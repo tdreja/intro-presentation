@@ -20,5 +20,11 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@stylistic/indent': ['error', 4],
+      '@stylistic/semi': ['error', 'always'],
+    },
   },
 ])
