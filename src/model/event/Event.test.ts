@@ -38,7 +38,7 @@ describe('importAppEvent', () => {
     });
 
     test('reconstructs a valid event with an object payload', () => {
-        type SlidePayload = { index: number; title: string };
+        type SlidePayload = { index: number, title: string };
         const event: AppEvent<SlidePayload> = {
             id: VALID_ID,
             type: EventType.REPLACE_SLIDE,

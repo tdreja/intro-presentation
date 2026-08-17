@@ -27,4 +27,10 @@ export default defineConfig([
       '@stylistic/semi': ['error', 'always'],
     },
   },
+  {
+    files: ['**/*.{test,spec}.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ])

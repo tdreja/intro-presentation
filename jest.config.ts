@@ -12,6 +12,7 @@ const config: Config = {
                     module: 'CommonJS',
                     moduleResolution: 'node',
                     verbatimModuleSyntax: false,
+                    allowImportingTsExtensions: true,
                     types: ['jest', 'node'],
                 },
             },
