@@ -1,0 +1,150 @@
+import { Temporal } from '@js-temporal/polyfill';
+import { createSlideId, importSlide } from './Slide';
+import type { FullImageSlide, HalfTextHalfImageSlide } from './Slide';
+import type { AppId } from '../identifier/AppId';
+import type { Base64Image } from './Image';
+
+const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const VALID_IMAGE = 'data:image/png;base64,abc123' as Base64Image;
+
+// ---------------------------------------------------------------------------
+// createSlideId
+// ---------------------------------------------------------------------------
+
+describe('createSlideId', () => {
+    test('returns an id starting with "slide-"', () => {
+        expect(createSlideId()).toMatch(/^slide-/);
+    });
+
+    test('produces a deterministic id from a fixed PlainDateTime', () => {
+        const date = Temporal.PlainDateTime.from('2026-08-18T10:00:00');
+        const id = createSlideId(date);
+        expect(id).toBe('slide-2026-08-18-10-00-00-000');
+    });
+
+    test('returns an id matching the full slide-id format without a date argument', () => {
+        const id = createSlideId();
+        expect(id).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// importSlide — invalid inputs
+// ---------------------------------------------------------------------------
+
+describe('importSlide — invalid inputs', () => {
+    test('returns null for null', () => {
+        expect(importSlide(null)).toBeNull();
+    });
+
+    test('returns null for undefined', () => {
+        expect(importSlide(undefined)).toBeNull();
+    });
+
+    test('returns null for empty string', () => {
+        expect(importSlide('')).toBeNull();
+    });
+
+    test('returns null when slideId is missing', () => {
+        const json = JSON.stringify({ slideType: 'full-image', image: VALID_IMAGE });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when slideType is missing', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, image: VALID_IMAGE });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when slideId has an invalid format', () => {
+        const json = JSON.stringify({ slideId: 'not-a-valid-id', slideType: 'full-image', image: VALID_IMAGE });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null for an unknown slideType', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'unknown-type' });
+        expect(importSlide(json)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// importSlide — full-image
+// ---------------------------------------------------------------------------
+
+describe('importSlide — full-image', () => {
+    test('returns a FullImageSlide for valid input', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE });
+        const result = importSlide(json) as FullImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.slideType).toBe('full-image');
+        expect(result.slideId).toBe(VALID_SLIDE_ID);
+        expect(result.image).toBe(VALID_IMAGE);
+    });
+
+    test('returns null when image is missing', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image' });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when image is not a valid base64 data URL', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image', image: 'not-an-image' });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('round-trips a FullImageSlide through JSON.stringify', () => {
+        const slide: FullImageSlide = { slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE };
+        const result = importSlide(JSON.stringify(slide));
+        expect(result).toEqual(slide);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// importSlide — half-text-half-image
+// ---------------------------------------------------------------------------
+
+describe('importSlide — half-text-half-image', () => {
+    test('returns a HalfTextHalfImageSlide for valid input', () => {
+        const json = JSON.stringify({
+            slideId: VALID_SLIDE_ID,
+            slideType: 'half-text-half-image',
+            text: 'Hello World',
+            image: VALID_IMAGE,
+        });
+        const result = importSlide(json) as HalfTextHalfImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.slideType).toBe('half-text-half-image');
+        expect(result.slideId).toBe(VALID_SLIDE_ID);
+        expect(result.text).toBe('Hello World');
+        expect(result.image).toBe(VALID_IMAGE);
+    });
+
+    test('returns null when text is missing', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', image: VALID_IMAGE });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when image is missing', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello' });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when image is not a valid base64 data URL', () => {
+        const json = JSON.stringify({
+            slideId: VALID_SLIDE_ID,
+            slideType: 'half-text-half-image',
+            text: 'Hello',
+            image: 'not-an-image',
+        });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('round-trips a HalfTextHalfImageSlide through JSON.stringify', () => {
+        const slide: HalfTextHalfImageSlide = {
+            slideId: VALID_SLIDE_ID,
+            slideType: 'half-text-half-image',
+            text: 'Hello World',
+            image: VALID_IMAGE,
+        };
+        const result = importSlide(JSON.stringify(slide));
+        expect(result).toEqual(slide);
+    });
+});
