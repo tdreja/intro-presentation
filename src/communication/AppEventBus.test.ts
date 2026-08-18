@@ -7,7 +7,7 @@ import type { AppId } from '../model/identifier/AppId';
 // Helpers
 // ---------------------------------------------------------------------------
 
-const VALID_ID = 'evt-2026-08-17-10-30-00' as AppId;
+const VALID_ID = 'evt-2026-08-17-10-30-00-000' as AppId;
 
 function makeEvent(payload: number = 1): AppEvent<number> {
     return { id: VALID_ID, type: EventType.GO_TO_SLIDE, payload };

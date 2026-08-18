@@ -1,4 +1,4 @@
-import type { AppId } from '../identifier/AppId.ts';
+import { type AppId, asAppId } from '../identifier/AppId.ts';
 
 /**
  * What type of event can be sent to all tabs?
@@ -31,11 +31,11 @@ export interface AppEvent<PAYLOAD> {
     /**
      * Unique identifier of the event
      */
-    id: AppId
+    readonly id: AppId
     /**
      * Type of the event
      */
-    type: EventType
+    readonly type: EventType
     /**
      * Payload of the event, can be any type depending on the event type
      */
@@ -59,8 +59,12 @@ export function importAppEvent<PAYLOAD>(json?: string | null): AppEvent<PAYLOAD>
     if (!raw || !raw.id || !raw.type) {
         return null;
     }
+    const validId = asAppId(raw.id);
+    if (!validId) {
+        return null;
+    }
     return {
-        id: raw.id,
+        id: validId,
         type: raw.type,
         payload: raw.payload as PAYLOAD,
     };

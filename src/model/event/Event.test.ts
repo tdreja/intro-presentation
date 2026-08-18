@@ -2,7 +2,7 @@ import { EventType, importAppEvent, exportAppEvent } from './Event';
 import type { AppEvent } from './Event';
 import type { AppId } from '../identifier/AppId';
 
-const VALID_ID = 'evt-2026-08-17-10-30-00' as AppId;
+const VALID_ID = 'evt-2026-08-17-10-30-00-000' as AppId;
 
 // ---------------------------------------------------------------------------
 // importAppEvent
