@@ -1,30 +1,7 @@
-import { type AppId, asAppId, newAppId } from '../identifier/AppId.ts';
-import { asBoolean } from '../JsonUtils.ts';
-import { type JsonSlideShow, type SlideShow, toJsonSlideShow } from '../slides/SlideShow.ts';
-
-/**
- * What type of event can be sent to all tabs?
- */
-export const EventType = {
-    /**
-     * Requires all tabs to move to the given slide
-     */
-    GO_TO_SLIDE: 'GO_TO_SLIDE',
-    /**
-     * Requires all tabs to replace the given slide
-     */
-    REPLACE_SLIDE: 'REPLACE_SLIDE',
-    /**
-     * Requires all tabs to replace the entire presentation
-     */
-    REPLACE_PRESENTATION: 'REPLACE_PRESENTATION',
-    /**
-     * Requires all tabs to toggle the countdown timer on or off
-     */
-    TOGGLE_COUNTDOWN: 'TOGGLE_COUNTDOWN',
-} as const;
-
-export type EventType = typeof EventType[keyof typeof EventType];
+import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
+import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../slides/SlideShow.ts';
+import type { JsonConverter, RawJson } from '../json/json.ts';
+import { BOOLEAN_CONVERTER, NUMBER_CONVERTER, STRING_CONVERTER } from '../json/common.ts';
 
 /**
  * Actual event sent across all tabs
@@ -37,7 +14,7 @@ export interface AppEvent<PAYLOAD> {
     /**
      * Type of the event
      */
-    readonly type: EventType
+    readonly type: 'replace-slideshow' | 'go-to-slide'
     /**
      * Should the event only be transmitted to remote receivers?
      */
@@ -45,51 +22,93 @@ export interface AppEvent<PAYLOAD> {
     /**
      * Payload of the event, can be any type depending on the event type
      */
-    payload: PAYLOAD
+    readonly payload: PAYLOAD
 }
 
 /**
- * JSON representation of an AppEvent, used to restore the original
+ * Raw JSON representation of an AppEvent, used for serialization and deserialization
  */
-type JsonAppEvent = Partial<AppEvent<unknown>>;
+export type RawJsonEvent = RawJson<AppEvent<unknown>>;
 
 /**
- * Restores an AppEvent from its JSON representation
- * @param json JSON input
+ * Event sent, whenever the entire slideshow gets updated
  */
-export function importAppEvent<PAYLOAD>(json?: string | null): AppEvent<PAYLOAD> | null {
-    if (!json) {
-        return null;
-    }
-    const raw: JsonAppEvent = JSON.parse(json);
-    if (!raw || !raw.id || !raw.type) {
-        return null;
-    }
-    const validId = asAppId(raw.id);
-    if (!validId) {
-        return null;
-    }
-    return {
-        id: validId,
-        type: raw.type,
-        remoteOnly: asBoolean(raw.remoteOnly),
-        payload: raw.payload as PAYLOAD,
-    };
+export interface ReplaceSlideshowEvent extends AppEvent<SlideShow> {
+    readonly type: 'replace-slideshow'
 }
 
 /**
- * Stores an AppEvent as JSON representation, used to send it across tabs
- * @param event Event to store
+ * Event sent, whenever the current slide index changes
  */
-export function exportAppEvent<PAYLOAD>(event: AppEvent<PAYLOAD>): string {
-    return JSON.stringify(event);
+export interface GoToSlideEvent extends AppEvent<number> {
+    readonly type: 'go-to-slide'
 }
 
-export function replacePresentationEvent(slideshow: SlideShow): AppEvent<JsonSlideShow> {
-    return {
-        type: EventType.REPLACE_PRESENTATION,
-        remoteOnly: true,
-        id: newAppId('event'),
-        payload: toJsonSlideShow(slideshow),
-    };
-}
+export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
+    fromJson(json: unknown | null | undefined): AppEvent<unknown> | null {
+        if (!json) {
+            return null;
+        }
+        const parsed = json as RawJsonEvent;
+        const id = APP_ID_CONVERTER.fromJson(parsed.id);
+        if (!id) {
+            return null;
+        }
+        const type = STRING_CONVERTER.fromJson(parsed.type);
+        if (!type) {
+            return null;
+        }
+        const remoteOnly = BOOLEAN_CONVERTER.fromJson(parsed.remoteOnly) ?? false;
+        switch (type) {
+            case 'replace-slideshow': {
+                const slideshow = SLIDE_SHOW_CONVERTER.fromJson(parsed.payload);
+                if (slideshow) {
+                    return {
+                        id,
+                        type,
+                        remoteOnly,
+                        payload: slideshow,
+                    } as ReplaceSlideshowEvent;
+                }
+                return null;
+            }
+            case 'go-to-slide': {
+                const nr = NUMBER_CONVERTER.fromJson(parsed.payload);
+                if (nr !== null) {
+                    return {
+                        id,
+                        type,
+                        remoteOnly,
+                        payload: nr,
+                    } as GoToSlideEvent;
+                }
+                return null;
+            }
+            default:
+                return null;
+        }
+    },
+    toJson(data: AppEvent<unknown> | null | undefined): RawJsonEvent | null {
+        if (!data) {
+            return null;
+        }
+        let payload: unknown;
+        switch (data.type) {
+            case 'replace-slideshow':
+                payload = SLIDE_SHOW_CONVERTER.toJson(data.payload as SlideShow);
+                break;
+            case 'go-to-slide':
+                payload = NUMBER_CONVERTER.toJson(data.payload as number);
+                break;
+            default:
+                payload = undefined;
+                break;
+        }
+        return {
+            id: APP_ID_CONVERTER.toJson(data.id),
+            type: data.type,
+            remoteOnly: BOOLEAN_CONVERTER.toJson(data.remoteOnly),
+            payload,
+        };
+    },
+};

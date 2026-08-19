@@ -6,7 +6,7 @@ export interface JsonConverter<DATA, JSON> {
      * Imports data from serialized JSON
      * @param json JSON data
      */
-    fromJson(json?: JSON | null): DATA | null
+    fromJson(json?: unknown | null): DATA | null
 
     /**
      * Exports the data into a serialized JSON format

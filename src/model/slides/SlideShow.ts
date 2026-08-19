@@ -31,20 +31,21 @@ export type RawJsonSlideShow = RawJson<SlideShow>;
 const SLIDES_CONVERTER = new ArrayConverter<Slide, unknown>(SLIDE_CONVERTER);
 
 export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = {
-    fromJson(json: RawJsonSlideShow | null | undefined): SlideShow | null {
+    fromJson(json: unknown | null | undefined): SlideShow | null {
         if (!json) {
             return null;
         }
-        const id = APP_ID_CONVERTER.fromJson(json.id);
+        const parsed = json as RawJsonSlideShow;
+        const id = APP_ID_CONVERTER.fromJson(parsed.id);
         if (!id) {
             return null;
         }
-        const slides = SLIDES_CONVERTER.fromJson(json.slides);
+        const slides = SLIDES_CONVERTER.fromJson(parsed.slides);
         if (slides === null) {
             return null;
         }
-        const currentSlideIndex = NUMBER_CONVERTER.fromJson(json.currentSlideIndex) ?? 0;
-        const countdownTarget = DATE_TIME_CONVERTER.fromJson(json.countdownTarget) ?? undefined;
+        const currentSlideIndex = NUMBER_CONVERTER.fromJson(parsed.currentSlideIndex) ?? 0;
+        const countdownTarget = DATE_TIME_CONVERTER.fromJson(parsed.countdownTarget) ?? undefined;
         return { id, slides, currentSlideIndex, countdownTarget };
     },
     toJson(data: SlideShow | null | undefined): RawJsonSlideShow | null {

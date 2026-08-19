@@ -62,14 +62,14 @@ export const DATE_TIME_CONVERTER: DirectJsonConverter<Temporal.PlainDateTime> = 
 /**
  * Wraps a regular converter and exports/imports Arrays
  */
-export class ArrayConverter<DATA, JSON> implements JsonConverter<DATA[], JSON> {
+export class ArrayConverter<DATA, JSON> implements JsonConverter<DATA[], JSON[]> {
     private readonly itemConverter: JsonConverter<DATA, JSON>;
 
     constructor(itemConverter: JsonConverter<DATA, JSON>) {
         this.itemConverter = itemConverter;
     }
 
-    public fromJson(json?: JSON | null): DATA[] | null {
+    public fromJson(json?: unknown | null): DATA[] | null {
         if (json && Array.isArray(json)) {
             const result: DATA[] = [];
             for (const item of json) {
@@ -84,9 +84,9 @@ export class ArrayConverter<DATA, JSON> implements JsonConverter<DATA[], JSON> {
         return null;
     }
 
-    public toJson(data?: DATA[] | null): JSON | null {
+    public toJson(data?: DATA[] | null): JSON[] | null {
         if (data) {
-            const result = [];
+            const result: JSON[] = [];
             for (const item of data) {
                 const json = this.itemConverter.toJson(item);
                 if (json === null) {
@@ -94,7 +94,7 @@ export class ArrayConverter<DATA, JSON> implements JsonConverter<DATA[], JSON> {
                 }
                 result.push(json);
             }
-            return result as JSON;
+            return result;
         }
         return null;
     }

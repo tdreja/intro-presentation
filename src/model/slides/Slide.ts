@@ -87,22 +87,23 @@ export type RawJsonSlide = RawJson<Slide> & RawJson<FullImageSlide> & RawJson<Ha
  * Imports and exports slides to JSON
  */
 export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
-    fromJson(json: RawJsonSlide | null | undefined): Slide | null {
+    fromJson(json: unknown | null | undefined): Slide | null {
         if (!json) {
             return null;
         }
-        const slideType = STRING_CONVERTER.fromJson(json.slideType);
+        const parsed = json as RawJsonSlide;
+        const slideType = STRING_CONVERTER.fromJson(parsed.slideType);
         if (!slideType) {
             return null;
         }
-        const slideId = APP_ID_CONVERTER.fromJson(json.slideId);
+        const slideId = APP_ID_CONVERTER.fromJson(parsed.slideId);
         if (!slideId) {
             return null;
         }
-        const headline = STRING_CONVERTER.fromJson(json.headline);
+        const headline = STRING_CONVERTER.fromJson(parsed.headline);
         switch (slideType) {
             case 'full-image': {
-                const img = BASE_64_IMAGE_CONVERTER.fromJson(json.image);
+                const img = BASE_64_IMAGE_CONVERTER.fromJson(parsed.image);
                 if (img) {
                     return {
                         headline,
@@ -114,9 +115,9 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                 return null;
             }
             case 'half-text-half-image': {
-                const img = BASE_64_IMAGE_CONVERTER.fromJson(json.image);
-                const text = STRING_CONVERTER.fromJson(json.text);
-                const layout = STRING_CONVERTER.fromJson(json.layout);
+                const img = BASE_64_IMAGE_CONVERTER.fromJson(parsed.image);
+                const text = STRING_CONVERTER.fromJson(parsed.text);
+                const layout = STRING_CONVERTER.fromJson(parsed.layout);
                 if (img && text && layout) {
                     return {
                         headline,
