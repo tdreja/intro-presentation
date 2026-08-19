@@ -1,4 +1,5 @@
 import placeholderSvg from './placeholder.svg?raw';
+import type { DirectJsonConverter } from '../json/json.ts';
 
 export type Base64Image = `data:${string};base64,${string}`;
 
@@ -9,6 +10,21 @@ export type Base64Image = `data:${string};base64,${string}`;
  */
 export const PLACEHOLDER_IMAGE: Base64Image
     = `data:image/svg+xml;base64,${btoa(placeholderSvg)}`;
+
+/**
+ * Exports/Imports Base64Image as a JSON string.
+ */
+export const BASE_64_IMAGE_CONVERTER: DirectJsonConverter<Base64Image> = {
+    fromJson(json: unknown | null | undefined): Base64Image | null {
+        if (typeof json === 'string' && json.startsWith('data:') && json.includes(';base64,')) {
+            return json as Base64Image;
+        }
+        return null;
+    },
+    toJson(data: Base64Image | null | undefined): unknown | null {
+        return data ?? null;
+    },
+};
 
 export function asBase64Image(json?: string | null): Base64Image | null {
     if (!json) {

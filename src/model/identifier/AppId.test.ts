@@ -1,5 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { asAppId, newAppId } from './AppId';
+import { APP_ID_CONVERTER, asAppId, newAppId } from './AppId';
 
 const VALID_ID = 'app-2026-08-17-10-30-00-000';
 const PINNED_DATE = Temporal.PlainDateTime.from('2026-08-17T10:30:45');
@@ -110,5 +110,76 @@ describe('newAppId', () => {
     test('falls back to system time when date is undefined', () => {
         const pattern = /^app-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
         expect(newAppId('app', undefined)).toMatch(pattern);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// APP_ID_CONVERTER
+// ---------------------------------------------------------------------------
+
+describe('APP_ID_CONVERTER.fromJson', () => {
+    test('returns the string typed as AppId for a valid id', () => {
+        expect(APP_ID_CONVERTER.fromJson(VALID_ID)).toBe(VALID_ID);
+    });
+
+    test('accepts uppercase prefix letters', () => {
+        const id = 'APP-2024-12-31-23-59-59-999';
+        expect(APP_ID_CONVERTER.fromJson(id)).toBe(id);
+    });
+
+    test('returns null for null', () => {
+        expect(APP_ID_CONVERTER.fromJson(null)).toBeNull();
+    });
+
+    test('returns null for undefined', () => {
+        expect(APP_ID_CONVERTER.fromJson(undefined)).toBeNull();
+    });
+
+    test('returns null for a number', () => {
+        expect(APP_ID_CONVERTER.fromJson(42)).toBeNull();
+    });
+
+    test('returns null for an object', () => {
+        expect(APP_ID_CONVERTER.fromJson({})).toBeNull();
+    });
+
+    test('returns null for an array', () => {
+        expect(APP_ID_CONVERTER.fromJson([])).toBeNull();
+    });
+
+    test('returns null when a segment is missing', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-2026-08-17-10-30')).toBeNull();
+    });
+
+    test('returns null when year is not 4 digits', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-26-08-17-10-30-00-000')).toBeNull();
+    });
+
+    test('returns null when prefix starts with a digit', () => {
+        expect(APP_ID_CONVERTER.fromJson('1bad-2024-01-01-00-00-00-000')).toBeNull();
+    });
+
+    test('returns null when there are extra segments', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-2026-08-17-10-30-00-000-99')).toBeNull();
+    });
+});
+
+describe('APP_ID_CONVERTER.toJson', () => {
+    test('returns the id unchanged', () => {
+        const id = asAppId(VALID_ID)!;
+        expect(APP_ID_CONVERTER.toJson(id)).toBe(VALID_ID);
+    });
+
+    test('round-trips through fromJson and toJson', () => {
+        const id = asAppId(VALID_ID)!;
+        expect(APP_ID_CONVERTER.toJson(APP_ID_CONVERTER.fromJson(VALID_ID)!)).toBe(id);
+    });
+
+    test('returns null for null', () => {
+        expect(APP_ID_CONVERTER.toJson(null)).toBeNull();
+    });
+
+    test('returns null for undefined', () => {
+        expect(APP_ID_CONVERTER.toJson(undefined)).toBeNull();
     });
 });

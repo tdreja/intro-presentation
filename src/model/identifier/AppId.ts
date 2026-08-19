@@ -1,4 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill';
+import type { DirectJsonConverter } from '../json/json.ts';
 
 /**
  * Describes an internal App-ID number with the following scheme:
@@ -16,6 +17,21 @@ import { Temporal } from '@js-temporal/polyfill';
 export type AppId = `${string}-${number}-${number}-${number}-${number}-${number}-${number}-${number}`;
 
 const APP_ID_REGEX = /^[a-zA-Z]+-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
+
+/**
+ * Imports/Exports AppId to JSON
+ */
+export const APP_ID_CONVERTER: DirectJsonConverter<AppId> = {
+    fromJson: (input?: unknown | null): AppId | null => {
+        if (typeof input === 'string' && APP_ID_REGEX.test(input)) {
+            return input as AppId;
+        }
+        return null;
+    },
+    toJson: (input?: AppId | null): unknown | null => {
+        return input ?? null;
+    },
+};
 
 /**
  * Parses the given String as AppId or null
