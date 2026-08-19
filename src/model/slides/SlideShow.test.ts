@@ -2,12 +2,12 @@ import { Temporal } from '@js-temporal/polyfill';
 import { exportSlideShow, importSlideShow, type SlideShow } from './SlideShow';
 import type { FullImageSlide, HalfTextHalfImageSlide } from './Slide';
 import type { AppId } from '../identifier/AppId';
-import type { Base64Image } from './Image';
+import { PLACEHOLDER_IMAGE } from './Image';
 
 const VALID_ID = 'show-2026-08-18-10-00-00-000' as AppId;
 const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
 const VALID_SLIDE_ID_2 = 'slide-2026-08-18-11-00-00-000' as AppId;
-const VALID_IMAGE = 'data:image/png;base64,abc123' as Base64Image;
+const VALID_IMAGE = PLACEHOLDER_IMAGE;
 const VALID_COUNTDOWN = Temporal.PlainDateTime.from('2026-12-31T23:59:59');
 
 const FULL_IMAGE_SLIDE: FullImageSlide = {
