@@ -1,4 +1,6 @@
-import { type AppId, asAppId } from '../identifier/AppId.ts';
+import { type AppId, asAppId, newAppId } from '../identifier/AppId.ts';
+import { asBoolean } from '../JsonUtils.ts';
+import { type JsonSlideShow, type SlideShow, toJsonSlideShow } from '../slides/SlideShow.ts';
 
 /**
  * What type of event can be sent to all tabs?
@@ -37,6 +39,10 @@ export interface AppEvent<PAYLOAD> {
      */
     readonly type: EventType
     /**
+     * Should the event only be transmitted to remote receivers?
+     */
+    readonly remoteOnly: boolean
+    /**
      * Payload of the event, can be any type depending on the event type
      */
     payload: PAYLOAD
@@ -66,6 +72,7 @@ export function importAppEvent<PAYLOAD>(json?: string | null): AppEvent<PAYLOAD>
     return {
         id: validId,
         type: raw.type,
+        remoteOnly: asBoolean(raw.remoteOnly),
         payload: raw.payload as PAYLOAD,
     };
 }
@@ -76,4 +83,13 @@ export function importAppEvent<PAYLOAD>(json?: string | null): AppEvent<PAYLOAD>
  */
 export function exportAppEvent<PAYLOAD>(event: AppEvent<PAYLOAD>): string {
     return JSON.stringify(event);
+}
+
+export function replacePresentationEvent(slideshow: SlideShow): AppEvent<JsonSlideShow> {
+    return {
+        type: EventType.REPLACE_PRESENTATION,
+        remoteOnly: true,
+        id: newAppId('event'),
+        payload: toJsonSlideShow(slideshow),
+    };
 }

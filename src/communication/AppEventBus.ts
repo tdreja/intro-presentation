@@ -44,7 +44,9 @@ export class AppEventBus {
     }
 
     public dispatchEvent<PAYLOAD>(event: AppEvent<PAYLOAD>): void {
-        this._listeners.forEach(onEvent => onEvent(event));
+        if (!event.remoteOnly) {
+            this._listeners.forEach(onEvent => onEvent(event));
+        }
         if (this._channel) {
             this._channel.postMessage(exportAppEvent(event));
         }

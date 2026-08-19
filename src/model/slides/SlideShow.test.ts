@@ -1,5 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { exportSlideShow, importSlideShowJSON, type SlideShow } from './SlideShow';
+import { exportSlideShow, importSlideShowJSON, toJsonSlideShow, type SlideShow } from './SlideShow';
 import type { FullImageSlide, HalfTextHalfImageSlide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
@@ -29,6 +29,41 @@ const VALID_SHOW: SlideShow = {
     slides: [FULL_IMAGE_SLIDE, HALF_TEXT_SLIDE],
     currentSlideIndex: 1,
 };
+
+// ---------------------------------------------------------------------------
+// toJsonSlideShow
+// ---------------------------------------------------------------------------
+
+describe('toJsonSlideShow', () => {
+    test('returns an object with id, slides, and currentSlideIndex', () => {
+        const result = toJsonSlideShow(VALID_SHOW);
+        expect(result.id).toBe(VALID_ID);
+        expect(result.slides).toBe(VALID_SHOW.slides);
+        expect(result.currentSlideIndex).toBe(1);
+    });
+
+    test('converts countdownTarget to ISO string when set', () => {
+        const show: SlideShow = { ...VALID_SHOW, countdownTarget: VALID_COUNTDOWN };
+        const result = toJsonSlideShow(show);
+        expect(result.countdownTarget).toBe(VALID_COUNTDOWN.toString());
+    });
+
+    test('leaves countdownTarget as undefined when not set', () => {
+        const result = toJsonSlideShow(VALID_SHOW);
+        expect(result.countdownTarget).toBeUndefined();
+    });
+
+    test('does not mutate the original slideshow', () => {
+        const show: SlideShow = { ...VALID_SHOW, countdownTarget: VALID_COUNTDOWN };
+        toJsonSlideShow(show);
+        expect(show.countdownTarget).toBe(VALID_COUNTDOWN);
+    });
+
+    test('slides array reference is preserved', () => {
+        const result = toJsonSlideShow(VALID_SHOW);
+        expect(result.slides).toBe(VALID_SHOW.slides);
+    });
+});
 
 // ---------------------------------------------------------------------------
 // exportSlideShow

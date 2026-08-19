@@ -1,4 +1,4 @@
-import { asAppId, type AppId } from '../identifier/AppId.ts';
+import { type AppId, asAppId } from '../identifier/AppId.ts';
 import { importSlide, importSlideJSON, type Slide } from './Slide.ts';
 import { asArray, asDateTime, asNumberOrZero } from '../JsonUtils.ts';
 import { Temporal } from '@js-temporal/polyfill';
@@ -25,7 +25,7 @@ export interface SlideShow {
     readonly id: AppId
 }
 
-export type JsonSlideShow = Partial<Omit<SlideShow, 'slides' | 'id'>> & {
+export type JsonSlideShow = Partial<Omit<SlideShow, 'slides' | 'id' | 'countdownTarget'>> & {
     /**
      * Unknown ID
      */
@@ -40,11 +40,16 @@ export type JsonSlideShow = Partial<Omit<SlideShow, 'slides' | 'id'>> & {
     countdownTarget?: unknown
 };
 
+export function toJsonSlideShow(slideshow: SlideShow): JsonSlideShow {
+    const countdownTarget: unknown = slideshow.countdownTarget ? slideshow.countdownTarget.toString() : undefined;
+    return {
+        ...slideshow,
+        countdownTarget,
+    };
+}
+
 export function exportSlideShow(show: SlideShow): string {
-    return JSON.stringify({
-        ...show,
-        countdownTarget: show.countdownTarget ? show.countdownTarget.toString() : undefined,
-    });
+    return JSON.stringify(toJsonSlideShow(show));
 }
 
 /**

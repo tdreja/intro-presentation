@@ -3,38 +3,45 @@ import { importSlideShow, type JsonSlideShow, type SlideShow } from '../model/sl
 import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader.ts';
 import { AppSlideshowContext, FALLBACK_SLIDESHOW, type SlideshowSetter } from './SlideshowContext.ts';
 import { useAppEventBus } from './AppEventBus.ts';
-import type { AppEvent } from '../model/event/Event.ts';
+import { type AppEvent, replacePresentationEvent } from '../model/event/Event.ts';
 
 type Props = {
     children?: ReactElement | ReactElement[]
 };
-
-const GLOBAL_SLIDE_SHOW_LISTENER = 'global-slideshow-listener';
 
 /**
  * Provides access to the current slideshow for all child components
  * @constructor
  */
 export const AppSlideshow = ({ children }: Props): ReactElement => {
+    // Attach to the eventbus
     const eventBus = useAppEventBus();
+
+    // Keep the slideshow in a local state, initalized from storage or fallback
     const [slideshow, setLocalSlideshow] = useState<SlideShow>(
         () => loadSlideshowFromStorage() ?? FALLBACK_SLIDESHOW,
     );
+
+    // When updated the local slideshow, also store it and notify the event bus
     const setSlideshow: SlideshowSetter = useCallback((newSlideshow: SlideShow) => {
         setLocalSlideshow(newSlideshow);
         storeSlideshowToStorage(newSlideshow);
-        // TODO send event!
-        // eventBus.dispatchEvent({});
-    }, [setLocalSlideshow]);
-    const listener = useCallback((event: AppEvent<JsonSlideShow>) => {
+        eventBus.dispatchEvent(replacePresentationEvent(newSlideshow));
+    }, [eventBus, setLocalSlideshow]);
+
+    // Build the listener to update the slideshow based on remote data
+    const remoteEventListener = useCallback((event: AppEvent<JsonSlideShow>) => {
         const parsed = importSlideShow(event.payload);
-        if (parsed) {
+        if (event.remoteOnly && parsed) {
             setLocalSlideshow(parsed);
         }
     }, [setLocalSlideshow]);
+
+    // Auto-Attach the listener to the event bus!
     useEffect(() => {
-        eventBus.registerListener(GLOBAL_SLIDE_SHOW_LISTENER, listener);
-    }, [listener, eventBus]);
+        eventBus.registerListener('global-slideshow-listener', remoteEventListener);
+    }, [remoteEventListener, eventBus]);
+
     return (
         <AppSlideshowContext.Provider value={[slideshow, setSlideshow]}>
             {children}
