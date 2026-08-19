@@ -9,7 +9,12 @@ function pickNewest(a: SlideShow, b: SlideShow): SlideShow {
 function loadFromStorage(): SlideShow | null {
     const stringValue = localStorage.getItem(SLIDESHOW_STORAGE_KEY);
     if (stringValue) {
-        return SLIDE_SHOW_CONVERTER.fromJson(JSON.parse(stringValue));
+        try {
+            return SLIDE_SHOW_CONVERTER.fromJson(JSON.parse(stringValue));
+        }
+        catch {
+            return null;
+        }
     }
     return null;
 }

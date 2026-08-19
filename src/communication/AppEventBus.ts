@@ -77,7 +77,13 @@ export class AppEventBus {
         if (typeof str !== 'string') {
             return;
         }
-        const appEvent = EVENT_CONVERTER.fromJson(JSON.parse(str));
+        let appEvent;
+        try {
+            appEvent = EVENT_CONVERTER.fromJson(JSON.parse(str));
+        }
+        catch {
+            return;
+        }
         if (appEvent) {
             console.debug('Received event from another tab.', appEvent);
             for (const listener of this._listeners.values()) {
