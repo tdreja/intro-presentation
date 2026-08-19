@@ -4,6 +4,7 @@ import type { SlideShow } from '../model/slides/SlideShow.ts';
 import { AppSlideshowContext, FALLBACK_SLIDESHOW, type SlideshowSetter } from './SlideshowContext.ts';
 import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader.ts';
 import { type AppEvent, replaceSlideshowEvent } from '../model/event/Event.ts';
+import { type AppId, newAppId } from '../model/identifier/AppId.ts';
 
 type Props = {
     children?: ReactElement | ReactElement[]
@@ -14,6 +15,9 @@ type Props = {
  * @constructor
  */
 export const AppSlideshow = ({ children }: Props): ReactElement => {
+    // Add a unique source ID for this instance
+    const [source] = useState<AppId>(() => newAppId('app-slideshow'));
+
     // Attach to the eventbus
     const eventBus = useAppEventBus();
 
@@ -26,15 +30,15 @@ export const AppSlideshow = ({ children }: Props): ReactElement => {
     const setSlideshow: SlideshowSetter = useCallback((newSlideshow: SlideShow) => {
         setLocalSlideshow(newSlideshow);
         storeSlideshowToStorage(newSlideshow);
-        eventBus.dispatchEvent(replaceSlideshowEvent(newSlideshow, true));
-    }, [eventBus, setLocalSlideshow]);
+        eventBus.dispatchEvent(replaceSlideshowEvent(source, newSlideshow, true));
+    }, [source, eventBus, setLocalSlideshow]);
 
     // Build the listener to update the slideshow based on remote data
     const remoteEventListener = useCallback((event: AppEvent<SlideShow>) => {
-        if (event.remoteOnly) {
+        if (event.remoteOnly && source !== event.source) {
             setLocalSlideshow(event.payload);
         }
-    }, [setLocalSlideshow]);
+    }, [source, setLocalSlideshow]);
 
     // Auto-Attach the listener to the event bus!
     useEffect(() => {

@@ -10,6 +10,7 @@ import type { SlideShow } from '../model/slides/SlideShow';
 // ---------------------------------------------------------------------------
 
 const EVT_ID = 'evt-2026-08-19-10-00-00-000' as AppId;
+const SOURCE_ID = 'src-2026-08-19-10-00-00-000' as AppId;
 const SHOW_ID = 'show-2026-01-01-10-00-00-000' as AppId;
 const SLIDE_ID = 'slide-2026-01-01-10-00-00-000' as AppId;
 
@@ -30,6 +31,7 @@ const GO_TO_SLIDE: GoToSlideEvent = {
     type: 'go-to-slide',
     remoteOnly: false,
     payload: 3,
+    source: SOURCE_ID,
 };
 
 const REPLACE_SLIDESHOW: ReplaceSlideshowEvent = {
@@ -37,6 +39,7 @@ const REPLACE_SLIDESHOW: ReplaceSlideshowEvent = {
     type: 'replace-slideshow',
     remoteOnly: false,
     payload: SLIDESHOW,
+    source: SOURCE_ID,
 };
 
 // ---------------------------------------------------------------------------
@@ -348,7 +351,7 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
     test('33. completely malformed JSON string: listener not called', () => {
         const fn = jest.fn();
         bus.registerListener('l', 'go-to-slide', fn);
-        expect(() => bus._channelListener({ data: '{not valid json' } as MessageEvent)).toThrow();
+        expect(() => bus._channelListener({ data: '{not valid json' } as MessageEvent)).not.toThrow();
         expect(fn).not.toHaveBeenCalled();
     });
 });

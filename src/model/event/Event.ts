@@ -25,6 +25,10 @@ export interface AppEvent<PAYLOAD> {
      * Payload of the event, can be any type depending on the event type
      */
     readonly payload: PAYLOAD
+    /**
+     * Identifier of the source that sent the event!
+     */
+    readonly source: AppId
 }
 
 /**
@@ -39,12 +43,13 @@ export interface ReplaceSlideshowEvent extends AppEvent<SlideShow> {
     readonly type: 'replace-slideshow'
 }
 
-export function replaceSlideshowEvent(slideShow: SlideShow, remoteOnly?: boolean): ReplaceSlideshowEvent {
+export function replaceSlideshowEvent(source: AppId, slideShow: SlideShow, remoteOnly?: boolean): ReplaceSlideshowEvent {
     return {
         id: newAppId('event'),
         type: 'replace-slideshow',
         remoteOnly: !!remoteOnly,
         payload: slideShow,
+        source,
     };
 }
 
@@ -55,12 +60,13 @@ export interface GoToSlideEvent extends AppEvent<number> {
     readonly type: 'go-to-slide'
 }
 
-export function goToSlideEvent(slideIndex: number, remoteOnly?: boolean): GoToSlideEvent {
+export function goToSlideEvent(source: AppId, slideIndex: number, remoteOnly?: boolean): GoToSlideEvent {
     return {
         id: newAppId('event'),
         type: 'go-to-slide',
         remoteOnly: !!remoteOnly,
         payload: slideIndex,
+        source,
     };
 }
 
@@ -72,6 +78,10 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
         const parsed = json as RawJsonEvent;
         const id = APP_ID_CONVERTER.fromJson(parsed.id);
         if (!id) {
+            return null;
+        }
+        const source = APP_ID_CONVERTER.fromJson(parsed.source);
+        if (!source) {
             return null;
         }
         const type = STRING_CONVERTER.fromJson(parsed.type);
@@ -88,6 +98,7 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                         type,
                         remoteOnly,
                         payload: slideshow,
+                        source,
                     } as ReplaceSlideshowEvent;
                 }
                 return null;
@@ -100,6 +111,7 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                         type,
                         remoteOnly,
                         payload: nr,
+                        source,
                     } as GoToSlideEvent;
                 }
                 return null;
@@ -129,6 +141,7 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
             type: data.type,
             remoteOnly: BOOLEAN_CONVERTER.toJson(data.remoteOnly),
             payload,
+            source: APP_ID_CONVERTER.toJson(data.source),
         };
     },
 };
