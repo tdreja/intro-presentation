@@ -9,6 +9,10 @@ const channel: BroadcastChannel = new BroadcastChannel('intro-presentation-chann
 let lastListener: ChannelListener = () => {
 };
 
+/**
+ * Provides access to the AppEventBus for all child components
+ * @constructor
+ */
 export const EventBus = ({ children }: Props): ReactElement => {
     // Set up the state for the app context
     const [eventBus] = useState<AppEventBus>(() => {

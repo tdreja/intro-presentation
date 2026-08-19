@@ -45,3 +45,6 @@ export function newAppId(prefix?: string | null, date?: Temporal.PlainDateTime |
     const millisecond = String(now.millisecond).padStart(3, '0');
     return `${pre}-${year}-${month}-${day}-${hour}-${minute}-${second}-${millisecond}` as AppId;
 }
+
+export const FALLBACK_DATE_TIME = Temporal.PlainDateTime.from('2025-01-01T00:00:00.000');
+export const FALLBACK_APP_ID = newAppId('fallback', FALLBACK_DATE_TIME);
