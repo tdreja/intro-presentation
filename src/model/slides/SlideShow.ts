@@ -25,7 +25,7 @@ export interface SlideShow {
     readonly id: AppId
 }
 
-type JsonSlideShow = Partial<Omit<SlideShow, 'slides' | 'id'>> & {
+export type JsonSlideShow = Partial<Omit<SlideShow, 'slides' | 'id'>> & {
     /**
      * Unknown ID
      */

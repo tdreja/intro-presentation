@@ -17,11 +17,11 @@ export type ChannelListener = (event: MessageEvent) => void;
 export class AppEventBus {
     readonly _channel?: BroadcastChannel;
     readonly _channelListener: ChannelListener;
-    _listeners: AppEventListener<unknown>[];
+    readonly _listeners: Map<string, AppEventListener<unknown>>;
 
     constructor(channel?: BroadcastChannel, lastChannelListener?: ChannelListener) {
         this._channel = channel;
-        this._listeners = [];
+        this._listeners = new Map<string, AppEventListener<unknown>>();
         this._channelListener = ev => this.onChannelEvent(ev);
         if (this._channel) {
             if (lastChannelListener) {
@@ -31,15 +31,15 @@ export class AppEventBus {
         }
     }
 
-    public registerListener<PAYLOAD>(listener?: AppEventListener<PAYLOAD> | null): void {
-        if (listener) {
-            this._listeners = [...this._listeners, listener as AppEventListener<unknown>];
+    public registerListener<PAYLOAD>(listenerName?: string, listener?: AppEventListener<PAYLOAD> | null): void {
+        if (listenerName && listener) {
+            this._listeners.set(listenerName, listener as AppEventListener<unknown>);
         }
     }
 
-    public unregisterListener<PAYLOAD>(listener?: AppEventListener<PAYLOAD> | null): void {
-        if (listener) {
-            this._listeners = this._listeners.filter(l => l !== listener);
+    public unregisterListener(listenerName?: string): void {
+        if (listenerName) {
+            this._listeners.delete(listenerName);
         }
     }
 

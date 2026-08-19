@@ -1,5 +1,5 @@
 import { exportSlideShow, type SlideShow } from '../model/slides/SlideShow';
-import { loadSlideshowFromStorage } from './SlideshowLoader';
+import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader';
 import type { AppId } from '../model/identifier/AppId';
 import type { FullImageSlide } from '../model/slides/Slide';
 import { PLACEHOLDER_IMAGE } from '../model/slides/Image';
@@ -149,5 +149,39 @@ describe('loadSlideshowFromStorage — pickNewest when both sources present', ()
         const exported = JSON.parse(exportSlideShow(SHOW_OLDER));
         const result = loadSlideshowFromStorage(exported);
         expect(result!.id).toBe(SHOW_OLDER.id);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// storeSlideshowToStorage
+// ---------------------------------------------------------------------------
+
+describe('storeSlideshowToStorage', () => {
+    test('writes to storage when storage is empty', () => {
+        storeSlideshowToStorage(SHOW_NEWER);
+        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_NEWER.id);
+    });
+
+    test('round-trips: stored slideshow is readable with the same id', () => {
+        storeSlideshowToStorage(SHOW_OLDER);
+        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_OLDER.id);
+    });
+
+    test('overwrites when incoming slideshow is newer than stored', () => {
+        storeSlideshowToStorage(SHOW_OLDER);
+        storeSlideshowToStorage(SHOW_NEWER);
+        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_NEWER.id);
+    });
+
+    test('does not overwrite when incoming slideshow is older than stored', () => {
+        storeSlideshowToStorage(SHOW_NEWER);
+        storeSlideshowToStorage(SHOW_OLDER);
+        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_NEWER.id);
+    });
+
+    test('does not overwrite when incoming slideshow has the same id as stored', () => {
+        storeSlideshowToStorage(SHOW_OLDER);
+        storeSlideshowToStorage(SHOW_OLDER);
+        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_OLDER.id);
     });
 });

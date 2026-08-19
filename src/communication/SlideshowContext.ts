@@ -1,4 +1,4 @@
-import { createContext, type Dispatch, type SetStateAction, useContext } from 'react';
+import { createContext, useContext } from 'react';
 import type { SlideShow } from '../model/slides/SlideShow.ts';
 import { FALLBACK_APP_ID } from '../model/identifier/AppId.ts';
 import type { FullImageSlide } from '../model/slides/Slide.ts';
@@ -18,7 +18,8 @@ export const FALLBACK_SLIDESHOW: SlideShow = {
     ],
 };
 
-export type SlideshowState = [SlideShow, Dispatch<SetStateAction<SlideShow>>];
+export type SlideshowSetter = (newSlideshow: SlideShow) => void;
+export type SlideshowState = [SlideShow, SlideshowSetter];
 
 export const AppSlideshowContext = createContext<SlideshowState>([
     FALLBACK_SLIDESHOW, () => {

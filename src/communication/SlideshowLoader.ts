@@ -1,4 +1,4 @@
-import { importSlideShow, importSlideShowJSON, type SlideShow } from '../model/slides/SlideShow.ts';
+import { exportSlideShow, importSlideShow, importSlideShowJSON, type SlideShow } from '../model/slides/SlideShow.ts';
 
 const SLIDESHOW_STORAGE_KEY = 'slideshow';
 
@@ -16,4 +16,12 @@ export function loadSlideshowFromStorage(exportedSlideshow?: unknown): SlideShow
         return pickNewest(fromStorage, fromExport);
     }
     return fromStorage ?? fromExport;
+}
+
+export function storeSlideshowToStorage(slideshow: SlideShow): void {
+    const existing = importSlideShowJSON(localStorage.getItem(SLIDESHOW_STORAGE_KEY));
+    if (existing && existing.id >= slideshow.id) {
+        return;
+    }
+    localStorage.setItem(SLIDESHOW_STORAGE_KEY, exportSlideShow(slideshow));
 }
