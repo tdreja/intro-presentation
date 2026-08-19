@@ -2,6 +2,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import type { AppId } from '../identifier/AppId.ts';
 import { asAppId, newAppId } from '../identifier/AppId.ts';
 import { asBase64Image, type Base64Image } from './Image.ts';
+import { asString } from '../JsonUtils.ts';
 
 export function createSlideId(date?: Temporal.PlainDateTime | null): AppId {
     return newAppId('slide', date);
@@ -33,20 +34,29 @@ export interface HalfTextHalfImageSlide extends Slide {
 
 type JsonSlide = Partial<Slide> & Partial<FullImageSlide> & Partial<HalfTextHalfImageSlide>;
 
-export function importSlide(json?: string | null): Slide | null {
+export function exportSlide(slide: Slide): string {
+    return JSON.stringify(slide);
+}
+
+export function importSlideJSON(json?: string | null): Slide | null {
     if (!json) {
         return null;
     }
-    const raw: JsonSlide = JSON.parse(json);
-    if (!raw || !raw.slideId || !raw.slideType) {
+    return importSlide(JSON.parse(json));
+}
+
+export function importSlide(raw?: unknown | null): Slide | null {
+    const parsed = raw as JsonSlide | null | undefined;
+    if (!parsed || !parsed.slideId || !parsed.slideType) {
         return null;
     }
-    const slideId = asAppId(raw.slideId);
+    const slideId = asAppId(parsed.slideId);
     if (!slideId) {
         return null;
     }
-    const image = asBase64Image(raw.image);
-    switch (raw.slideType) {
+    const image = asBase64Image(parsed.image);
+    const headline = asString(parsed.headline);
+    switch (parsed.slideType) {
         case 'full-image':
             if (!image) {
                 return null;
@@ -55,19 +65,19 @@ export function importSlide(json?: string | null): Slide | null {
                 slideId,
                 slideType: 'full-image',
                 image,
-                ...(raw.headline !== undefined && { headline: raw.headline }),
+                headline,
             } as FullImageSlide;
         case 'half-text-half-image':
-            if (!raw.text || !image || !raw.layout || !VALID_LAYOUTS.includes(raw.layout)) {
+            if (!parsed.text || !image || !parsed.layout || !VALID_LAYOUTS.includes(parsed.layout)) {
                 return null;
             }
             return {
                 slideId,
-                text: raw.text,
+                text: parsed.text,
                 slideType: 'half-text-half-image',
                 image,
-                layout: raw.layout,
-                ...(raw.headline !== undefined && { headline: raw.headline }),
+                layout: parsed.layout,
+                headline,
             } as HalfTextHalfImageSlide;
         default:
             return null;

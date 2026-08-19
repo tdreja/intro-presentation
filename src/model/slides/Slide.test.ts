@@ -1,5 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { createSlideId, importSlide } from './Slide';
+import { createSlideId, importSlide, importSlideJSON } from './Slide';
 import type { FullImageSlide, HalfTextHalfImageSlide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import type { Base64Image } from './Image';
@@ -42,27 +42,27 @@ describe('importSlide — invalid inputs', () => {
     });
 
     test('returns null for empty string', () => {
-        expect(importSlide('')).toBeNull();
+        expect(importSlideJSON('')).toBeNull();
     });
 
     test('returns null when slideId is missing', () => {
         const json = JSON.stringify({ slideType: 'full-image', image: VALID_IMAGE });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when slideType is missing', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, image: VALID_IMAGE });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when slideId has an invalid format', () => {
         const json = JSON.stringify({ slideId: 'not-a-valid-id', slideType: 'full-image', image: VALID_IMAGE });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null for an unknown slideType', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'unknown-type' });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 });
 
@@ -73,7 +73,7 @@ describe('importSlide — invalid inputs', () => {
 describe('importSlide — full-image', () => {
     test('returns a FullImageSlide for valid input', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE });
-        const result = importSlide(json) as FullImageSlide;
+        const result = importSlideJSON(json) as FullImageSlide;
         expect(result).not.toBeNull();
         expect(result.slideType).toBe('full-image');
         expect(result.slideId).toBe(VALID_SLIDE_ID);
@@ -82,30 +82,30 @@ describe('importSlide — full-image', () => {
 
     test('returns null when image is missing', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image' });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when image is not a valid base64 data URL', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image', image: 'not-an-image' });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('round-trips a FullImageSlide through JSON.stringify', () => {
         const slide: FullImageSlide = { slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE };
-        const result = importSlide(JSON.stringify(slide));
+        const result = importSlideJSON(JSON.stringify(slide));
         expect(result).toEqual(slide);
     });
 
     test('preserves headline when present', () => {
         const slide: FullImageSlide = { slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE, headline: 'My Title' };
-        const result = importSlide(JSON.stringify(slide)) as FullImageSlide;
+        const result = importSlideJSON(JSON.stringify(slide)) as FullImageSlide;
         expect(result).not.toBeNull();
         expect(result.headline).toBe('My Title');
     });
 
     test('headline is undefined when not provided', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE });
-        const result = importSlide(json) as FullImageSlide;
+        const result = importSlideJSON(json) as FullImageSlide;
         expect(result).not.toBeNull();
         expect(result.headline).toBeUndefined();
     });
@@ -124,7 +124,7 @@ describe('importSlide — half-text-half-image', () => {
             image: VALID_IMAGE,
             layout: 'half-half',
         });
-        const result = importSlide(json) as HalfTextHalfImageSlide;
+        const result = importSlideJSON(json) as HalfTextHalfImageSlide;
         expect(result).not.toBeNull();
         expect(result.slideType).toBe('half-text-half-image');
         expect(result.slideId).toBe(VALID_SLIDE_ID);
@@ -135,12 +135,12 @@ describe('importSlide — half-text-half-image', () => {
 
     test('returns null when text is missing', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', image: VALID_IMAGE, layout: 'half-half' });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when image is missing', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello', layout: 'half-half' });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when image is not a valid base64 data URL', () => {
@@ -151,17 +151,17 @@ describe('importSlide — half-text-half-image', () => {
             image: 'not-an-image',
             layout: 'half-half',
         });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when layout is missing', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello', image: VALID_IMAGE });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('returns null when layout is invalid', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello', image: VALID_IMAGE, layout: 'invalid-layout' });
-        expect(importSlide(json)).toBeNull();
+        expect(importSlideJSON(json)).toBeNull();
     });
 
     test('round-trips a HalfTextHalfImageSlide through JSON.stringify', () => {
@@ -172,7 +172,7 @@ describe('importSlide — half-text-half-image', () => {
             image: VALID_IMAGE,
             layout: 'half-half',
         };
-        const result = importSlide(JSON.stringify(slide));
+        const result = importSlideJSON(JSON.stringify(slide));
         expect(result).toEqual(slide);
     });
 
@@ -184,7 +184,7 @@ describe('importSlide — half-text-half-image', () => {
             image: VALID_IMAGE,
             layout,
         };
-        const result = importSlide(JSON.stringify(slide)) as HalfTextHalfImageSlide;
+        const result = importSlideJSON(JSON.stringify(slide)) as HalfTextHalfImageSlide;
         expect(result).not.toBeNull();
         expect(result.layout).toBe(layout);
     });
@@ -198,14 +198,14 @@ describe('importSlide — half-text-half-image', () => {
             layout: 'half-half',
             headline: 'My Title',
         };
-        const result = importSlide(JSON.stringify(slide)) as HalfTextHalfImageSlide;
+        const result = importSlideJSON(JSON.stringify(slide)) as HalfTextHalfImageSlide;
         expect(result).not.toBeNull();
         expect(result.headline).toBe('My Title');
     });
 
     test('headline is undefined when not provided', () => {
         const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello World', image: VALID_IMAGE, layout: 'half-half' });
-        const result = importSlide(json) as HalfTextHalfImageSlide;
+        const result = importSlideJSON(json) as HalfTextHalfImageSlide;
         expect(result).not.toBeNull();
         expect(result.headline).toBeUndefined();
     });

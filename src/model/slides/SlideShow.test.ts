@@ -1,0 +1,209 @@
+import { exportSlideShow, importSlideShow, type SlideShow } from './SlideShow';
+import type { FullImageSlide, HalfTextHalfImageSlide } from './Slide';
+import type { AppId } from '../identifier/AppId';
+import type { Base64Image } from './Image';
+
+const VALID_ID = 'show-2026-08-18-10-00-00-000' as AppId;
+const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const VALID_SLIDE_ID_2 = 'slide-2026-08-18-11-00-00-000' as AppId;
+const VALID_IMAGE = 'data:image/png;base64,abc123' as Base64Image;
+
+const FULL_IMAGE_SLIDE: FullImageSlide = {
+    slideId: VALID_SLIDE_ID,
+    slideType: 'full-image',
+    image: VALID_IMAGE,
+};
+
+const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
+    slideId: VALID_SLIDE_ID_2,
+    slideType: 'half-text-half-image',
+    text: 'Hello World',
+    image: VALID_IMAGE,
+    layout: 'half-half',
+};
+
+const VALID_SHOW: SlideShow = {
+    id: VALID_ID,
+    slides: [FULL_IMAGE_SLIDE, HALF_TEXT_SLIDE],
+    currentSlideIndex: 1,
+    isCountdownActive: false,
+};
+
+// ---------------------------------------------------------------------------
+// exportSlideShow
+// ---------------------------------------------------------------------------
+
+describe('exportSlideShow', () => {
+    test('returns a string', () => {
+        expect(typeof exportSlideShow(VALID_SHOW)).toBe('string');
+    });
+
+    test('round-trips through importSlideShow', () => {
+        const json = exportSlideShow(VALID_SHOW);
+        const result = importSlideShow(json);
+        expect(result).toEqual(VALID_SHOW);
+    });
+
+    test('serializes id, currentSlideIndex, isCountdownActive', () => {
+        const json = exportSlideShow(VALID_SHOW);
+        const parsed = JSON.parse(json);
+        expect(parsed.id).toBe(VALID_ID);
+        expect(parsed.currentSlideIndex).toBe(1);
+        expect(parsed.isCountdownActive).toBe(false);
+    });
+
+    test('serializes all slides', () => {
+        const json = exportSlideShow(VALID_SHOW);
+        const parsed = JSON.parse(json);
+        expect(parsed.slides).toHaveLength(2);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// importSlideShow — invalid inputs
+// ---------------------------------------------------------------------------
+
+describe('importSlideShow — invalid inputs', () => {
+    test('returns null for null', () => {
+        expect(importSlideShow(null)).toBeNull();
+    });
+
+    test('returns null for undefined', () => {
+        expect(importSlideShow(undefined)).toBeNull();
+    });
+
+    test('returns null for empty string', () => {
+        expect(importSlideShow('')).toBeNull();
+    });
+
+    test('returns null when id is missing', () => {
+        const json = JSON.stringify({ slides: [], currentSlideIndex: 0, isCountdownActive: false });
+        expect(importSlideShow(json)).toBeNull();
+    });
+
+    test('returns null when id has invalid format', () => {
+        const json = JSON.stringify({ id: 'not-a-valid-id', slides: [], currentSlideIndex: 0, isCountdownActive: false });
+        expect(importSlideShow(json)).toBeNull();
+    });
+
+    test('returns null when slides is missing', () => {
+        const json = JSON.stringify({ id: VALID_ID, currentSlideIndex: 0, isCountdownActive: false });
+        expect(importSlideShow(json)).toBeNull();
+    });
+
+    test('returns null when slides is not an array', () => {
+        const json = JSON.stringify({ id: VALID_ID, slides: 'not-an-array', currentSlideIndex: 0, isCountdownActive: false });
+        expect(importSlideShow(json)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// importSlideShow — valid inputs
+// ---------------------------------------------------------------------------
+
+describe('importSlideShow — valid inputs', () => {
+    test('returns a SlideShow with correct id', () => {
+        const json = exportSlideShow(VALID_SHOW);
+        const result = importSlideShow(json)!;
+        expect(result).not.toBeNull();
+        expect(result.id).toBe(VALID_ID);
+    });
+
+    test('returns a SlideShow with correct currentSlideIndex', () => {
+        const json = exportSlideShow(VALID_SHOW);
+        const result = importSlideShow(json)!;
+        expect(result.currentSlideIndex).toBe(1);
+    });
+
+    test('returns a SlideShow with correct isCountdownActive = false', () => {
+        const json = exportSlideShow(VALID_SHOW);
+        const result = importSlideShow(json)!;
+        expect(result.isCountdownActive).toBe(false);
+    });
+
+    test('returns a SlideShow with correct isCountdownActive = true', () => {
+        const show: SlideShow = { ...VALID_SHOW, isCountdownActive: true };
+        const result = importSlideShow(exportSlideShow(show))!;
+        expect(result.isCountdownActive).toBe(true);
+    });
+
+    test('defaults currentSlideIndex to 0 when missing', () => {
+        const raw = { id: VALID_ID, slides: [FULL_IMAGE_SLIDE], isCountdownActive: false };
+        const result = importSlideShow(JSON.stringify(raw))!;
+        expect(result).not.toBeNull();
+        expect(result.currentSlideIndex).toBe(0);
+    });
+
+    test('defaults isCountdownActive to false when missing', () => {
+        const raw = { id: VALID_ID, slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0 };
+        const result = importSlideShow(JSON.stringify(raw))!;
+        expect(result).not.toBeNull();
+        expect(result.isCountdownActive).toBe(false);
+    });
+
+    test('parses an empty slides array', () => {
+        const show: SlideShow = { id: VALID_ID, slides: [], currentSlideIndex: 0, isCountdownActive: false };
+        const result = importSlideShow(exportSlideShow(show))!;
+        expect(result).not.toBeNull();
+        expect(result.slides).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// importSlideShow — slides handling
+// ---------------------------------------------------------------------------
+
+describe('importSlideShow — slides handling', () => {
+    test('parses a FullImageSlide correctly', () => {
+        const show: SlideShow = { id: VALID_ID, slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0, isCountdownActive: false };
+        const result = importSlideShow(exportSlideShow(show))!;
+        expect(result.slides).toHaveLength(1);
+        expect(result.slides[0]).toEqual(FULL_IMAGE_SLIDE);
+    });
+
+    test('parses a HalfTextHalfImageSlide correctly', () => {
+        const show: SlideShow = { id: VALID_ID, slides: [HALF_TEXT_SLIDE], currentSlideIndex: 0, isCountdownActive: false };
+        const result = importSlideShow(exportSlideShow(show))!;
+        expect(result.slides).toHaveLength(1);
+        expect(result.slides[0]).toEqual(HALF_TEXT_SLIDE);
+    });
+
+    test('parses mixed slide types', () => {
+        const result = importSlideShow(exportSlideShow(VALID_SHOW))!;
+        expect(result.slides).toHaveLength(2);
+        expect(result.slides[0]).toEqual(FULL_IMAGE_SLIDE);
+        expect(result.slides[1]).toEqual(HALF_TEXT_SLIDE);
+    });
+
+    test('skips invalid slide entries', () => {
+        const rawShow = {
+            id: VALID_ID,
+            slides: [FULL_IMAGE_SLIDE, { slideType: 'full-image' /* missing image and slideId */ }],
+            currentSlideIndex: 0,
+            isCountdownActive: false,
+        };
+        const result = importSlideShow(JSON.stringify(rawShow))!;
+        expect(result).not.toBeNull();
+        expect(result.slides).toHaveLength(1);
+        expect(result.slides[0]).toEqual(FULL_IMAGE_SLIDE);
+    });
+
+    test('returns empty slides array when all entries are invalid', () => {
+        const rawShow = {
+            id: VALID_ID,
+            slides: [{ slideType: 'full-image' }, { slideType: 'half-text-half-image' }],
+            currentSlideIndex: 0,
+            isCountdownActive: false,
+        };
+        const result = importSlideShow(JSON.stringify(rawShow))!;
+        expect(result).not.toBeNull();
+        expect(result.slides).toHaveLength(0);
+    });
+
+    test('preserves slide headline', () => {
+        const slideWithHeadline: FullImageSlide = { ...FULL_IMAGE_SLIDE, headline: 'My Title' };
+        const show: SlideShow = { id: VALID_ID, slides: [slideWithHeadline], currentSlideIndex: 0, isCountdownActive: false };
+        const result = importSlideShow(exportSlideShow(show))!;
+        expect((result.slides[0] as FullImageSlide).headline).toBe('My Title');
+    });
+});
