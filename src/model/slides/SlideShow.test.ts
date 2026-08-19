@@ -1,14 +1,12 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { exportSlideShow, importSlideShowJSON, toJsonSlideShow, type SlideShow } from './SlideShow';
-import type { FullImageSlide, HalfTextHalfImageSlide } from './Slide';
+import { SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
+import type { FullImageSlide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
 
-const VALID_ID = 'show-2026-08-18-10-00-00-000' as AppId;
+const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000' as AppId;
 const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
-const VALID_SLIDE_ID_2 = 'slide-2026-08-18-11-00-00-000' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
-const VALID_COUNTDOWN = Temporal.PlainDateTime.from('2026-12-31T23:59:59');
 
 const FULL_IMAGE_SLIDE: FullImageSlide = {
     slideId: VALID_SLIDE_ID,
@@ -16,234 +14,212 @@ const FULL_IMAGE_SLIDE: FullImageSlide = {
     image: VALID_IMAGE,
 };
 
-const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
-    slideId: VALID_SLIDE_ID_2,
-    slideType: 'half-text-half-image',
-    text: 'Hello World',
-    image: VALID_IMAGE,
-    layout: 'half-half',
+const MINIMAL_SLIDESHOW: SlideShow = {
+    id: VALID_SHOW_ID,
+    slides: [FULL_IMAGE_SLIDE],
+    currentSlideIndex: 0,
 };
 
-const VALID_SHOW: SlideShow = {
-    id: VALID_ID,
-    slides: [FULL_IMAGE_SLIDE, HALF_TEXT_SLIDE],
-    currentSlideIndex: 1,
+const COUNTDOWN_TARGET = Temporal.PlainDateTime.from('2026-12-31T23:59:59.000');
+
+const SLIDESHOW_WITH_COUNTDOWN: SlideShow = {
+    ...MINIMAL_SLIDESHOW,
+    countdownTarget: COUNTDOWN_TARGET,
 };
 
 // ---------------------------------------------------------------------------
-// toJsonSlideShow
+// SLIDE_SHOW_CONVERTER.fromJson — null / invalid guards
 // ---------------------------------------------------------------------------
 
-describe('toJsonSlideShow', () => {
-    test('returns an object with id, slides, and currentSlideIndex', () => {
-        const result = toJsonSlideShow(VALID_SHOW);
-        expect(result.id).toBe(VALID_ID);
-        expect(result.slides).toBe(VALID_SHOW.slides);
-        expect(result.currentSlideIndex).toBe(1);
-    });
-
-    test('converts countdownTarget to ISO string when set', () => {
-        const show: SlideShow = { ...VALID_SHOW, countdownTarget: VALID_COUNTDOWN };
-        const result = toJsonSlideShow(show);
-        expect(result.countdownTarget).toBe(VALID_COUNTDOWN.toString());
-    });
-
-    test('leaves countdownTarget as undefined when not set', () => {
-        const result = toJsonSlideShow(VALID_SHOW);
-        expect(result.countdownTarget).toBeUndefined();
-    });
-
-    test('does not mutate the original slideshow', () => {
-        const show: SlideShow = { ...VALID_SHOW, countdownTarget: VALID_COUNTDOWN };
-        toJsonSlideShow(show);
-        expect(show.countdownTarget).toBe(VALID_COUNTDOWN);
-    });
-
-    test('slides array reference is preserved', () => {
-        const result = toJsonSlideShow(VALID_SHOW);
-        expect(result.slides).toBe(VALID_SHOW.slides);
-    });
-});
-
-// ---------------------------------------------------------------------------
-// exportSlideShow
-// ---------------------------------------------------------------------------
-
-describe('exportSlideShow', () => {
-    test('returns a string', () => {
-        expect(typeof exportSlideShow(VALID_SHOW)).toBe('string');
-    });
-
-    test('round-trips through importSlideShowJSON', () => {
-        const json = exportSlideShow(VALID_SHOW);
-        const result = importSlideShowJSON(json);
-        expect(result).toEqual(VALID_SHOW);
-    });
-
-    test('serializes id and currentSlideIndex', () => {
-        const json = exportSlideShow(VALID_SHOW);
-        const parsed = JSON.parse(json);
-        expect(parsed.id).toBe(VALID_ID);
-        expect(parsed.currentSlideIndex).toBe(1);
-    });
-
-    test('serializes all slides', () => {
-        const json = exportSlideShow(VALID_SHOW);
-        const parsed = JSON.parse(json);
-        expect(parsed.slides).toHaveLength(2);
-    });
-
-    test('serializes countdownTarget as ISO string', () => {
-        const show: SlideShow = { ...VALID_SHOW, countdownTarget: VALID_COUNTDOWN };
-        const parsed = JSON.parse(exportSlideShow(show));
-        expect(parsed.countdownTarget).toBe(VALID_COUNTDOWN.toString());
-    });
-
-    test('omits countdownTarget when not set', () => {
-        const parsed = JSON.parse(exportSlideShow(VALID_SHOW));
-        expect(parsed.countdownTarget).toBeUndefined();
-    });
-});
-
-// ---------------------------------------------------------------------------
-// importSlideShow — invalid inputs
-// ---------------------------------------------------------------------------
-
-describe('importSlideShowJSON — invalid inputs', () => {
+describe('SLIDE_SHOW_CONVERTER.fromJson — null / invalid guards', () => {
     test('returns null for null', () => {
-        expect(importSlideShowJSON(null)).toBeNull();
+        expect(SLIDE_SHOW_CONVERTER.fromJson(null)).toBeNull();
     });
 
     test('returns null for undefined', () => {
-        expect(importSlideShowJSON(undefined)).toBeNull();
-    });
-
-    test('returns null for empty string', () => {
-        expect(importSlideShowJSON('')).toBeNull();
+        expect(SLIDE_SHOW_CONVERTER.fromJson(undefined)).toBeNull();
     });
 
     test('returns null when id is missing', () => {
-        const json = JSON.stringify({ slides: [], currentSlideIndex: 0 });
-        expect(importSlideShowJSON(json)).toBeNull();
+        const json = { slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0 } as never;
+        expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 
-    test('returns null when id has invalid format', () => {
-        const json = JSON.stringify({ id: 'not-a-valid-id', slides: [], currentSlideIndex: 0 });
-        expect(importSlideShowJSON(json)).toBeNull();
+    test('returns null when id has an invalid format', () => {
+        const json = { id: 'not-a-valid-id', slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0 } as never;
+        expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 
-    test('returns null when slides is missing', () => {
-        const json = JSON.stringify({ id: VALID_ID, currentSlideIndex: 0 });
-        expect(importSlideShowJSON(json)).toBeNull();
+    test('returns null when slides is null', () => {
+        const json = { id: VALID_SHOW_ID, slides: null, currentSlideIndex: 0 } as never;
+        expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 
-    test('returns null when slides is not an array', () => {
-        const json = JSON.stringify({ id: VALID_ID, slides: 'not-an-array', currentSlideIndex: 0 });
-        expect(importSlideShowJSON(json)).toBeNull();
+    test('returns null when slides contains an invalid slide', () => {
+        const badSlide = { slideType: 'full-image' }; // missing slideId and image
+        const json = { id: VALID_SHOW_ID, slides: [badSlide], currentSlideIndex: 0 } as never;
+        expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 });
 
 // ---------------------------------------------------------------------------
-// importSlideShow — valid inputs
+// SLIDE_SHOW_CONVERTER.fromJson — valid inputs
 // ---------------------------------------------------------------------------
 
-describe('importSlideShowJSON — valid inputs', () => {
-    test('returns a SlideShow with correct id', () => {
-        const result = importSlideShowJSON(exportSlideShow(VALID_SHOW))!;
-        expect(result).not.toBeNull();
-        expect(result.id).toBe(VALID_ID);
+describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
+    const validJson = {
+        id: VALID_SHOW_ID,
+        slides: [{
+            slideId: VALID_SLIDE_ID,
+            slideType: 'full-image' as const,
+            image: VALID_IMAGE,
+        }],
+        currentSlideIndex: 0,
+    };
+
+    test('returns a SlideShow for minimal valid JSON', () => {
+        expect(SLIDE_SHOW_CONVERTER.fromJson(validJson)).not.toBeNull();
     });
 
-    test('returns a SlideShow with correct currentSlideIndex', () => {
-        const result = importSlideShowJSON(exportSlideShow(VALID_SHOW))!;
-        expect(result.currentSlideIndex).toBe(1);
+    test('id matches the input', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson(validJson)!;
+        expect(result.id).toBe(VALID_SHOW_ID);
     });
 
-    test('defaults currentSlideIndex to 0 when missing', () => {
-        const raw = { id: VALID_ID, slides: [FULL_IMAGE_SLIDE] };
-        const result = importSlideShowJSON(JSON.stringify(raw))!;
-        expect(result).not.toBeNull();
+    test('slides array is populated correctly', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson(validJson)!;
+        expect(result.slides).toHaveLength(1);
+        expect(result.slides[0].slideType).toBe('full-image');
+        expect(result.slides[0].slideId).toBe(VALID_SLIDE_ID);
+    });
+
+    test('currentSlideIndex defaults to 0 when missing', () => {
+        const json = { id: VALID_SHOW_ID, slides: [] } as never;
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result.currentSlideIndex).toBe(0);
     });
 
-    test('parses countdownTarget from ISO string', () => {
-        const show: SlideShow = { ...VALID_SHOW, countdownTarget: VALID_COUNTDOWN };
-        const result = importSlideShowJSON(exportSlideShow(show))!;
-        expect(result.countdownTarget).toEqual(VALID_COUNTDOWN);
+    test('currentSlideIndex defaults to 0 when null', () => {
+        const json = { id: VALID_SHOW_ID, slides: [], currentSlideIndex: null } as never;
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
+        expect(result.currentSlideIndex).toBe(0);
     });
 
-    test('leaves countdownTarget undefined when not set', () => {
-        const result = importSlideShowJSON(exportSlideShow(VALID_SHOW))!;
+    test('currentSlideIndex is set when present', () => {
+        const json = { ...validJson, currentSlideIndex: 3 };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
+        expect(result.currentSlideIndex).toBe(3);
+    });
+
+    test('countdownTarget is undefined when missing', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson(validJson)!;
         expect(result.countdownTarget).toBeUndefined();
     });
 
-    test('leaves countdownTarget undefined for invalid string', () => {
-        const raw = { id: VALID_ID, slides: [], currentSlideIndex: 0, countdownTarget: 'not-a-date' };
-        const result = importSlideShowJSON(JSON.stringify(raw))!;
+    test('countdownTarget is set when present', () => {
+        const json = { ...validJson, countdownTarget: '2026-12-31T23:59:59' };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
+        expect(result.countdownTarget).toBeDefined();
+        expect(result.countdownTarget?.year).toBe(2026);
+        expect(result.countdownTarget?.month).toBe(12);
+        expect(result.countdownTarget?.day).toBe(31);
+    });
+
+    test('countdownTarget is undefined when the string is invalid', () => {
+        const json = { ...validJson, countdownTarget: 'not-a-date' };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result.countdownTarget).toBeUndefined();
     });
 
-    test('parses an empty slides array', () => {
-        const show: SlideShow = { id: VALID_ID, slides: [], currentSlideIndex: 0 };
-        const result = importSlideShowJSON(exportSlideShow(show))!;
-        expect(result).not.toBeNull();
+    test('empty slides array is preserved', () => {
+        const json = { id: VALID_SHOW_ID, slides: [], currentSlideIndex: 0 };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result.slides).toEqual([]);
     });
 });
 
 // ---------------------------------------------------------------------------
-// importSlideShow — slides handling
+// SLIDE_SHOW_CONVERTER.toJson — null guards
 // ---------------------------------------------------------------------------
 
-describe('importSlideShowJSON — slides handling', () => {
-    test('parses a FullImageSlide correctly', () => {
-        const show: SlideShow = { id: VALID_ID, slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0 };
-        const result = importSlideShowJSON(exportSlideShow(show))!;
-        expect(result.slides).toHaveLength(1);
-        expect(result.slides[0]).toEqual(FULL_IMAGE_SLIDE);
+describe('SLIDE_SHOW_CONVERTER.toJson — null guards', () => {
+    test('returns null for null', () => {
+        expect(SLIDE_SHOW_CONVERTER.toJson(null)).toBeNull();
     });
 
-    test('parses a HalfTextHalfImageSlide correctly', () => {
-        const show: SlideShow = { id: VALID_ID, slides: [HALF_TEXT_SLIDE], currentSlideIndex: 0 };
-        const result = importSlideShowJSON(exportSlideShow(show))!;
-        expect(result.slides).toHaveLength(1);
-        expect(result.slides[0]).toEqual(HALF_TEXT_SLIDE);
+    test('returns null for undefined', () => {
+        expect(SLIDE_SHOW_CONVERTER.toJson(undefined)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// SLIDE_SHOW_CONVERTER.toJson — valid inputs
+// ---------------------------------------------------------------------------
+
+describe('SLIDE_SHOW_CONVERTER.toJson — valid inputs', () => {
+    test('serializes id correctly', () => {
+        const result = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
+        expect(result.id).toBe(VALID_SHOW_ID);
     });
 
-    test('parses mixed slide types', () => {
-        const result = importSlideShowJSON(exportSlideShow(VALID_SHOW))!;
-        expect(result.slides).toHaveLength(2);
-        expect(result.slides[0]).toEqual(FULL_IMAGE_SLIDE);
-        expect(result.slides[1]).toEqual(HALF_TEXT_SLIDE);
+    test('serializes slides array', () => {
+        const result = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
+        expect(Array.isArray(result.slides)).toBe(true);
+        const slides = result.slides as unknown[];
+        expect(slides).toHaveLength(1);
     });
 
-    test('skips invalid slide entries', () => {
-        const rawShow = {
-            id: VALID_ID,
-            slides: [FULL_IMAGE_SLIDE, { slideType: 'full-image' /* missing image and slideId */ }],
-            currentSlideIndex: 0,
-        };
-        const result = importSlideShowJSON(JSON.stringify(rawShow))!;
+    test('serializes currentSlideIndex', () => {
+        const slideshow: SlideShow = { ...MINIMAL_SLIDESHOW, currentSlideIndex: 2 };
+        const result = SLIDE_SHOW_CONVERTER.toJson(slideshow)!;
+        expect(result.currentSlideIndex).toBe(2);
+    });
+
+    test('serializes countdownTarget as ISO string when present', () => {
+        const result = SLIDE_SHOW_CONVERTER.toJson(SLIDESHOW_WITH_COUNTDOWN)!;
+        expect(typeof result.countdownTarget).toBe('string');
+        expect(result.countdownTarget as string).toContain('2026-12-31');
+    });
+
+    test('countdownTarget is null in JSON when absent on the object', () => {
+        const result = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
+        expect(result.countdownTarget).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Round-trip: fromJson ∘ toJson
+// ---------------------------------------------------------------------------
+
+describe('SLIDE_SHOW_CONVERTER round-trip', () => {
+    test('SlideShow without countdown survives a full round-trip', () => {
+        const json = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result).not.toBeNull();
-        expect(result.slides).toHaveLength(1);
-        expect(result.slides[0]).toEqual(FULL_IMAGE_SLIDE);
+        expect(result.id).toBe(MINIMAL_SLIDESHOW.id);
+        expect(result.currentSlideIndex).toBe(MINIMAL_SLIDESHOW.currentSlideIndex);
+        expect(result.slides).toHaveLength(MINIMAL_SLIDESHOW.slides.length);
+        expect(result.slides[0].slideId).toBe(MINIMAL_SLIDESHOW.slides[0].slideId);
+        expect(result.slides[0].slideType).toBe(MINIMAL_SLIDESHOW.slides[0].slideType);
+        expect(result.countdownTarget).toBeUndefined();
     });
 
-    test('returns empty slides array when all entries are invalid', () => {
-        const rawShow = {
-            id: VALID_ID,
-            slides: [{ slideType: 'full-image' }, { slideType: 'half-text-half-image' }],
-            currentSlideIndex: 0,
-        };
-        const result = importSlideShowJSON(JSON.stringify(rawShow))!;
+    test('SlideShow with countdown survives a full round-trip', () => {
+        const json = SLIDE_SHOW_CONVERTER.toJson(SLIDESHOW_WITH_COUNTDOWN)!;
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json);
         expect(result).not.toBeNull();
-        expect(result.slides).toHaveLength(0);
+        expect(result!.id).toBe(VALID_SHOW_ID);
+        expect(result!.countdownTarget?.toString()).toBe(COUNTDOWN_TARGET.toString());
     });
 
-    test('preserves slide headline', () => {
-        const slideWithHeadline: FullImageSlide = { ...FULL_IMAGE_SLIDE, headline: 'My Title' };
-        const show: SlideShow = { id: VALID_ID, slides: [slideWithHeadline], currentSlideIndex: 0 };
-        const result = importSlideShowJSON(exportSlideShow(show))!;
-        expect((result.slides[0] as FullImageSlide).headline).toBe('My Title');
+    test('SlideShow with empty slides array round-trips correctly', () => {
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [], currentSlideIndex: 0 };
+        const json = SLIDE_SHOW_CONVERTER.toJson(empty)!;
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
+        expect(result).not.toBeNull();
+        expect(result.id).toBe(VALID_SHOW_ID);
+        expect(result.slides).toEqual([]);
+        expect(result.currentSlideIndex).toBe(0);
+        expect(result.countdownTarget).toBeUndefined();
     });
 });

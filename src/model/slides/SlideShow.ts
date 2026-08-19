@@ -1,7 +1,8 @@
-import { type AppId, asAppId } from '../identifier/AppId.ts';
-import { importSlide, importSlideJSON, type Slide } from './Slide.ts';
-import { asArray, asDateTime, asNumberOrZero } from '../JsonUtils.ts';
+import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
+import { SLIDE_CONVERTER, type Slide } from './Slide.ts';
 import { Temporal } from '@js-temporal/polyfill';
+import type { JsonConverter, RawJson } from '../json/json.ts';
+import { ArrayConverter, DATE_TIME_CONVERTER, NUMBER_CONVERTER } from '../json/common.ts';
 
 /**
  * Represents a slideshow with multiple slides, the current slide index, and a countdown timer target.
@@ -25,69 +26,36 @@ export interface SlideShow {
     readonly id: AppId
 }
 
-export type JsonSlideShow = Partial<Omit<SlideShow, 'slides' | 'id' | 'countdownTarget'>> & {
-    /**
-     * Unknown ID
-     */
-    id?: unknown
-    /**
-     * Array of slides
-     */
-    slides?: unknown[]
-    /**
-     * The countdown target stores as JSON value
-     */
-    countdownTarget?: unknown
-};
+export type RawJsonSlideShow = RawJson<SlideShow>;
 
-export function toJsonSlideShow(slideshow: SlideShow): JsonSlideShow {
-    const countdownTarget: unknown = slideshow.countdownTarget ? slideshow.countdownTarget.toString() : undefined;
-    return {
-        ...slideshow,
-        countdownTarget,
-    };
-}
+const SLIDES_CONVERTER = new ArrayConverter<Slide, unknown>(SLIDE_CONVERTER);
 
-export function exportSlideShow(show: SlideShow): string {
-    return JSON.stringify(toJsonSlideShow(show));
-}
-
-/**
- * Imports the slideshow from a JSON string, returning null if the input is invalid or cannot be parsed
- * @param json Input
- */
-export function importSlideShowJSON(json?: string | null): SlideShow | null {
-    if (!json) {
-        return null;
-    }
-    return importSlideShow(JSON.parse(json));
-}
-
-/**
- * Imports the slideshow from an unknown object, returning null if the input is invalid or cannot be parsed
- * @param raw Input
- */
-export function importSlideShow(raw?: unknown | null): SlideShow | null {
-    const parsed = raw as JsonSlideShow | null | undefined;
-    if (!parsed) {
-        return null;
-    }
-    const id = asAppId(parsed.id as string);
-    if (!id) {
-        return null;
-    }
-    const rawArray = asArray(parsed.slides);
-    if (!rawArray) {
-        return null;
-    }
-    const currentSlideIndex = asNumberOrZero(parsed.currentSlideIndex);
-    const countdownTarget = asDateTime(parsed.countdownTarget);
-    const slides: Slide[] = [];
-    for (const raw of rawArray) {
-        const slide = typeof raw === 'string' ? importSlideJSON(raw) : importSlide(raw);
-        if (slide) {
-            slides.push(slide);
+export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = {
+    fromJson(json: RawJsonSlideShow | null | undefined): SlideShow | null {
+        if (!json) {
+            return null;
         }
-    }
-    return { id, slides, currentSlideIndex, countdownTarget };
-}
+        const id = APP_ID_CONVERTER.fromJson(json.id);
+        if (!id) {
+            return null;
+        }
+        const slides = SLIDES_CONVERTER.fromJson(json.slides);
+        if (slides === null) {
+            return null;
+        }
+        const currentSlideIndex = NUMBER_CONVERTER.fromJson(json.currentSlideIndex) ?? 0;
+        const countdownTarget = DATE_TIME_CONVERTER.fromJson(json.countdownTarget) ?? undefined;
+        return { id, slides, currentSlideIndex, countdownTarget };
+    },
+    toJson(data: SlideShow | null | undefined): RawJsonSlideShow | null {
+        if (!data) {
+            return null;
+        }
+        return {
+            id: APP_ID_CONVERTER.toJson(data.id),
+            slides: SLIDES_CONVERTER.toJson(data.slides),
+            currentSlideIndex: NUMBER_CONVERTER.toJson(data.currentSlideIndex),
+            countdownTarget: DATE_TIME_CONVERTER.toJson(data.countdownTarget),
+        };
+    },
+};
