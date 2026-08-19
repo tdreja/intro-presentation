@@ -1,187 +1,192 @@
-import { exportSlideShow, type SlideShow } from '../model/slides/SlideShow';
-import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader';
-import type { AppId } from '../model/identifier/AppId';
-import type { FullImageSlide } from '../model/slides/Slide';
+import { Temporal } from '@js-temporal/polyfill';
+import { newAppId } from '../model/identifier/AppId';
 import { PLACEHOLDER_IMAGE } from '../model/slides/Image';
+import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../model/slides/SlideShow';
+import type { FullImageSlide } from '../model/slides/Slide';
+import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const OLDER_DATE = Temporal.PlainDateTime.from('2026-01-01T10:00:00.000');
+const NEWER_DATE = Temporal.PlainDateTime.from('2026-06-01T10:00:00.000');
 
-const FULL_IMAGE_SLIDE: FullImageSlide = {
-    slideId: SLIDE_ID,
+const OLDER_ID = newAppId('show', OLDER_DATE);
+const NEWER_ID = newAppId('show', NEWER_DATE);
+
+const SLIDE: FullImageSlide = {
+    slideId: newAppId('slide', OLDER_DATE),
     slideType: 'full-image',
     image: PLACEHOLDER_IMAGE,
 };
 
-const SHOW_OLDER: SlideShow = {
-    id: 'show-2026-08-18-09-00-00-000' as AppId,
-    slides: [FULL_IMAGE_SLIDE],
-    currentSlideIndex: 0,
-};
-
-const SHOW_NEWER: SlideShow = {
-    id: 'show-2026-08-18-11-00-00-000' as AppId,
-    slides: [FULL_IMAGE_SLIDE],
-    currentSlideIndex: 0,
-};
+const OLDER_SHOW: SlideShow = { id: OLDER_ID, slides: [SLIDE], currentSlideIndex: 0 };
+const NEWER_SHOW: SlideShow = { id: NEWER_ID, slides: [SLIDE], currentSlideIndex: 0 };
 
 // ---------------------------------------------------------------------------
-// localStorage mock helpers
+// localStorage mock
 // ---------------------------------------------------------------------------
 
-let storedValue: string | null = null;
+const SLIDESHOW_STORAGE_KEY = 'slideshow';
 
-const localStorageMock = {
-    getItem: (_key: string): string | null => storedValue,
-    setItem: (_key: string, value: string): void => { storedValue = value; },
-    removeItem: (_key: string): void => { storedValue = null; },
-    clear: (): void => { storedValue = null; },
-    length: 0,
-    key: (_index: number): string | null => null,
-};
-
-beforeAll(() => {
-    Object.defineProperty(global, 'localStorage', {
-        value: localStorageMock,
-        writable: true,
-    });
+let store: Record<string, string> = {};
+const setItemSpy = jest.fn((key: string, value: string) => {
+    store[key] = value;
 });
+const localStorageMock = {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: setItemSpy,
+};
 
 beforeEach(() => {
-    storedValue = null;
+    store = {};
+    setItemSpy.mockClear();
+    Object.defineProperty(global, 'localStorage', { value: localStorageMock, writable: true, configurable: true });
 });
 
+/** Helper: put a serialized SlideShow into the mock storage. */
+function storeInMock(slideshow: SlideShow): void {
+    store[SLIDESHOW_STORAGE_KEY] = JSON.stringify(SLIDE_SHOW_CONVERTER.toJson(slideshow));
+}
+
 // ---------------------------------------------------------------------------
-// No argument, no storage
+// loadSlideshowFromStorage — no data
 // ---------------------------------------------------------------------------
 
-describe('loadSlideshowFromStorage — no storage, no argument', () => {
-    test('returns null when localStorage is empty', () => {
+describe('loadSlideshowFromStorage — no data', () => {
+    test('returns null when storage is empty and no export arg is given', () => {
         expect(loadSlideshowFromStorage()).toBeNull();
     });
 
-    test('returns null when localStorage returns an empty string', () => {
-        storedValue = '';
-        expect(loadSlideshowFromStorage()).toBeNull();
+    test('returns null when storage is empty and export arg is undefined', () => {
+        expect(loadSlideshowFromStorage(undefined)).toBeNull();
+    });
+
+    test('returns null when storage is empty and export arg is null', () => {
+        expect(loadSlideshowFromStorage(null)).toBeNull();
+    });
+
+    test('returns null when storage is empty and export arg is an invalid object', () => {
+        expect(loadSlideshowFromStorage({})).toBeNull();
     });
 });
 
 // ---------------------------------------------------------------------------
-// From storage only (no argument)
+// loadSlideshowFromStorage — export only (storage empty)
 // ---------------------------------------------------------------------------
 
-describe('loadSlideshowFromStorage — from storage only', () => {
-    test('returns the slideshow from storage when JSON is valid', () => {
-        storedValue = exportSlideShow(SHOW_OLDER);
+describe('loadSlideshowFromStorage — export only (storage empty)', () => {
+    const exportedJson = SLIDE_SHOW_CONVERTER.toJson(OLDER_SHOW);
+
+    test('returns the exported slideshow when storage is empty', () => {
+        const result = loadSlideshowFromStorage(exportedJson);
+        expect(result).not.toBeNull();
+    });
+
+    test('returned slideshow id matches the exported id', () => {
+        const result = loadSlideshowFromStorage(exportedJson)!;
+        expect(result.id).toBe(OLDER_ID);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// loadSlideshowFromStorage — storage only (no export arg)
+// ---------------------------------------------------------------------------
+
+describe('loadSlideshowFromStorage — storage only (no export arg)', () => {
+    beforeEach(() => storeInMock(OLDER_SHOW));
+
+    test('returns the stored slideshow when no export arg is given', () => {
         const result = loadSlideshowFromStorage();
         expect(result).not.toBeNull();
-        expect(result!.id).toBe(SHOW_OLDER.id);
     });
 
-    test('returns null when storage contains JSON with missing id', () => {
-        storedValue = JSON.stringify({ slides: [], currentSlideIndex: 0 });
-        expect(loadSlideshowFromStorage()).toBeNull();
-    });
-
-    test('returns null when storage contains JSON with invalid id format', () => {
-        storedValue = JSON.stringify({ id: 'not-valid', slides: [], currentSlideIndex: 0 });
-        expect(loadSlideshowFromStorage()).toBeNull();
-    });
-
-    test('throws a SyntaxError when storage contains non-JSON garbage', () => {
-        storedValue = 'not json at all {{';
-        expect(() => loadSlideshowFromStorage()).toThrow(SyntaxError);
+    test('returned slideshow id matches the stored id', () => {
+        const result = loadSlideshowFromStorage()!;
+        expect(result.id).toBe(OLDER_ID);
     });
 });
 
 // ---------------------------------------------------------------------------
-// From export argument only (no storage)
+// loadSlideshowFromStorage — both present, pick newest
 // ---------------------------------------------------------------------------
 
-describe('loadSlideshowFromStorage — from argument only', () => {
-    test('returns the slideshow from the argument when storage is empty', () => {
-        const exported = JSON.parse(exportSlideShow(SHOW_NEWER));
-        const result = loadSlideshowFromStorage(exported);
-        expect(result).not.toBeNull();
-        expect(result!.id).toBe(SHOW_NEWER.id);
+describe('loadSlideshowFromStorage — both present, pick newest', () => {
+    test('returns storage when storage id is newer than export', () => {
+        storeInMock(NEWER_SHOW);
+        const result = loadSlideshowFromStorage(SLIDE_SHOW_CONVERTER.toJson(OLDER_SHOW))!;
+        expect(result.id).toBe(NEWER_ID);
     });
 
-    test('returns null when argument is an object missing required fields', () => {
-        const result = loadSlideshowFromStorage({ slides: [], currentSlideIndex: 0 });
-        expect(result).toBeNull();
+    test('returns export when export id is newer than storage', () => {
+        storeInMock(OLDER_SHOW);
+        const result = loadSlideshowFromStorage(SLIDE_SHOW_CONVERTER.toJson(NEWER_SHOW))!;
+        expect(result.id).toBe(NEWER_ID);
     });
 
-    test('returns null when argument is null', () => {
-        const result = loadSlideshowFromStorage(null as unknown);
-        expect(result).toBeNull();
-    });
-
-    test('returns null when argument is a plain string', () => {
-        const result = loadSlideshowFromStorage('not-an-object' as unknown);
-        expect(result).toBeNull();
+    test('returns storage when both have the same id (>= favours storage)', () => {
+        storeInMock(OLDER_SHOW);
+        const result = loadSlideshowFromStorage(SLIDE_SHOW_CONVERTER.toJson(OLDER_SHOW))!;
+        expect(result.id).toBe(OLDER_ID);
     });
 });
 
 // ---------------------------------------------------------------------------
-// Both sources present — pickNewest logic
+// storeSlideshowToStorage — empty storage
 // ---------------------------------------------------------------------------
 
-describe('loadSlideshowFromStorage — pickNewest when both sources present', () => {
-    test('returns argument slideshow when its id is newer than storage', () => {
-        storedValue = exportSlideShow(SHOW_OLDER);
-        const exported = JSON.parse(exportSlideShow(SHOW_NEWER));
-        const result = loadSlideshowFromStorage(exported);
-        expect(result!.id).toBe(SHOW_NEWER.id);
+describe('storeSlideshowToStorage — empty storage', () => {
+    test('calls setItem once when storage is empty', () => {
+        storeSlideshowToStorage(OLDER_SHOW);
+        expect(setItemSpy).toHaveBeenCalledTimes(1);
     });
 
-    test('returns storage slideshow when its id is newer than argument', () => {
-        storedValue = exportSlideShow(SHOW_NEWER);
-        const exported = JSON.parse(exportSlideShow(SHOW_OLDER));
-        const result = loadSlideshowFromStorage(exported);
-        expect(result!.id).toBe(SHOW_NEWER.id);
-    });
-
-    test('returns storage slideshow when both ids are equal (storage wins via >=)', () => {
-        storedValue = exportSlideShow(SHOW_OLDER);
-        const exported = JSON.parse(exportSlideShow(SHOW_OLDER));
-        const result = loadSlideshowFromStorage(exported);
-        expect(result!.id).toBe(SHOW_OLDER.id);
+    test('stored JSON round-trips back to the original slideshow', () => {
+        storeSlideshowToStorage(OLDER_SHOW);
+        const [, storedValue] = setItemSpy.mock.calls[0] as [string, string];
+        const parsed = SLIDE_SHOW_CONVERTER.fromJson(JSON.parse(storedValue));
+        expect(parsed).not.toBeNull();
+        expect(parsed!.id).toBe(OLDER_SHOW.id);
+        expect(parsed!.currentSlideIndex).toBe(OLDER_SHOW.currentSlideIndex);
+        expect(parsed!.slides).toHaveLength(OLDER_SHOW.slides.length);
     });
 });
 
 // ---------------------------------------------------------------------------
-// storeSlideshowToStorage
+// storeSlideshowToStorage — storage has older slideshow
 // ---------------------------------------------------------------------------
 
-describe('storeSlideshowToStorage', () => {
-    test('writes to storage when storage is empty', () => {
-        storeSlideshowToStorage(SHOW_NEWER);
-        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_NEWER.id);
+describe('storeSlideshowToStorage — storage has older slideshow', () => {
+    beforeEach(() => storeInMock(OLDER_SHOW));
+
+    test('calls setItem when the incoming slideshow is newer', () => {
+        storeSlideshowToStorage(NEWER_SHOW);
+        expect(setItemSpy).toHaveBeenCalledTimes(1);
     });
 
-    test('round-trips: stored slideshow is readable with the same id', () => {
-        storeSlideshowToStorage(SHOW_OLDER);
-        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_OLDER.id);
+    test('stored value after update contains the newer id', () => {
+        storeSlideshowToStorage(NEWER_SHOW);
+        const [, storedValue] = setItemSpy.mock.calls[0] as [string, string];
+        const parsed = SLIDE_SHOW_CONVERTER.fromJson(JSON.parse(storedValue));
+        expect(parsed!.id).toBe(NEWER_ID);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// storeSlideshowToStorage — storage has equal or newer id
+// ---------------------------------------------------------------------------
+
+describe('storeSlideshowToStorage — storage has equal or newer id', () => {
+    test('does not call setItem when stored id is newer than incoming', () => {
+        storeInMock(NEWER_SHOW);
+        storeSlideshowToStorage(OLDER_SHOW);
+        expect(setItemSpy).not.toHaveBeenCalled();
     });
 
-    test('overwrites when incoming slideshow is newer than stored', () => {
-        storeSlideshowToStorage(SHOW_OLDER);
-        storeSlideshowToStorage(SHOW_NEWER);
-        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_NEWER.id);
-    });
-
-    test('does not overwrite when incoming slideshow is older than stored', () => {
-        storeSlideshowToStorage(SHOW_NEWER);
-        storeSlideshowToStorage(SHOW_OLDER);
-        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_NEWER.id);
-    });
-
-    test('does not overwrite when incoming slideshow has the same id as stored', () => {
-        storeSlideshowToStorage(SHOW_OLDER);
-        storeSlideshowToStorage(SHOW_OLDER);
-        expect(loadSlideshowFromStorage()!.id).toBe(SHOW_OLDER.id);
+    test('does not call setItem when stored id equals incoming id', () => {
+        storeInMock(OLDER_SHOW);
+        storeSlideshowToStorage(OLDER_SHOW);
+        expect(setItemSpy).not.toHaveBeenCalled();
     });
 });

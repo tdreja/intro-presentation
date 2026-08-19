@@ -194,6 +194,31 @@ describe('DATE_TIME_CONVERTER.fromJson', () => {
     test('returns null for an invalid date string', () => {
         expect(DATE_TIME_CONVERTER.fromJson('not-a-date')).toBeNull();
     });
+
+    test('accepts a PlainDateTime instance', () => {
+        const dt = Temporal.PlainDateTime.from('2026-08-19T10:00:00');
+        const result = DATE_TIME_CONVERTER.fromJson(dt);
+        expect(result).not.toBeNull();
+        expect(result!.year).toBe(2026);
+        expect(result!.month).toBe(8);
+        expect(result!.day).toBe(19);
+        expect(result!.hour).toBe(10);
+    });
+
+    test('accepts a PlainDateTimeLike object', () => {
+        const like: Temporal.PlainDateTimeLike = { year: 2026, month: 8, day: 19, hour: 14, minute: 30, second: 0 };
+        const result = DATE_TIME_CONVERTER.fromJson(like);
+        expect(result).not.toBeNull();
+        expect(result!.year).toBe(2026);
+        expect(result!.month).toBe(8);
+        expect(result!.day).toBe(19);
+        expect(result!.hour).toBe(14);
+        expect(result!.minute).toBe(30);
+    });
+
+    test('returns null for a PlainDateTimeLike missing required fields', () => {
+        expect(DATE_TIME_CONVERTER.fromJson({})).toBeNull();
+    });
 });
 
 describe('DATE_TIME_CONVERTER.toJson', () => {

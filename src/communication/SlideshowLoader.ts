@@ -1,4 +1,4 @@
-import { exportSlideShow, importSlideShow, importSlideShowJSON, type SlideShow } from '../model/slides/SlideShow.ts';
+import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../model/slides/SlideShow.ts';
 
 const SLIDESHOW_STORAGE_KEY = 'slideshow';
 
@@ -6,12 +6,17 @@ function pickNewest(a: SlideShow, b: SlideShow): SlideShow {
     return a.id >= b.id ? a : b;
 }
 
-export function loadSlideshowFromStorage(exportedSlideshow?: unknown): SlideShow | null {
-    const fromStorage = importSlideShowJSON(localStorage.getItem(SLIDESHOW_STORAGE_KEY));
-    const fromExport = exportedSlideshow
-        ? importSlideShow(exportedSlideshow)
-        : null;
+function loadFromStorage(): SlideShow | null {
+    const stringValue = localStorage.getItem(SLIDESHOW_STORAGE_KEY);
+    if (stringValue) {
+        return SLIDE_SHOW_CONVERTER.fromJson(JSON.parse(stringValue));
+    }
+    return null;
+}
 
+export function loadSlideshowFromStorage(exportedSlideshow?: unknown): SlideShow | null {
+    const fromStorage = loadFromStorage();
+    const fromExport = SLIDE_SHOW_CONVERTER.fromJson(exportedSlideshow);
     if (fromStorage && fromExport) {
         return pickNewest(fromStorage, fromExport);
     }
@@ -19,9 +24,9 @@ export function loadSlideshowFromStorage(exportedSlideshow?: unknown): SlideShow
 }
 
 export function storeSlideshowToStorage(slideshow: SlideShow): void {
-    const existing = importSlideShowJSON(localStorage.getItem(SLIDESHOW_STORAGE_KEY));
-    if (existing && existing.id >= slideshow.id) {
+    const fromStorage = loadFromStorage();
+    if (fromStorage && fromStorage.id >= slideshow.id) {
         return;
     }
-    localStorage.setItem(SLIDESHOW_STORAGE_KEY, exportSlideShow(slideshow));
+    localStorage.setItem(SLIDESHOW_STORAGE_KEY, JSON.stringify(SLIDE_SHOW_CONVERTER.toJson(slideshow)));
 }

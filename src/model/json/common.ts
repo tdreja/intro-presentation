@@ -45,15 +45,29 @@ export const NUMBER_CONVERTER: DirectJsonConverter<number> = {
  */
 export const DATE_TIME_CONVERTER: DirectJsonConverter<Temporal.PlainDateTime> = {
     fromJson(json: unknown | null | undefined): Temporal.PlainDateTime | null {
-        if (typeof json !== 'string' || !json) {
+        if (json == null) {
             return null;
         }
-        try {
-            return Temporal.PlainDateTime.from(json);
+        if (typeof json === 'string') {
+            if (!json) {
+                return null;
+            }
+            try {
+                return Temporal.PlainDateTime.from(json);
+            }
+            catch {
+                return null;
+            }
         }
-        catch {
-            return null;
+        if (typeof json === 'object') {
+            try {
+                return Temporal.PlainDateTime.from(json as Temporal.PlainDateTimeLike);
+            }
+            catch {
+                return null;
+            }
         }
+        return null;
     }, toJson(data: Temporal.PlainDateTime | null | undefined): unknown | null {
         return data?.toString() ?? null;
     },
