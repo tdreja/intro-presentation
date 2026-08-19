@@ -1,9 +1,9 @@
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
-import { importSlideShow, type JsonSlideShow, type SlideShow } from '../model/slides/SlideShow.ts';
-import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader.ts';
-import { AppSlideshowContext, FALLBACK_SLIDESHOW, type SlideshowSetter } from './SlideshowContext.ts';
 import { useAppEventBus } from './AppEventBus.ts';
-import { type AppEvent, replacePresentationEvent } from '../model/event/Event.ts';
+import type { SlideShow } from '../model/slides/SlideShow.ts';
+import { AppSlideshowContext, FALLBACK_SLIDESHOW, type SlideshowSetter } from './SlideshowContext.ts';
+import { loadSlideshowFromStorage, storeSlideshowToStorage } from './SlideshowLoader.ts';
+import { type AppEvent, replaceSlideshowEvent } from '../model/event/Event.ts';
 
 type Props = {
     children?: ReactElement | ReactElement[]
@@ -26,20 +26,19 @@ export const AppSlideshow = ({ children }: Props): ReactElement => {
     const setSlideshow: SlideshowSetter = useCallback((newSlideshow: SlideShow) => {
         setLocalSlideshow(newSlideshow);
         storeSlideshowToStorage(newSlideshow);
-        eventBus.dispatchEvent(replacePresentationEvent(newSlideshow));
+        eventBus.dispatchEvent(replaceSlideshowEvent(newSlideshow, true));
     }, [eventBus, setLocalSlideshow]);
 
     // Build the listener to update the slideshow based on remote data
-    const remoteEventListener = useCallback((event: AppEvent<JsonSlideShow>) => {
-        const parsed = importSlideShow(event.payload);
-        if (event.remoteOnly && parsed) {
-            setLocalSlideshow(parsed);
+    const remoteEventListener = useCallback((event: AppEvent<SlideShow>) => {
+        if (event.remoteOnly) {
+            setLocalSlideshow(event.payload);
         }
     }, [setLocalSlideshow]);
 
     // Auto-Attach the listener to the event bus!
     useEffect(() => {
-        eventBus.registerListener('global-slideshow-listener', remoteEventListener);
+        eventBus.registerListener('global-slideshow-listener', 'replace-slideshow', remoteEventListener);
     }, [remoteEventListener, eventBus]);
 
     return (

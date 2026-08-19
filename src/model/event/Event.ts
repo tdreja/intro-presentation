@@ -1,7 +1,9 @@
-import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
+import { APP_ID_CONVERTER, type AppId, newAppId } from '../identifier/AppId.ts';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../slides/SlideShow.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { BOOLEAN_CONVERTER, NUMBER_CONVERTER, STRING_CONVERTER } from '../json/common.ts';
+
+export type EventType = 'replace-slideshow' | 'go-to-slide';
 
 /**
  * Actual event sent across all tabs
@@ -14,7 +16,7 @@ export interface AppEvent<PAYLOAD> {
     /**
      * Type of the event
      */
-    readonly type: 'replace-slideshow' | 'go-to-slide'
+    readonly type: EventType
     /**
      * Should the event only be transmitted to remote receivers?
      */
@@ -37,11 +39,29 @@ export interface ReplaceSlideshowEvent extends AppEvent<SlideShow> {
     readonly type: 'replace-slideshow'
 }
 
+export function replaceSlideshowEvent(slideShow: SlideShow, remoteOnly?: boolean): ReplaceSlideshowEvent {
+    return {
+        id: newAppId('event'),
+        type: 'replace-slideshow',
+        remoteOnly: !!remoteOnly,
+        payload: slideShow,
+    };
+}
+
 /**
  * Event sent, whenever the current slide index changes
  */
 export interface GoToSlideEvent extends AppEvent<number> {
     readonly type: 'go-to-slide'
+}
+
+export function goToSlideEvent(slideIndex: number, remoteOnly?: boolean): GoToSlideEvent {
+    return {
+        id: newAppId('event'),
+        type: 'go-to-slide',
+        remoteOnly: !!remoteOnly,
+        payload: slideIndex,
+    };
 }
 
 export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {

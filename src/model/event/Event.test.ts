@@ -1,6 +1,7 @@
-import { EVENT_CONVERTER } from './Event';
+import { EVENT_CONVERTER, goToSlideEvent, replaceSlideshowEvent } from './Event';
 import type { AppEvent } from './Event';
 import type { AppId } from '../identifier/AppId';
+import type { SlideShow } from '../slides/SlideShow';
 
 const VALID_ID = 'evt-2026-08-19-10-00-00-000' as AppId;
 
@@ -96,5 +97,75 @@ describe('EVENT_CONVERTER — toJson', () => {
         const json = EVENT_CONVERTER.toJson(event);
         const restored = EVENT_CONVERTER.fromJson(json);
         expect(restored).toEqual(event);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Helper fixtures
+// ---------------------------------------------------------------------------
+
+const MINIMAL_SLIDESHOW: SlideShow = {
+    id: 'ss-2026-01-01-00-00-00-000' as AppId,
+    slides: [],
+    currentSlideIndex: 0,
+};
+
+// ---------------------------------------------------------------------------
+// goToSlideEvent
+// ---------------------------------------------------------------------------
+
+describe('goToSlideEvent', () => {
+    test('sets type to go-to-slide', () => {
+        expect(goToSlideEvent(0).type).toBe('go-to-slide');
+    });
+
+    test('sets payload to the given slide index', () => {
+        expect(goToSlideEvent(5).payload).toBe(5);
+    });
+
+    test('remoteOnly defaults to false when omitted', () => {
+        expect(goToSlideEvent(0).remoteOnly).toBe(false);
+    });
+
+    test('remoteOnly is true when passed true', () => {
+        expect(goToSlideEvent(0, true).remoteOnly).toBe(true);
+    });
+
+    test('remoteOnly is false when passed false explicitly', () => {
+        expect(goToSlideEvent(0, false).remoteOnly).toBe(false);
+    });
+
+    test('id starts with the event- prefix', () => {
+        expect(goToSlideEvent(0).id).toMatch(/^event-/);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// replaceSlideshowEvent
+// ---------------------------------------------------------------------------
+
+describe('replaceSlideshowEvent', () => {
+    test('sets type to replace-slideshow', () => {
+        expect(replaceSlideshowEvent(MINIMAL_SLIDESHOW).type).toBe('replace-slideshow');
+    });
+
+    test('sets payload to the given SlideShow', () => {
+        expect(replaceSlideshowEvent(MINIMAL_SLIDESHOW).payload).toEqual(MINIMAL_SLIDESHOW);
+    });
+
+    test('remoteOnly defaults to false when omitted', () => {
+        expect(replaceSlideshowEvent(MINIMAL_SLIDESHOW).remoteOnly).toBe(false);
+    });
+
+    test('remoteOnly is true when passed true', () => {
+        expect(replaceSlideshowEvent(MINIMAL_SLIDESHOW, true).remoteOnly).toBe(true);
+    });
+
+    test('remoteOnly is false when passed false explicitly', () => {
+        expect(replaceSlideshowEvent(MINIMAL_SLIDESHOW, false).remoteOnly).toBe(false);
+    });
+
+    test('id starts with the event- prefix', () => {
+        expect(replaceSlideshowEvent(MINIMAL_SLIDESHOW).id).toMatch(/^event-/);
     });
 });
