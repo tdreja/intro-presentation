@@ -95,6 +95,20 @@ describe('importSlide — full-image', () => {
         const result = importSlide(JSON.stringify(slide));
         expect(result).toEqual(slide);
     });
+
+    test('preserves headline when present', () => {
+        const slide: FullImageSlide = { slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE, headline: 'My Title' };
+        const result = importSlide(JSON.stringify(slide)) as FullImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.headline).toBe('My Title');
+    });
+
+    test('headline is undefined when not provided', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE });
+        const result = importSlide(json) as FullImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.headline).toBeUndefined();
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -108,6 +122,7 @@ describe('importSlide — half-text-half-image', () => {
             slideType: 'half-text-half-image',
             text: 'Hello World',
             image: VALID_IMAGE,
+            layout: 'half-half',
         });
         const result = importSlide(json) as HalfTextHalfImageSlide;
         expect(result).not.toBeNull();
@@ -115,15 +130,16 @@ describe('importSlide — half-text-half-image', () => {
         expect(result.slideId).toBe(VALID_SLIDE_ID);
         expect(result.text).toBe('Hello World');
         expect(result.image).toBe(VALID_IMAGE);
+        expect(result.layout).toBe('half-half');
     });
 
     test('returns null when text is missing', () => {
-        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', image: VALID_IMAGE });
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', image: VALID_IMAGE, layout: 'half-half' });
         expect(importSlide(json)).toBeNull();
     });
 
     test('returns null when image is missing', () => {
-        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello' });
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello', layout: 'half-half' });
         expect(importSlide(json)).toBeNull();
     });
 
@@ -133,7 +149,18 @@ describe('importSlide — half-text-half-image', () => {
             slideType: 'half-text-half-image',
             text: 'Hello',
             image: 'not-an-image',
+            layout: 'half-half',
         });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when layout is missing', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello', image: VALID_IMAGE });
+        expect(importSlide(json)).toBeNull();
+    });
+
+    test('returns null when layout is invalid', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello', image: VALID_IMAGE, layout: 'invalid-layout' });
         expect(importSlide(json)).toBeNull();
     });
 
@@ -143,8 +170,43 @@ describe('importSlide — half-text-half-image', () => {
             slideType: 'half-text-half-image',
             text: 'Hello World',
             image: VALID_IMAGE,
+            layout: 'half-half',
         };
         const result = importSlide(JSON.stringify(slide));
         expect(result).toEqual(slide);
+    });
+
+    test.each(['half-half', 'one-third-left', 'one-third-right'] as const)('round-trips layout "%s"', (layout) => {
+        const slide: HalfTextHalfImageSlide = {
+            slideId: VALID_SLIDE_ID,
+            slideType: 'half-text-half-image',
+            text: 'Hello World',
+            image: VALID_IMAGE,
+            layout,
+        };
+        const result = importSlide(JSON.stringify(slide)) as HalfTextHalfImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.layout).toBe(layout);
+    });
+
+    test('preserves headline when present', () => {
+        const slide: HalfTextHalfImageSlide = {
+            slideId: VALID_SLIDE_ID,
+            slideType: 'half-text-half-image',
+            text: 'Hello World',
+            image: VALID_IMAGE,
+            layout: 'half-half',
+            headline: 'My Title',
+        };
+        const result = importSlide(JSON.stringify(slide)) as HalfTextHalfImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.headline).toBe('My Title');
+    });
+
+    test('headline is undefined when not provided', () => {
+        const json = JSON.stringify({ slideId: VALID_SLIDE_ID, slideType: 'half-text-half-image', text: 'Hello World', image: VALID_IMAGE, layout: 'half-half' });
+        const result = importSlide(json) as HalfTextHalfImageSlide;
+        expect(result).not.toBeNull();
+        expect(result.headline).toBeUndefined();
     });
 });

@@ -7,9 +7,12 @@ export function createSlideId(date?: Temporal.PlainDateTime | null): AppId {
     return newAppId('slide', date);
 }
 
+export type SlideType = 'full-image' | 'half-text-half-image';
+
 export interface Slide {
     readonly slideId: AppId
-    readonly slideType: 'full-image' | 'half-text-half-image'
+    readonly slideType: SlideType
+    readonly headline?: string
 }
 
 export interface FullImageSlide extends Slide {
@@ -17,9 +20,14 @@ export interface FullImageSlide extends Slide {
     readonly slideType: 'full-image'
 }
 
+export type SlideLayout = 'half-half' | 'one-third-left' | 'one-third-right';
+
+const VALID_LAYOUTS: SlideLayout[] = ['half-half', 'one-third-left', 'one-third-right'];
+
 export interface HalfTextHalfImageSlide extends Slide {
     readonly text: string
     readonly image: Base64Image
+    readonly layout: SlideLayout
     readonly slideType: 'half-text-half-image'
 }
 
@@ -47,9 +55,10 @@ export function importSlide(json?: string | null): Slide | null {
                 slideId,
                 slideType: 'full-image',
                 image,
+                ...(raw.headline !== undefined && { headline: raw.headline }),
             } as FullImageSlide;
         case 'half-text-half-image':
-            if (!raw.text || !image) {
+            if (!raw.text || !image || !raw.layout || !VALID_LAYOUTS.includes(raw.layout)) {
                 return null;
             }
             return {
@@ -57,6 +66,8 @@ export function importSlide(json?: string | null): Slide | null {
                 text: raw.text,
                 slideType: 'half-text-half-image',
                 image,
+                layout: raw.layout,
+                ...(raw.headline !== undefined && { headline: raw.headline }),
             } as HalfTextHalfImageSlide;
         default:
             return null;
