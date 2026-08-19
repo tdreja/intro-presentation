@@ -47,24 +47,36 @@ export function exportSlideShow(show: SlideShow): string {
     });
 }
 
-export function importSlideShow(json?: string | null): SlideShow | null {
+/**
+ * Imports the slideshow from a JSON string, returning null if the input is invalid or cannot be parsed
+ * @param json Input
+ */
+export function importSlideShowJSON(json?: string | null): SlideShow | null {
     if (!json) {
         return null;
     }
-    const raw: JsonSlideShow = JSON.parse(json);
-    if (!raw) {
+    return importSlideShow(JSON.parse(json));
+}
+
+/**
+ * Imports the slideshow from an unknown object, returning null if the input is invalid or cannot be parsed
+ * @param raw Input
+ */
+export function importSlideShow(raw?: unknown | null): SlideShow | null {
+    const parsed = raw as JsonSlideShow | null | undefined;
+    if (!parsed) {
         return null;
     }
-    const id = asAppId(raw.id as string);
+    const id = asAppId(parsed.id as string);
     if (!id) {
         return null;
     }
-    const rawArray = asArray(raw.slides);
+    const rawArray = asArray(parsed.slides);
     if (!rawArray) {
         return null;
     }
-    const currentSlideIndex = asNumberOrZero(raw.currentSlideIndex);
-    const countdownTarget = asDateTime(raw.countdownTarget);
+    const currentSlideIndex = asNumberOrZero(parsed.currentSlideIndex);
+    const countdownTarget = asDateTime(parsed.countdownTarget);
     const slides: Slide[] = [];
     for (const raw of rawArray) {
         const slide = typeof raw === 'string' ? importSlideJSON(raw) : importSlide(raw);
