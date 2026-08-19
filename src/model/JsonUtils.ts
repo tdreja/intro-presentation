@@ -1,3 +1,5 @@
+import { Temporal } from '@js-temporal/polyfill';
+
 export function asNumber(input?: unknown | null): number | null {
     if (typeof input === 'number' && Number.isFinite(input)) {
         return input;
@@ -29,4 +31,16 @@ export function asString(input?: unknown | null): string | undefined {
         return input;
     }
     return undefined;
+}
+
+export function asDateTime(input?: unknown | null): Temporal.PlainDateTime | undefined {
+    if (typeof input !== 'string' || !input) {
+        return undefined;
+    }
+    try {
+        return Temporal.PlainDateTime.from(input);
+    }
+    catch {
+        return undefined;
+    }
 }

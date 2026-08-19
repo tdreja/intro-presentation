@@ -1,4 +1,5 @@
-import { asArray, asBoolean, asNumber, asNumberOrZero, asString } from './JsonUtils';
+import { Temporal } from '@js-temporal/polyfill';
+import { asArray, asBoolean, asDateTime, asNumber, asNumberOrZero, asString } from './JsonUtils';
 
 describe('asNumber', () => {
     test.each([
@@ -119,5 +120,41 @@ describe('asString', () => {
         [{}],
     ])('returns undefined for non-string input %s', (input) => {
         expect(asString(input)).toBeUndefined();
+    });
+});
+
+describe('asDateTime', () => {
+    test.each([
+        ['2026-08-19T10:30:00', 2026, 8, 19, 10, 30, 0],
+        ['2024-01-01T00:00:00', 2024, 1, 1, 0, 0, 0],
+        ['2026-08-19T10:30:00.123', 2026, 8, 19, 10, 30, 0],
+    ])('returns PlainDateTime for valid ISO string %s', (input, year, month, day, hour, minute, second) => {
+        const result = asDateTime(input);
+        expect(result).toBeInstanceOf(Temporal.PlainDateTime);
+        expect(result?.year).toBe(year);
+        expect(result?.month).toBe(month);
+        expect(result?.day).toBe(day);
+        expect(result?.hour).toBe(hour);
+        expect(result?.minute).toBe(minute);
+        expect(result?.second).toBe(second);
+    });
+
+    test.each([
+        [''],
+        ['not-a-date'],
+        ['2026-99-99T00:00:00'],
+    ])('returns undefined for invalid string %s', (input) => {
+        expect(asDateTime(input)).toBeUndefined();
+    });
+
+    test.each([
+        [null],
+        [undefined],
+        [42],
+        [true],
+        [{}],
+        [[]],
+    ])('returns undefined for non-string input %s', (input) => {
+        expect(asDateTime(input)).toBeUndefined();
     });
 });
