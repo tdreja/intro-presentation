@@ -11,33 +11,30 @@ npm run dev          # dev server
 npm run build        # tsc -b && vite build → dist/
 npm run lint         # eslint
 npm run lint:fix     # eslint --fix
-npm test             # jest (all tests)
+npm test             # vitest run (all tests)
 ```
 
-### Run a single test file / test name
+### Run a single test file
 
 ```bash
-npx jest --testPathPatterns=TestName   # match by file path fragment or test name
+npx vitest run src/path/to/File.test.ts   # match by file path
 ```
-
-> User requirement: always use `--testPathPatterns` (not `--testNamePattern`) to filter tests.
 
 ## TypeScript setup — three tsconfigs
 
 | Config | Covers | Notes |
 |---|---|---|
-| `tsconfig.app.json` | `src/` (excludes `*.test.ts`) | bundler module resolution, `noEmit` |
+| `tsconfig.app.json` | `src/` (includes `*.test.ts`) | bundler module resolution, `noEmit` |
 | `tsconfig.node.json` | `vite.config.ts` | nodenext modules |
-| `tsconfig.test.json` | `src/**/*.test.ts` | commonjs + node resolution (Jest compat) |
 
 Root `tsconfig.json` is project-references-only — do not add files there.
 
 ## Testing
 
-- Runner: **Jest** with `ts-jest`
+- Runner: **Vitest** (Vite-native, shares `vite.config.ts`)
 - Test files: `*.test.ts` only (no `.tsx` test files)
 - Test environment: `node` (not jsdom — DOM APIs are not available in tests)
-- Jest re-uses its own tsconfig transform (CommonJS), separate from Vite's ESM build
+- Each test file imports from `vitest` explicitly: `import { describe, test, expect, vi } from 'vitest'`
 
 ## Code style (ESLint enforced)
 

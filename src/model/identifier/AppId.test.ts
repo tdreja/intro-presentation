@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import { APP_ID_CONVERTER, asAppId, newAppId } from './AppId';
 

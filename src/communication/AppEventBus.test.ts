@@ -1,3 +1,4 @@
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AppEventBus } from './AppEventBus';
 import { EVENT_CONVERTER, type AppEvent, type GoToSlideEvent, type ReplaceSlideshowEvent } from '../model/event/Event';
 import { PLACEHOLDER_IMAGE } from '../model/slides/Image';
@@ -47,9 +48,9 @@ const REPLACE_SLIDESHOW: ReplaceSlideshowEvent = {
 // ---------------------------------------------------------------------------
 
 const makeMockChannel = () => ({
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    postMessage: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    postMessage: vi.fn(),
 });
 
 type MockChannel = ReturnType<typeof makeMockChannel>;
@@ -63,11 +64,11 @@ function makeMessageEvent(event: AppEvent<unknown>): MessageEvent {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
 });
 
 afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
 });
 
 // ---------------------------------------------------------------------------
@@ -89,7 +90,7 @@ describe('AppEventBus — constructor', () => {
 
     test('3. with channel + lastChannelListener: removeEventListener called before addEventListener', () => {
         const ch = makeMockChannel();
-        const oldListener = jest.fn();
+        const oldListener = vi.fn();
         new AppEventBus(ch as unknown as BroadcastChannel, oldListener);
         expect(ch.removeEventListener).toHaveBeenCalledWith('message', oldListener);
         expect(ch.addEventListener).toHaveBeenCalledWith('message', expect.any(Function));
@@ -112,26 +113,26 @@ describe('AppEventBus — constructor', () => {
 describe('AppEventBus — registerListener / unregisterListener', () => {
     test('5. registerListener for go-to-slide: _listeners has one entry', () => {
         const bus = new AppEventBus();
-        bus.registerListener('l1', 'go-to-slide', jest.fn());
+        bus.registerListener('l1', 'go-to-slide', vi.fn());
         expect(bus._listeners.size).toBe(1);
     });
 
     test('6. registerListener for replace-slideshow: _listeners has one entry', () => {
         const bus = new AppEventBus();
-        bus.registerListener('l1', 'replace-slideshow', jest.fn());
+        bus.registerListener('l1', 'replace-slideshow', vi.fn());
         expect(bus._listeners.size).toBe(1);
     });
 
     test('7. unregisterListener: _listeners is empty afterwards', () => {
         const bus = new AppEventBus();
-        bus.registerListener('l1', 'go-to-slide', jest.fn());
+        bus.registerListener('l1', 'go-to-slide', vi.fn());
         bus.unregisterListener('l1');
         expect(bus._listeners.size).toBe(0);
     });
 
     test('8. no-op when listenerName is undefined', () => {
         const bus = new AppEventBus();
-        expect(() => bus.registerListener(undefined, 'go-to-slide', jest.fn())).not.toThrow();
+        expect(() => bus.registerListener(undefined, 'go-to-slide', vi.fn())).not.toThrow();
         expect(bus._listeners.size).toBe(0);
     });
 
@@ -143,14 +144,14 @@ describe('AppEventBus — registerListener / unregisterListener', () => {
 
     test('10. no-op when eventType is undefined', () => {
         const bus = new AppEventBus();
-        expect(() => bus.registerListener('l1', undefined, jest.fn())).not.toThrow();
+        expect(() => bus.registerListener('l1', undefined, vi.fn())).not.toThrow();
         expect(bus._listeners.size).toBe(0);
     });
 
     test('11. same name registered twice: replaces first entry (size stays 1)', () => {
         const bus = new AppEventBus();
-        bus.registerListener('l1', 'go-to-slide', jest.fn());
-        bus.registerListener('l1', 'replace-slideshow', jest.fn());
+        bus.registerListener('l1', 'go-to-slide', vi.fn());
+        bus.registerListener('l1', 'replace-slideshow', vi.fn());
         expect(bus._listeners.size).toBe(1);
     });
 });
@@ -162,7 +163,7 @@ describe('AppEventBus — registerListener / unregisterListener', () => {
 describe('AppEventBus — dispatchEvent (local, no channel)', () => {
     test('12. GoToSlideEvent with matching listener: listener is called with the event', () => {
         const bus = new AppEventBus();
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus.dispatchEvent(GO_TO_SLIDE);
         expect(fn).toHaveBeenCalledTimes(1);
@@ -171,7 +172,7 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
 
     test('13. ReplaceSlideshowEvent with matching listener: listener is called with the event and payload equals SLIDESHOW', () => {
         const bus = new AppEventBus();
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus.dispatchEvent(REPLACE_SLIDESHOW);
         expect(fn).toHaveBeenCalledTimes(1);
@@ -180,7 +181,7 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
 
     test('14. GoToSlideEvent dispatched: replace-slideshow listener is NOT called', () => {
         const bus = new AppEventBus();
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus.dispatchEvent(GO_TO_SLIDE);
         expect(fn).not.toHaveBeenCalled();
@@ -188,7 +189,7 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
 
     test('15. ReplaceSlideshowEvent dispatched: go-to-slide listener is NOT called', () => {
         const bus = new AppEventBus();
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus.dispatchEvent(REPLACE_SLIDESHOW);
         expect(fn).not.toHaveBeenCalled();
@@ -196,8 +197,8 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
 
     test('16. Multiple listeners (one per type): only the matching one fires', () => {
         const bus = new AppEventBus();
-        const goFn = jest.fn();
-        const replaceFn = jest.fn();
+        const goFn = vi.fn();
+        const replaceFn = vi.fn();
         bus.registerListener('go', 'go-to-slide', goFn);
         bus.registerListener('replace', 'replace-slideshow', replaceFn);
         bus.dispatchEvent(GO_TO_SLIDE);
@@ -207,7 +208,7 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
 
     test('17. GoToSlideEvent with remoteOnly: true — local listener is NOT called', () => {
         const bus = new AppEventBus();
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus.dispatchEvent({ ...GO_TO_SLIDE, remoteOnly: true });
         expect(fn).not.toHaveBeenCalled();
@@ -215,7 +216,7 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
 
     test('18. ReplaceSlideshowEvent with remoteOnly: true — local listener is NOT called', () => {
         const bus = new AppEventBus();
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus.dispatchEvent({ ...REPLACE_SLIDESHOW, remoteOnly: true });
         expect(fn).not.toHaveBeenCalled();
@@ -274,7 +275,7 @@ describe('AppEventBus — dispatchEvent (with channel)', () => {
     });
 
     test('25. GoToSlideEvent remoteOnly: false — both local listener AND postMessage fire', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus.dispatchEvent(GO_TO_SLIDE);
         expect(fn).toHaveBeenCalledTimes(1);
@@ -282,7 +283,7 @@ describe('AppEventBus — dispatchEvent (with channel)', () => {
     });
 
     test('26. ReplaceSlideshowEvent remoteOnly: false — both local listener AND postMessage fire', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus.dispatchEvent(REPLACE_SLIDESHOW);
         expect(fn).toHaveBeenCalledTimes(1);
@@ -302,14 +303,14 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
     });
 
     test('27. non-string data: no listener called, no error', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         expect(() => bus._channelListener({ data: 42 } as unknown as MessageEvent)).not.toThrow();
         expect(fn).not.toHaveBeenCalled();
     });
 
     test('28. valid go-to-slide JSON: matching listener called with parsed GoToSlideEvent, payload equals 3', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus._channelListener(makeMessageEvent(GO_TO_SLIDE));
         expect(fn).toHaveBeenCalledTimes(1);
@@ -317,7 +318,7 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
     });
 
     test('29. valid replace-slideshow JSON: listener called; payload.id equals SHOW_ID and slides has length 1', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus._channelListener(makeMessageEvent(REPLACE_SLIDESHOW));
         expect(fn).toHaveBeenCalledTimes(1);
@@ -327,21 +328,21 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
     });
 
     test('30. incoming go-to-slide: replace-slideshow listener is NOT called', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus._channelListener(makeMessageEvent(GO_TO_SLIDE));
         expect(fn).not.toHaveBeenCalled();
     });
 
     test('31. incoming replace-slideshow: go-to-slide listener is NOT called', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus._channelListener(makeMessageEvent(REPLACE_SLIDESHOW));
         expect(fn).not.toHaveBeenCalled();
     });
 
     test('32. JSON with missing id: EVENT_CONVERTER returns null, listener not called', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         const badJson = JSON.stringify({ type: 'go-to-slide', remoteOnly: false, payload: 5 });
         expect(() => bus._channelListener({ data: badJson } as MessageEvent)).not.toThrow();
@@ -349,7 +350,7 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
     });
 
     test('33. completely malformed JSON string: listener not called', () => {
-        const fn = jest.fn();
+        const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         expect(() => bus._channelListener({ data: '{not valid json' } as MessageEvent)).not.toThrow();
         expect(fn).not.toHaveBeenCalled();
@@ -366,7 +367,7 @@ describe('AppEventBus — full round-trip', () => {
         const sender = new AppEventBus(senderCh as unknown as BroadcastChannel);
         const receiver = new AppEventBus();
 
-        const fn = jest.fn();
+        const fn = vi.fn();
         receiver.registerListener('l', 'go-to-slide', fn);
 
         sender.dispatchEvent(GO_TO_SLIDE);
@@ -382,7 +383,7 @@ describe('AppEventBus — full round-trip', () => {
         const sender = new AppEventBus(senderCh as unknown as BroadcastChannel);
         const receiver = new AppEventBus();
 
-        const fn = jest.fn();
+        const fn = vi.fn();
         receiver.registerListener('l', 'replace-slideshow', fn);
 
         sender.dispatchEvent(REPLACE_SLIDESHOW);

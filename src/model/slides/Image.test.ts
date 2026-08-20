@@ -1,3 +1,4 @@
+import { describe, test, expect, vi, type MockInstance } from 'vitest';
 import { asBase64Image, importFromBlob, BASE_64_IMAGE_CONVERTER } from './Image';
 import type { Base64Image } from './Image';
 
@@ -9,7 +10,7 @@ type MockFileReaderInstance = {
     onload: ((event: ProgressEvent) => void) | null
     onerror: ((event: ProgressEvent) => void) | null
     result: string | null
-    readAsDataURL: jest.Mock
+    readAsDataURL: MockInstance
 };
 
 let mockFileReaderInstance: MockFileReaderInstance;
@@ -19,7 +20,7 @@ class MockFileReader {
     onerror: ((event: ProgressEvent) => void) | null = null;
     result: string | null = null;
 
-    readAsDataURL = jest.fn((_blob: Blob) => {
+    readAsDataURL = vi.fn((_blob: Blob) => {
         mockFileReaderInstance = this as unknown as MockFileReaderInstance;
     });
 }

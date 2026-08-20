@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { EVENT_CONVERTER, goToSlideEvent, replaceSlideshowEvent } from './Event';
 import type { AppEvent } from './Event';
 import type { AppId } from '../identifier/AppId';

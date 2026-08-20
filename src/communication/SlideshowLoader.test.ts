@@ -1,3 +1,4 @@
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import { newAppId } from '../model/identifier/AppId';
 import { PLACEHOLDER_IMAGE } from '../model/slides/Image';
@@ -31,7 +32,7 @@ const NEWER_SHOW: SlideShow = { id: NEWER_ID, slides: [SLIDE], currentSlideIndex
 const SLIDESHOW_STORAGE_KEY = 'slideshow';
 
 let store: Record<string, string> = {};
-const setItemSpy = jest.fn((key: string, value: string) => {
+const setItemSpy = vi.fn((key: string, value: string) => {
     store[key] = value;
 });
 const localStorageMock = {

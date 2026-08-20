@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
