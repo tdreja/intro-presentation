@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest';
+import { Temporal } from '@js-temporal/polyfill';
 import { findNextSlideId, findSlide, indexOfSlide, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
 import type { FullImageSlide } from './Slide';
@@ -7,6 +8,7 @@ import { PLACEHOLDER_IMAGE } from './Image';
 const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000' as AppId;
 const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
+const VALID_TIME_PER_SLIDE = Temporal.Duration.from({ seconds: 10 });
 
 const FULL_IMAGE_SLIDE: FullImageSlide = {
     slideId: VALID_SLIDE_ID,
@@ -17,6 +19,7 @@ const FULL_IMAGE_SLIDE: FullImageSlide = {
 const MINIMAL_SLIDESHOW: SlideShow = {
     id: VALID_SHOW_ID,
     slides: [FULL_IMAGE_SLIDE],
+    timePerSlide: VALID_TIME_PER_SLIDE,
 };
 
 // ---------------------------------------------------------------------------
@@ -49,7 +52,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — null / invalid guards', () => {
 
     test('returns null when slides contains an invalid slide', () => {
         const badSlide = { slideType: 'full-image' }; // missing slideId and image
-        const json = { id: VALID_SHOW_ID, slides: [badSlide] } as never;
+        const json = { id: VALID_SHOW_ID, slides: [badSlide], timePerSlide: 'PT10S' } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 });
@@ -66,6 +69,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
             slideType: 'full-image' as const,
             image: VALID_IMAGE,
         }],
+        timePerSlide: 'PT10S',
     };
 
     test('returns a SlideShow for minimal valid JSON', () => {
@@ -85,7 +89,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
     });
 
     test('empty slides array is preserved', () => {
-        const json = { id: VALID_SHOW_ID, slides: [] };
+        const json = { id: VALID_SHOW_ID, slides: [], timePerSlide: 'PT10S' };
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result.slides).toEqual([]);
     });
@@ -139,7 +143,7 @@ describe('SLIDE_SHOW_CONVERTER round-trip', () => {
     });
 
     test('SlideShow with empty slides array round-trips correctly', () => {
-        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [], timePerSlide: VALID_TIME_PER_SLIDE };
         const json = SLIDE_SHOW_CONVERTER.toJson(empty)!;
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result).not.toBeNull();
@@ -180,7 +184,7 @@ describe('findSlide', () => {
     });
 
     test('returns null when the slides array is empty', () => {
-        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [], timePerSlide: VALID_TIME_PER_SLIDE };
         expect(findSlide(empty, VALID_SLIDE_ID)).toBeNull();
     });
 });
@@ -196,8 +200,8 @@ const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
 const SLIDE_2: FullImageSlide = { slideId: SLIDE_2_ID, slideType: 'full-image', image: VALID_IMAGE };
 const SLIDE_3: FullImageSlide = { slideId: SLIDE_3_ID, slideType: 'full-image', image: VALID_IMAGE };
 
-const TWO_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2] };
-const THREE_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2, SLIDE_3] };
+const TWO_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2], timePerSlide: VALID_TIME_PER_SLIDE };
+const THREE_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2, SLIDE_3], timePerSlide: VALID_TIME_PER_SLIDE };
 
 // ---------------------------------------------------------------------------
 // indexOfSlide
@@ -221,7 +225,7 @@ describe('indexOfSlide', () => {
     });
 
     test('returns -1 for an empty slides array', () => {
-        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [], timePerSlide: VALID_TIME_PER_SLIDE };
         expect(indexOfSlide(empty, VALID_SLIDE_ID)).toBe(-1);
     });
 
@@ -252,7 +256,7 @@ describe('findNextSlideId', () => {
     });
 
     test('returns null for an empty slides array', () => {
-        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [], timePerSlide: VALID_TIME_PER_SLIDE };
         expect(findNextSlideId(empty, VALID_SLIDE_ID)).toBeNull();
     });
 
@@ -274,5 +278,60 @@ describe('findNextSlideId', () => {
 
     test('returns the next slide for a middle slide in a three-slide show', () => {
         expect(findNextSlideId(THREE_SLIDE_SHOW, SLIDE_2_ID)).toBe(SLIDE_3_ID);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// SLIDE_SHOW_CONVERTER.fromJson — timePerSlide
+// ---------------------------------------------------------------------------
+
+describe('SLIDE_SHOW_CONVERTER.fromJson — timePerSlide', () => {
+    const baseJson = {
+        id: VALID_SHOW_ID,
+        slides: [{
+            slideId: VALID_SLIDE_ID,
+            slideType: 'full-image' as const,
+            image: VALID_IMAGE,
+        }],
+    };
+
+    test('returns null when timePerSlide is missing', () => {
+        expect(SLIDE_SHOW_CONVERTER.fromJson(baseJson)).toBeNull();
+    });
+
+    test('returns null when timePerSlide is an invalid string', () => {
+        const json = { ...baseJson, timePerSlide: 'not-a-duration' };
+        expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
+    });
+
+    test('parses a valid ISO 8601 duration string', () => {
+        const json = { ...baseJson, timePerSlide: 'PT10S' };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
+        expect(result).not.toBeNull();
+        expect(result.timePerSlide.seconds).toBe(10);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// SLIDE_SHOW_CONVERTER.toJson — timePerSlide
+// ---------------------------------------------------------------------------
+
+describe('SLIDE_SHOW_CONVERTER.toJson — timePerSlide', () => {
+    test('serializes timePerSlide to its ISO 8601 string', () => {
+        const result = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
+        expect(result.timePerSlide).toBe('PT10S');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Round-trip: timePerSlide
+// ---------------------------------------------------------------------------
+
+describe('SLIDE_SHOW_CONVERTER round-trip — timePerSlide', () => {
+    test('timePerSlide survives a full round-trip', () => {
+        const json = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
+        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
+        expect(result).not.toBeNull();
+        expect(Temporal.Duration.compare(result.timePerSlide, VALID_TIME_PER_SLIDE)).toBe(0);
     });
 });

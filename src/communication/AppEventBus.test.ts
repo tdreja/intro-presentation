@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { Temporal } from '@js-temporal/polyfill';
 import { AppEventBus } from './AppEventBus';
 import { EVENT_CONVERTER, type AppEvent, type GoToSlideEvent, type ReplaceSlideshowEvent } from '../model/event/Event';
 import { PLACEHOLDER_IMAGE } from '../model/slides/Image';
@@ -24,6 +25,7 @@ const SLIDE: FullImageSlide = {
 const SLIDESHOW: SlideShow = {
     id: SHOW_ID,
     slides: [SLIDE],
+    timePerSlide: Temporal.Duration.from({ seconds: 10 }),
 };
 
 const GO_TO_SLIDE: GoToSlideEvent = {

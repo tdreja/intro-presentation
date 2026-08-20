@@ -60,7 +60,7 @@ const NEWER_COUNTDOWN: Countdown = {
 };
 
 function makeSlideShow(id: AppId): SlideShow {
-    return { id, slides: [] };
+    return { id, slides: [], timePerSlide: Temporal.Duration.from({ seconds: 10 }) };
 }
 
 // ---------------------------------------------------------------------------

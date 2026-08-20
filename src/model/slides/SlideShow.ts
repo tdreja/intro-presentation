@@ -1,7 +1,8 @@
+import { Temporal } from '@js-temporal/polyfill';
 import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
 import { SLIDE_CONVERTER, type Slide } from './Slide.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
-import { ArrayConverter } from '../json/common.ts';
+import { ArrayConverter, DURATION_CONVERTER } from '../json/common.ts';
 
 /**
  * Represents a slideshow with multiple slides.
@@ -15,6 +16,10 @@ export interface SlideShow {
      * Unique ID of the slideshow, referencing its creation date. This ID is used to identify the slideshow across multiple tabs and devices.
      */
     readonly id: AppId
+    /**
+     * Duration each slide is shown before advancing to the next one automatically.
+     */
+    readonly timePerSlide: Temporal.Duration
 }
 
 export type RawJsonSlideShow = RawJson<SlideShow>;
@@ -35,7 +40,11 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         if (slides === null) {
             return null;
         }
-        return { id, slides };
+        const timePerSlide = DURATION_CONVERTER.fromJson(parsed.timePerSlide);
+        if (!timePerSlide) {
+            return null;
+        }
+        return { id, slides, timePerSlide };
     },
     toJson(data: SlideShow | null | undefined): RawJsonSlideShow | null {
         if (!data) {
@@ -44,6 +53,7 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         return {
             id: APP_ID_CONVERTER.toJson(data.id),
             slides: SLIDES_CONVERTER.toJson(data.slides),
+            timePerSlide: DURATION_CONVERTER.toJson(data.timePerSlide),
         };
     },
 };
