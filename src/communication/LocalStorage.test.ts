@@ -3,6 +3,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import { asAppId, type AppId } from '../model/identifier/AppId.ts';
 import { APP_ID_CONVERTER } from '../model/identifier/AppId.ts';
 import { type SlideShow } from '../model/slides/SlideShow.ts';
+import { type Countdown } from '../model/slides/Countdown.ts';
 import {
     fromStorage,
     toStorage,
@@ -10,8 +11,8 @@ import {
     slideShowFromStorage,
     currentSlideIdToStorage,
     currentSlideIdFromStorage,
-    countdownTimeToStorage,
-    countdownTimeFromStorage,
+    countdownToStorage,
+    countdownFromStorage,
 } from './LocalStorage.ts';
 
 // ---------------------------------------------------------------------------
@@ -44,8 +45,19 @@ beforeEach(() => {
 const OLDER_SLIDE_ID = asAppId('slide-2026-01-01-00-00-00-000')!;
 const NEWER_SLIDE_ID = asAppId('slide-2026-06-15-12-30-00-000')!;
 
-const OLDER_TIME = Temporal.PlainDateTime.from('2026-01-01T00:00:00');
-const NEWER_TIME = Temporal.PlainDateTime.from('2026-06-15T12:30:00');
+const SMALL_FOR = Temporal.Duration.from({ minutes: 30 });
+const LARGE_FOR = Temporal.Duration.from({ minutes: 5 });
+
+const OLDER_COUNTDOWN: Countdown = {
+    countdownTime: Temporal.PlainDateTime.from('2026-01-01T00:00:00'),
+    showSmallCountdownFor: SMALL_FOR,
+    showLargeCountdownFor: LARGE_FOR,
+};
+const NEWER_COUNTDOWN: Countdown = {
+    countdownTime: Temporal.PlainDateTime.from('2026-06-15T12:30:00'),
+    showSmallCountdownFor: SMALL_FOR,
+    showLargeCountdownFor: LARGE_FOR,
+};
 
 function makeSlideShow(id: AppId): SlideShow {
     return { id, slides: [] };
@@ -163,39 +175,41 @@ describe('currentSlideIdToStorage / currentSlideIdFromStorage round-trip', () =>
 });
 
 // ---------------------------------------------------------------------------
-// countdownTimeToStorage / countdownTimeFromStorage
+// countdownToStorage / countdownFromStorage
 // ---------------------------------------------------------------------------
 
-describe('countdownTimeFromStorage', () => {
+describe('countdownFromStorage', () => {
     test('returns null when nothing is stored', () => {
-        expect(countdownTimeFromStorage()).toBeNull();
+        expect(countdownFromStorage()).toBeNull();
     });
 });
 
-describe('countdownTimeToStorage / countdownTimeFromStorage round-trip', () => {
-    test('stores and retrieves a Temporal.PlainDateTime', () => {
-        countdownTimeToStorage(OLDER_TIME);
-        const result = countdownTimeFromStorage();
+describe('countdownToStorage / countdownFromStorage round-trip', () => {
+    test('stores and retrieves a Countdown', () => {
+        countdownToStorage(OLDER_COUNTDOWN);
+        const result = countdownFromStorage();
         expect(result).not.toBeNull();
-        expect(Temporal.PlainDateTime.compare(result!, OLDER_TIME)).toBe(0);
+        expect(Temporal.PlainDateTime.compare(result!.countdownTime, OLDER_COUNTDOWN.countdownTime)).toBe(0);
+        expect(result!.showSmallCountdownFor.minutes).toBe(30);
+        expect(result!.showLargeCountdownFor.minutes).toBe(5);
     });
 
-    test('does not overwrite when stored time is the same', () => {
-        countdownTimeToStorage(NEWER_TIME);
-        countdownTimeToStorage(OLDER_TIME);
-        const result = countdownTimeFromStorage();
-        expect(Temporal.PlainDateTime.compare(result!, NEWER_TIME)).toBe(0);
+    test('does not overwrite when stored countdownTime is the same', () => {
+        countdownToStorage(NEWER_COUNTDOWN);
+        countdownToStorage(OLDER_COUNTDOWN);
+        const result = countdownFromStorage();
+        expect(Temporal.PlainDateTime.compare(result!.countdownTime, NEWER_COUNTDOWN.countdownTime)).toBe(0);
     });
 
-    test('does not overwrite when stored time is later', () => {
-        countdownTimeToStorage(NEWER_TIME);
-        countdownTimeToStorage(OLDER_TIME);
-        expect(Temporal.PlainDateTime.compare(countdownTimeFromStorage()!, NEWER_TIME)).toBe(0);
+    test('does not overwrite when stored countdownTime is later', () => {
+        countdownToStorage(NEWER_COUNTDOWN);
+        countdownToStorage(OLDER_COUNTDOWN);
+        expect(Temporal.PlainDateTime.compare(countdownFromStorage()!.countdownTime, NEWER_COUNTDOWN.countdownTime)).toBe(0);
     });
 
-    test('overwrites when stored time is earlier', () => {
-        countdownTimeToStorage(OLDER_TIME);
-        countdownTimeToStorage(NEWER_TIME);
-        expect(Temporal.PlainDateTime.compare(countdownTimeFromStorage()!, NEWER_TIME)).toBe(0);
+    test('overwrites when stored countdownTime is earlier', () => {
+        countdownToStorage(OLDER_COUNTDOWN);
+        countdownToStorage(NEWER_COUNTDOWN);
+        expect(Temporal.PlainDateTime.compare(countdownFromStorage()!.countdownTime, NEWER_COUNTDOWN.countdownTime)).toBe(0);
     });
 });

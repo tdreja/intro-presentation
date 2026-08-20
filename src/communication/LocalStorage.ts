@@ -2,7 +2,7 @@ import type { JsonConverter } from '../model/json/json.ts';
 import { APP_ID_CONVERTER, type AppId } from '../model/identifier/AppId.ts';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../model/slides/SlideShow.ts';
 import { Temporal } from '@js-temporal/polyfill';
-import { DATE_TIME_CONVERTER } from '../model/json/common.ts';
+import { COUNTDOWN_CONVERTER, type Countdown } from '../model/slides/Countdown.ts';
 
 export function fromStorage<DATA, JSON>(converter: JsonConverter<DATA, JSON>, key: string): DATA | null {
     const string = localStorage.getItem(key);
@@ -46,10 +46,10 @@ export function currentSlideIdFromStorage(): AppId | null {
     return fromStorage(APP_ID_CONVERTER, 'current-slide-id');
 }
 
-export function countdownTimeToStorage(countdownTime: Temporal.PlainDateTime) {
-    return toStorage(DATE_TIME_CONVERTER, 'countdown-time', countdownTime, (newer, older) => Temporal.PlainDateTime.compare(newer, older) >= 0);
+export function countdownToStorage(countdown: Countdown) {
+    return toStorage(COUNTDOWN_CONVERTER, 'countdown-time', countdown, (newer, older) => Temporal.PlainDateTime.compare(newer.countdownTime, older.countdownTime) >= 0);
 }
 
-export function countdownTimeFromStorage(): Temporal.PlainDateTime | null {
-    return fromStorage(DATE_TIME_CONVERTER, 'countdown-time');
+export function countdownFromStorage(): Countdown | null {
+    return fromStorage(COUNTDOWN_CONVERTER, 'countdown-time');
 }

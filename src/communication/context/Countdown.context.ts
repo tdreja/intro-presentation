@@ -1,9 +1,9 @@
-import { Temporal } from '@js-temporal/polyfill';
 import { createContext, useContext } from 'react';
+import type { Countdown } from '../../model/slides/Countdown.ts';
 
 export type CountdownState = [
-    countdown: Temporal.PlainDateTime | null,
-    setCountdown: (newCountdown: Temporal.PlainDateTime | null) => void,
+    countdown: Countdown | null,
+    setCountdown: (newCountdown: Countdown | null) => void,
 ];
 const noop: CountdownState = [null, () => {}];
 export const CountdownContext = createContext<CountdownState>(noop);

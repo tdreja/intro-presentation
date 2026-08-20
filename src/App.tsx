@@ -3,8 +3,8 @@ import { AppEventBus, AppEventContext, type ChannelListener } from './communicat
 import { PLACEHOLDER_IMAGE } from './model/slides/Image.ts';
 import type { SlideShow } from './model/slides/SlideShow.ts';
 import type { AppId } from './model/identifier/AppId.ts';
-import { Temporal } from '@js-temporal/polyfill';
-import { countdownTimeFromStorage, currentSlideIdFromStorage, slideShowFromStorage } from './communication/LocalStorage.ts';
+import type { Countdown } from './model/slides/Countdown.ts';
+import { countdownFromStorage, currentSlideIdFromStorage, slideShowFromStorage } from './communication/LocalStorage.ts';
 import { FALLBACK_SLIDESHOW, SlideShowContext, type SlideShowState } from './communication/context/Slideshow.context.ts';
 import { CurrentSlideContext, type CurrentSlideState } from './communication/context/CurrentSlide.context.ts';
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
@@ -24,7 +24,7 @@ export const App = (): ReactElement => {
     // Prepare the local state for this app!
     const [localSlideShow, setLocalSlideShow] = useState<SlideShow>(() => slideShowFromStorage() || FALLBACK_SLIDESHOW);
     const [localCurrentSlide, setLocalCurrentSlide] = useState<AppId | null>(() => currentSlideIdFromStorage());
-    const [localCountdown, setLocalCountdown] = useState<Temporal.PlainDateTime | null>(() => countdownTimeFromStorage());
+    const [localCountdown, setLocalCountdown] = useState<Countdown | null>(() => countdownFromStorage());
 
     // Add setters with attachment to the eventbus
     const setSlideShow = useCallback((slide: SlideShow) => {
@@ -35,7 +35,7 @@ export const App = (): ReactElement => {
         setLocalCurrentSlide(slideId);
         // TODO send event
     }, [setLocalCurrentSlide]);
-    const setCountdown = useCallback((countdown: Temporal.PlainDateTime | null) => {
+    const setCountdown = useCallback((countdown: Countdown | null) => {
         setLocalCountdown(countdown);
         // TODO send event
     }, [setLocalCountdown]);

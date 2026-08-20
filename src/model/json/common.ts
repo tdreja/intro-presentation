@@ -74,6 +74,34 @@ export const DATE_TIME_CONVERTER: DirectJsonConverter<Temporal.PlainDateTime> = 
 };
 
 /**
+ * Imports/Exports Temporal.Duration
+ */
+export const DURATION_CONVERTER: DirectJsonConverter<Temporal.Duration> = {
+    fromJson(json: unknown | null | undefined): Temporal.Duration | null {
+        if (json == null) {
+            return null;
+        }
+        try {
+            if (typeof json === 'string') {
+                if (!json) {
+                    return null;
+                }
+                return Temporal.Duration.from(json);
+            }
+            if (typeof json === 'object') {
+                return Temporal.Duration.from(json as Temporal.DurationLike);
+            }
+        }
+        catch {
+            return null;
+        }
+        return null;
+    }, toJson(data: Temporal.Duration | null | undefined): unknown | null {
+        return data?.toString() ?? null;
+    },
+};
+
+/**
  * Wraps a regular converter and exports/imports Arrays
  */
 export class ArrayConverter<DATA, JSON> implements JsonConverter<DATA[], JSON[]> {

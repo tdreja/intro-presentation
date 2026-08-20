@@ -5,6 +5,7 @@ import {
     STRING_CONVERTER,
     NUMBER_CONVERTER,
     DATE_TIME_CONVERTER,
+    DURATION_CONVERTER,
     ArrayConverter,
 } from './common';
 
@@ -236,6 +237,77 @@ describe('DATE_TIME_CONVERTER.toJson', () => {
 
     test('returns null for undefined', () => {
         expect(DATE_TIME_CONVERTER.toJson(undefined)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// DURATION_CONVERTER
+// ---------------------------------------------------------------------------
+
+describe('DURATION_CONVERTER.fromJson', () => {
+    test('parses a valid ISO duration string', () => {
+        const result = DURATION_CONVERTER.fromJson('PT5M');
+        expect(result).not.toBeNull();
+        expect((result as Temporal.Duration).minutes).toBe(5);
+    });
+
+    test('parses an ISO duration string with multiple components', () => {
+        const result = DURATION_CONVERTER.fromJson('P1DT2H30M');
+        expect(result).not.toBeNull();
+        expect((result as Temporal.Duration).days).toBe(1);
+        expect((result as Temporal.Duration).hours).toBe(2);
+        expect((result as Temporal.Duration).minutes).toBe(30);
+    });
+
+    test('accepts a DurationLike object', () => {
+        const result = DURATION_CONVERTER.fromJson({ minutes: 10, seconds: 30 });
+        expect(result).not.toBeNull();
+        expect((result as Temporal.Duration).minutes).toBe(10);
+        expect((result as Temporal.Duration).seconds).toBe(30);
+    });
+
+    test('returns null for an empty string', () => {
+        expect(DURATION_CONVERTER.fromJson('')).toBeNull();
+    });
+
+    test('returns null for an invalid duration string', () => {
+        expect(DURATION_CONVERTER.fromJson('not-a-duration')).toBeNull();
+    });
+
+    test('returns null for a number', () => {
+        expect(DURATION_CONVERTER.fromJson(42)).toBeNull();
+    });
+
+    test('returns null for null', () => {
+        expect(DURATION_CONVERTER.fromJson(null)).toBeNull();
+    });
+
+    test('returns null for undefined', () => {
+        expect(DURATION_CONVERTER.fromJson(undefined)).toBeNull();
+    });
+});
+
+describe('DURATION_CONVERTER.toJson', () => {
+    test('serializes a Duration to an ISO 8601 duration string', () => {
+        const duration = Temporal.Duration.from({ minutes: 5 });
+        const result = DURATION_CONVERTER.toJson(duration);
+        expect(typeof result).toBe('string');
+        expect(result as string).toBe('PT5M');
+    });
+
+    test('serializes a multi-component Duration', () => {
+        const duration = Temporal.Duration.from({ hours: 1, minutes: 30 });
+        const result = DURATION_CONVERTER.toJson(duration);
+        expect(typeof result).toBe('string');
+        expect(result as string).toBe('PT1H30M');
+    });
+
+    test('returns null for null', () => {
+        expect(DURATION_CONVERTER.toJson(null)).toBeNull();
+    });
+
+    test('returns null for undefined', () => {
+        expect(DURATION_CONVERTER.toJson(undefined)).toBeNull();
     });
 });
 
