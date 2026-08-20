@@ -2,8 +2,9 @@ import { APP_ID_CONVERTER, type AppId, newAppId } from '../identifier/AppId.ts';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../slides/SlideShow.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { BOOLEAN_CONVERTER, NUMBER_CONVERTER, STRING_CONVERTER } from '../json/common.ts';
+import { type Countdown, COUNTDOWN_CONVERTER } from '../slides/Countdown.ts';
 
-export type EventType = 'replace-slideshow' | 'go-to-slide';
+export type EventType = 'replace-slideshow' | 'go-to-slide' | 'update-countdown';
 
 /**
  * Actual event sent across all tabs
@@ -53,6 +54,13 @@ export function replaceSlideshowEvent(source: AppId, slideShow: SlideShow, remot
     };
 }
 
+export function asReplaceSlideshowEvent(event: AppEvent<unknown>): ReplaceSlideshowEvent | null {
+    if (event.type === 'replace-slideshow') {
+        return event as ReplaceSlideshowEvent;
+    }
+    return null;
+}
+
 /**
  * Event sent, whenever the current slide index changes
  */
@@ -68,6 +76,34 @@ export function goToSlideEvent(source: AppId, slideIndex: number, remoteOnly?: b
         payload: slideIndex,
         source,
     };
+}
+
+export function asGoToSlideEvent(event: AppEvent<unknown>): GoToSlideEvent | null {
+    if (event.type === 'go-to-slide') {
+        return event as GoToSlideEvent;
+    }
+    return null;
+}
+
+export interface UpdateCountdownEvent extends AppEvent<Countdown> {
+    readonly type: 'update-countdown'
+}
+
+export function updateCountdownEvent(source: AppId, countdown: Countdown, remoteOnly?: boolean): UpdateCountdownEvent {
+    return {
+        id: newAppId('event'),
+        type: 'update-countdown',
+        remoteOnly: !!remoteOnly,
+        payload: countdown,
+        source,
+    };
+}
+
+export function asUpdateCountdownEvent(event: AppEvent<unknown>): UpdateCountdownEvent | null {
+    if (event.type === 'update-countdown') {
+        return event as UpdateCountdownEvent;
+    }
+    return null;
 }
 
 export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
@@ -116,6 +152,19 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 }
                 return null;
             }
+            case 'update-countdown': {
+                const countdown = COUNTDOWN_CONVERTER.fromJson(parsed.payload);
+                if (countdown) {
+                    return {
+                        id,
+                        type,
+                        remoteOnly,
+                        payload: countdown,
+                        source,
+                    } as UpdateCountdownEvent;
+                }
+                return null;
+            }
             default:
                 return null;
         }
@@ -131,6 +180,9 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 break;
             case 'go-to-slide':
                 payload = NUMBER_CONVERTER.toJson(data.payload as number);
+                break;
+            case 'update-countdown':
+                payload = COUNTDOWN_CONVERTER.toJson(data.payload as Countdown);
                 break;
             default:
                 payload = undefined;

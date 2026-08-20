@@ -1,8 +1,18 @@
 import { describe, test, expect } from 'vitest';
-import { EVENT_CONVERTER, goToSlideEvent, replaceSlideshowEvent } from './Event';
+import { Temporal } from '@js-temporal/polyfill';
+import {
+    EVENT_CONVERTER,
+    goToSlideEvent,
+    replaceSlideshowEvent,
+    updateCountdownEvent,
+    asGoToSlideEvent,
+    asReplaceSlideshowEvent,
+    asUpdateCountdownEvent,
+} from './Event';
 import type { AppEvent } from './Event';
 import type { AppId } from '../identifier/AppId';
 import type { SlideShow } from '../slides/SlideShow';
+import type { Countdown } from '../slides/Countdown';
 
 const VALID_ID = 'evt-2026-08-19-10-00-00-000' as AppId;
 const SOURCE_ID = 'src-2026-08-19-10-00-00-000' as AppId;
@@ -61,6 +71,28 @@ describe('EVENT_CONVERTER — fromJson', () => {
         const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, type: 'replace-slideshow', remoteOnly: false, payload });
         expect(result).toBeNull();
     });
+
+    test('parses a valid update-countdown event', () => {
+        const raw = {
+            id: VALID_ID,
+            source: SOURCE_ID,
+            type: 'update-countdown',
+            remoteOnly: false,
+            payload: {
+                countdownTime: '2026-09-01T09:00:00',
+                showSmallCountdownFor: 'PT5M',
+                showLargeCountdownFor: 'PT1M',
+            },
+        };
+        const result = EVENT_CONVERTER.fromJson(raw);
+        expect(result?.type).toBe('update-countdown');
+        expect(result?.payload).toEqual(MINIMAL_COUNTDOWN);
+    });
+
+    test('returns null when update-countdown payload is not a valid Countdown', () => {
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: { bad: true } });
+        expect(result).toBeNull();
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -100,6 +132,24 @@ describe('EVENT_CONVERTER — toJson', () => {
         const restored = EVENT_CONVERTER.fromJson(json);
         expect(restored).toEqual(event);
     });
+
+    test('serializes an update-countdown event to the expected shape', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        const result = EVENT_CONVERTER.toJson(event);
+        expect(result?.type).toBe('update-countdown');
+        expect(result?.payload).toEqual({
+            countdownTime: '2026-09-01T09:00:00',
+            showSmallCountdownFor: 'PT5M',
+            showLargeCountdownFor: 'PT1M',
+        });
+    });
+
+    test('round-trip: toJson then fromJson for update-countdown returns an equal event', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: true, payload: MINIMAL_COUNTDOWN };
+        const json = EVENT_CONVERTER.toJson(event);
+        const restored = EVENT_CONVERTER.fromJson(json);
+        expect(restored).toEqual(event);
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -109,6 +159,12 @@ describe('EVENT_CONVERTER — toJson', () => {
 const MINIMAL_SLIDESHOW: SlideShow = {
     id: 'ss-2026-01-01-00-00-00-000' as AppId,
     slides: [],
+};
+
+const MINIMAL_COUNTDOWN: Countdown = {
+    countdownTime: Temporal.PlainDateTime.from('2026-09-01T09:00:00'),
+    showSmallCountdownFor: Temporal.Duration.from({ minutes: 5 }),
+    showLargeCountdownFor: Temporal.Duration.from({ minutes: 1 }),
 };
 
 // ---------------------------------------------------------------------------
@@ -168,5 +224,102 @@ describe('replaceSlideshowEvent', () => {
 
     test('id starts with the event- prefix', () => {
         expect(replaceSlideshowEvent(SOURCE_ID, MINIMAL_SLIDESHOW).id).toMatch(/^event-/);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// updateCountdownEvent
+// ---------------------------------------------------------------------------
+
+describe('updateCountdownEvent', () => {
+    test('sets type to update-countdown', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).type).toBe('update-countdown');
+    });
+
+    test('sets payload to the given Countdown', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).payload).toEqual(MINIMAL_COUNTDOWN);
+    });
+
+    test('sets source to the given source id', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).source).toBe(SOURCE_ID);
+    });
+
+    test('remoteOnly defaults to false when omitted', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).remoteOnly).toBe(false);
+    });
+
+    test('remoteOnly is true when passed true', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN, true).remoteOnly).toBe(true);
+    });
+
+    test('remoteOnly is false when passed false explicitly', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN, false).remoteOnly).toBe(false);
+    });
+
+    test('id starts with the event- prefix', () => {
+        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).id).toMatch(/^event-/);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// asGoToSlideEvent
+// ---------------------------------------------------------------------------
+
+describe('asGoToSlideEvent', () => {
+    test('returns the event when type is go-to-slide', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: 2 };
+        expect(asGoToSlideEvent(event)).toBe(event);
+    });
+
+    test('returns null when type is replace-slideshow', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload: MINIMAL_SLIDESHOW };
+        expect(asGoToSlideEvent(event)).toBeNull();
+    });
+
+    test('returns null when type is update-countdown', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        expect(asGoToSlideEvent(event)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// asReplaceSlideshowEvent
+// ---------------------------------------------------------------------------
+
+describe('asReplaceSlideshowEvent', () => {
+    test('returns the event when type is replace-slideshow', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload: MINIMAL_SLIDESHOW };
+        expect(asReplaceSlideshowEvent(event)).toBe(event);
+    });
+
+    test('returns null when type is go-to-slide', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: 0 };
+        expect(asReplaceSlideshowEvent(event)).toBeNull();
+    });
+
+    test('returns null when type is update-countdown', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        expect(asReplaceSlideshowEvent(event)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// asUpdateCountdownEvent
+// ---------------------------------------------------------------------------
+
+describe('asUpdateCountdownEvent', () => {
+    test('returns the event when type is update-countdown', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        expect(asUpdateCountdownEvent(event)).toBe(event);
+    });
+
+    test('returns null when type is go-to-slide', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: 0 };
+        expect(asUpdateCountdownEvent(event)).toBeNull();
+    });
+
+    test('returns null when type is replace-slideshow', () => {
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload: MINIMAL_SLIDESHOW };
+        expect(asUpdateCountdownEvent(event)).toBeNull();
     });
 });
