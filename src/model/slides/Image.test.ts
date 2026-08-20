@@ -25,7 +25,7 @@ class MockFileReader {
     });
 }
 
-global.FileReader = MockFileReader as unknown as typeof FileReader;
+(globalThis as { FileReader: typeof FileReader }).FileReader = MockFileReader as unknown as typeof FileReader;
 
 // ---------------------------------------------------------------------------
 // asBase64Image
