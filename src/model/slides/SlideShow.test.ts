@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
+import { findNextSlideId, findSlide, indexOfSlide, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
 import type { FullImageSlide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
@@ -145,5 +145,134 @@ describe('SLIDE_SHOW_CONVERTER round-trip', () => {
         expect(result).not.toBeNull();
         expect(result.id).toBe(VALID_SHOW_ID);
         expect(result.slides).toEqual([]);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// findSlide
+// ---------------------------------------------------------------------------
+
+describe('findSlide', () => {
+    const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
+
+    test('returns null when both arguments are undefined', () => {
+        expect(findSlide()).toBeNull();
+    });
+
+    test('returns null when slideShow is null', () => {
+        expect(findSlide(null, VALID_SLIDE_ID)).toBeNull();
+    });
+
+    test('returns null when slideId is null', () => {
+        expect(findSlide(MINIMAL_SLIDESHOW, null)).toBeNull();
+    });
+
+    test('returns null when both arguments are null', () => {
+        expect(findSlide(null, null)).toBeNull();
+    });
+
+    test('returns the matching slide', () => {
+        expect(findSlide(MINIMAL_SLIDESHOW, VALID_SLIDE_ID)).toBe(FULL_IMAGE_SLIDE);
+    });
+
+    test('returns null when no slide matches the given id', () => {
+        expect(findSlide(MINIMAL_SLIDESHOW, OTHER_SLIDE_ID)).toBeNull();
+    });
+
+    test('returns null when the slides array is empty', () => {
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        expect(findSlide(empty, VALID_SLIDE_ID)).toBeNull();
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Shared fixtures for multi-slide tests
+// ---------------------------------------------------------------------------
+
+const SLIDE_2_ID = 'slide-2026-08-18-10-00-00-001' as AppId;
+const SLIDE_3_ID = 'slide-2026-08-18-10-00-00-002' as AppId;
+const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
+
+const SLIDE_2: FullImageSlide = { slideId: SLIDE_2_ID, slideType: 'full-image', image: VALID_IMAGE };
+const SLIDE_3: FullImageSlide = { slideId: SLIDE_3_ID, slideType: 'full-image', image: VALID_IMAGE };
+
+const TWO_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2] };
+const THREE_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2, SLIDE_3] };
+
+// ---------------------------------------------------------------------------
+// indexOfSlide
+// ---------------------------------------------------------------------------
+
+describe('indexOfSlide', () => {
+    test('returns -1 when both arguments are undefined', () => {
+        expect(indexOfSlide()).toBe(-1);
+    });
+
+    test('returns -1 when slideShow is null', () => {
+        expect(indexOfSlide(null, VALID_SLIDE_ID)).toBe(-1);
+    });
+
+    test('returns -1 when slideId is null', () => {
+        expect(indexOfSlide(MINIMAL_SLIDESHOW, null)).toBe(-1);
+    });
+
+    test('returns -1 when slide is not found', () => {
+        expect(indexOfSlide(MINIMAL_SLIDESHOW, OTHER_SLIDE_ID)).toBe(-1);
+    });
+
+    test('returns -1 for an empty slides array', () => {
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        expect(indexOfSlide(empty, VALID_SLIDE_ID)).toBe(-1);
+    });
+
+    test('returns 0 for the only slide', () => {
+        expect(indexOfSlide(MINIMAL_SLIDESHOW, VALID_SLIDE_ID)).toBe(0);
+    });
+
+    test('returns 0 for the first slide in a multi-slide show', () => {
+        expect(indexOfSlide(TWO_SLIDE_SHOW, VALID_SLIDE_ID)).toBe(0);
+    });
+
+    test('returns 1 for the second slide in a multi-slide show', () => {
+        expect(indexOfSlide(TWO_SLIDE_SHOW, SLIDE_2_ID)).toBe(1);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// findNextSlideId
+// ---------------------------------------------------------------------------
+
+describe('findNextSlideId', () => {
+    test('returns null when slideShow is undefined', () => {
+        expect(findNextSlideId()).toBeNull();
+    });
+
+    test('returns null when slideShow is null', () => {
+        expect(findNextSlideId(null, VALID_SLIDE_ID)).toBeNull();
+    });
+
+    test('returns null for an empty slides array', () => {
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
+        expect(findNextSlideId(empty, VALID_SLIDE_ID)).toBeNull();
+    });
+
+    test('wraps to first slide when currentSlideId is null', () => {
+        expect(findNextSlideId(MINIMAL_SLIDESHOW, null)).toBe(VALID_SLIDE_ID);
+    });
+
+    test('wraps to first slide when currentSlideId is not found', () => {
+        expect(findNextSlideId(TWO_SLIDE_SHOW, OTHER_SLIDE_ID)).toBe(VALID_SLIDE_ID);
+    });
+
+    test('returns the second slide when current is the first', () => {
+        expect(findNextSlideId(TWO_SLIDE_SHOW, VALID_SLIDE_ID)).toBe(SLIDE_2_ID);
+    });
+
+    test('wraps to first slide when current is the last', () => {
+        expect(findNextSlideId(TWO_SLIDE_SHOW, SLIDE_2_ID)).toBe(VALID_SLIDE_ID);
+    });
+
+    test('returns the next slide for a middle slide in a three-slide show', () => {
+        expect(findNextSlideId(THREE_SLIDE_SHOW, SLIDE_2_ID)).toBe(SLIDE_3_ID);
     });
 });

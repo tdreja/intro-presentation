@@ -1,7 +1,7 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
 import { PLACEHOLDER_IMAGE } from './model/slides/Image.ts';
-import type { SlideShow } from './model/slides/SlideShow.ts';
+import { findSlide, type SlideShow } from './model/slides/SlideShow.ts';
 import type { AppId } from './model/identifier/AppId.ts';
 import type { Countdown } from './model/slides/Countdown.ts';
 import { countdownFromStorage, currentSlideIdFromStorage, slideShowFromStorage } from './communication/LocalStorage.ts';
@@ -49,8 +49,8 @@ export const App = (): ReactElement => {
     // Memoize the state tuples for the rest of the app
     const slideShowState: SlideShowState = useMemo(() => [localSlideShow, setSlideShow],
         [localSlideShow, setSlideShow]);
-    const currentSlideState: CurrentSlideState = useMemo(() => [localCurrentSlide, setCurrentSlide],
-        [localCurrentSlide, setCurrentSlide]);
+    const currentSlideState: CurrentSlideState = useMemo(() => [findSlide(localSlideShow, localCurrentSlide), setCurrentSlide],
+        [localSlideShow, localCurrentSlide, setCurrentSlide]);
     const countdownState: CountdownState = useMemo(() => [localCountdown, setCountdown],
         [localCountdown, setCountdown]);
 

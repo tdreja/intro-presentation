@@ -47,3 +47,31 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         };
     },
 };
+
+export function findSlide(slideShow?: SlideShow | null, slideId?: AppId | null): Slide | null {
+    if (slideShow && slideId) {
+        return slideShow.slides.find(slide => slide.slideId === slideId) ?? null;
+    }
+    return null;
+}
+
+export function indexOfSlide(slideShow?: SlideShow | null, slideId?: AppId | null): number {
+    if (slideShow && slideId) {
+        return slideShow.slides.findIndex(slide => slide.slideId === slideId);
+    }
+    return -1;
+}
+
+export function findNextSlideId(slideShow?: SlideShow | null, currentSlideId?: AppId | null): AppId | null {
+    if (slideShow) {
+        if (slideShow.slides.length === 0) {
+            return null;
+        }
+        const index = indexOfSlide(slideShow, currentSlideId);
+        if (index >= 0 && index < slideShow.slides.length - 1) {
+            return slideShow.slides[index + 1].slideId;
+        }
+        return slideShow.slides[0].slideId;
+    }
+    return null;
+}
