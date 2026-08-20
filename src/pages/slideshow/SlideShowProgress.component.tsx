@@ -7,12 +7,9 @@ type Props = {
     timePerSlideMs: number
 };
 
-export const SlideShowBottomNav = ({ slides, currentSlideId, timePerSlideMs }: Props): ReactElement => {
+export const SlideShowProgress = ({ slides, currentSlideId, timePerSlideMs }: Props): ReactElement => {
     return (
-        <nav
-            className="navbar bg-body-secondary border-top flex-shrink-0 justify-content-center gap-2"
-            style={{ height: 'var(--navbar-height)' }}
-        >
+        <div className="d-flex justify-content-center gap-2">
             {slides.map((slide) => {
                 const isActive = slide.slideId === currentSlideId;
                 return (
@@ -25,6 +22,6 @@ export const SlideShowBottomNav = ({ slides, currentSlideId, timePerSlideMs }: P
                     </span>
                 );
             })}
-        </nav>
+        </div>
     );
 };

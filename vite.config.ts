@@ -7,6 +7,6 @@ export default defineConfig({
     plugins: [react(), viteSingleFile()],
     test: {
         environment: 'node',
-        include: ['**/*.test.ts'],
+        include: ['**/*.test.ts', '**/*.spec.tsx'],
     },
 });

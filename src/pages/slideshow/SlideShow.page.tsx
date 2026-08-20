@@ -5,13 +5,11 @@ import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
 import { HalfTextHalfImageSlideComponent } from './HalfTextHalfImageSlide.component.tsx';
-import { SlideShowBottomNav } from './SlideShowBottomNav.component.tsx';
+import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
 
 export const SlideShowPage = (): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
     const [slideshow] = useSlideShow();
-
-    const timePerSlideMs = slideshow.timePerSlide.total('milliseconds');
 
     useEffect(() => {
         const ms = slideshow.timePerSlide.total('milliseconds');
@@ -44,9 +42,8 @@ export const SlideShowPage = (): ReactElement => {
                 {renderSlide()}
             </div>
             <SlideShowBottomNav
-                slides={slideshow.slides}
+                slideShow={slideshow}
                 currentSlideId={currentSlide?.slideId}
-                timePerSlideMs={timePerSlideMs}
             />
         </div>
     );
