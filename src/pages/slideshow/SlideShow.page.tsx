@@ -1,10 +1,11 @@
-import { useEffect, type CSSProperties, type ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/Slide.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
 import { HalfTextHalfImageSlideComponent } from './HalfTextHalfImageSlide.component.tsx';
+import { SlideShowBottomNav } from './SlideShowBottomNav.component.tsx';
 
 export const SlideShowPage = (): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
@@ -42,23 +43,11 @@ export const SlideShowPage = (): ReactElement => {
             <div className="flex-grow-1 overflow-hidden position-relative">
                 {renderSlide()}
             </div>
-            <nav
-                className="navbar bg-body-secondary border-top flex-shrink-0 justify-content-center gap-2"
-                style={{ height: 'var(--navbar-height)' }}
-            >
-                {slideshow.slides.map((slide) => {
-                    const isActive = slide.slideId === currentSlide?.slideId;
-                    return (
-                        <span
-                            key={slide.slideId}
-                            className={`slide-dot${isActive ? ' slide-dot--active' : ''}`}
-                            style={isActive ? { '--time-per-slide': `${timePerSlideMs}ms` } as CSSProperties : undefined}
-                        >
-                            {isActive && <span className="slide-dot-fill" />}
-                        </span>
-                    );
-                })}
-            </nav>
+            <SlideShowBottomNav
+                slides={slideshow.slides}
+                currentSlideId={currentSlide?.slideId}
+                timePerSlideMs={timePerSlideMs}
+            />
         </div>
     );
 };
