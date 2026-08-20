@@ -1,11 +1,22 @@
-import type { ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
+import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/Slide.ts';
+import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
 import { HalfTextHalfImageSlideComponent } from './HalfTextHalfImageSlide.component.tsx';
 
 export const SlideShowPage = (): ReactElement => {
-    const [currentSlide] = useCurrentSlide();
+    const [currentSlide, setCurrentSlideId] = useCurrentSlide();
+    const [slideshow] = useSlideShow();
+
+    useEffect(() => {
+        const ms = slideshow.timePerSlide.total('milliseconds');
+        const timer = setTimeout(() => {
+            setCurrentSlideId(findNextSlideId(slideshow, currentSlide?.slideId));
+        }, ms);
+        return () => clearTimeout(timer);
+    }, [slideshow, currentSlide, setCurrentSlideId]);
 
     const renderSlide = (): ReactElement => {
         if (!currentSlide) {
