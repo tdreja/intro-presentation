@@ -79,11 +79,11 @@ export function asGoToSlideEvent(event: AppEvent<unknown>): GoToSlideEvent | nul
     return null;
 }
 
-export interface UpdateCountdownEvent extends AppEvent<Countdown | null> {
+export interface UpdateCountdownEvent extends AppEvent<Countdown> {
     readonly type: 'update-countdown'
 }
 
-export function updateCountdownEvent(source: AppId, countdown: Countdown | null): UpdateCountdownEvent {
+export function updateCountdownEvent(source: AppId, countdown: Countdown): UpdateCountdownEvent {
     return {
         id: newAppId('event'),
         type: 'update-countdown',
@@ -163,7 +163,7 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 payload = APP_ID_CONVERTER.toJson(data.payload as AppId | null);
                 break;
             case 'update-countdown':
-                payload = COUNTDOWN_CONVERTER.toJson(data.payload as Countdown | null);
+                payload = COUNTDOWN_CONVERTER.toJson(data.payload as Countdown);
                 break;
             default:
                 payload = undefined;

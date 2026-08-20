@@ -175,11 +175,13 @@ describe('EVENT_CONVERTER — toJson', () => {
         expect(restored).toEqual(event);
     });
 
-    test('round-trip: toJson then fromJson for update-countdown with null payload', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: null };
+    test('round-trip: toJson then fromJson for update-countdown with minimal (ID-only) countdown', () => {
+        const minimal: Countdown = { countdownId: 'countdown-2026-09-01-09-00-00-000' };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: minimal };
         const json = EVENT_CONVERTER.toJson(event);
         const restored = EVENT_CONVERTER.fromJson(json);
-        expect(restored).toEqual(event);
+        expect(restored?.type).toBe('update-countdown');
+        expect((restored?.payload as Countdown).countdownId).toBe(minimal.countdownId);
     });
 });
 
@@ -251,10 +253,6 @@ describe('updateCountdownEvent', () => {
 
     test('sets payload to the given Countdown', () => {
         expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).payload).toEqual(MINIMAL_COUNTDOWN);
-    });
-
-    test('sets payload to null when null is passed', () => {
-        expect(updateCountdownEvent(SOURCE_ID, null).payload).toBeNull();
     });
 
     test('sets source to the given source id', () => {

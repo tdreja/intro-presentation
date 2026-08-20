@@ -2,7 +2,7 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
 import { findSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './model/slides/SlideShow.ts';
 import { type AppId, newAppId } from './model/identifier/AppId.ts';
-import { type Countdown, COUNTDOWN_CONVERTER } from './model/slides/Countdown.ts';
+import { type Countdown, COUNTDOWN_CONVERTER, FALLBACK_COUNTDOWN } from './model/slides/Countdown.ts';
 import {
     countdownFromStorage,
     countdownToStorage,
@@ -37,7 +37,7 @@ export const App = (): ReactElement => {
         return pickNewest(slideShowFromStorage(), fromHtml) ?? FALLBACK_SLIDESHOW;
     });
     const [localCurrentSlide, setLocalCurrentSlide] = useState<AppId | null>(() => currentSlideIdFromStorage());
-    const [localCountdown, setLocalCountdown] = useState<Countdown | null>(() => {
+    const [localCountdown, setLocalCountdown] = useState<Countdown>(() => {
         const fromHtml = COUNTDOWN_CONVERTER.fromJson(window.startupCountdown);
         const fromStorage = countdownFromStorage();
         if (fromHtml && fromStorage) {
@@ -50,7 +50,7 @@ export const App = (): ReactElement => {
             return fromStorage;
         }
         else {
-            return null;
+            return FALLBACK_COUNTDOWN;
         }
     });
 
@@ -67,11 +67,9 @@ export const App = (): ReactElement => {
         }
         eventBus.dispatchEvent(goToSlideEvent(source, slideId));
     }, [eventBus, source, setLocalCurrentSlide]);
-    const setCountdown = useCallback((countdown: Countdown | null) => {
+    const setCountdown = useCallback((countdown: Countdown) => {
         setLocalCountdown(countdown);
-        if (countdown) {
-            countdownToStorage(countdown);
-        }
+        countdownToStorage(countdown);
         eventBus.dispatchEvent(updateCountdownEvent(source, countdown));
     }, [eventBus, source, setLocalCountdown]);
 
@@ -82,7 +80,7 @@ export const App = (): ReactElement => {
                 setLocalSlideShow(ev.payload);
             }
         });
-        eventBus.registerListener('app-count-down', 'update-countdown', (ev: AppEvent<Countdown | null>) => {
+        eventBus.registerListener('app-count-down', 'update-countdown', (ev: AppEvent<Countdown>) => {
             if (ev.source !== source) {
                 setLocalCountdown(ev.payload);
             }

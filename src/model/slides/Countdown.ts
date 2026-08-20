@@ -1,10 +1,12 @@
 import { Temporal } from '@js-temporal/polyfill';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { DATE_TIME_CONVERTER, DURATION_CONVERTER } from '../json/common.ts';
-import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
+import { APP_ID_CONVERTER, type AppId, FALLBACK_APP_ID } from '../identifier/AppId.ts';
 
 /**
  * Countdown configuration describing when and how long to display countdown views.
+ * Only countdownId is required; all other fields are optional and may be absent
+ * (e.g. when representing a cleared countdown that has only an identity).
  */
 export interface Countdown {
     /**
@@ -14,16 +16,21 @@ export interface Countdown {
     /**
      * The target date and time to count down to.
      */
-    readonly countdownTime: Temporal.PlainDateTime
+    readonly countdownTime?: Temporal.PlainDateTime | null
     /**
      * How long before countdownTime to show the small countdown view.
      */
-    readonly showSmallCountdownFor: Temporal.Duration
+    readonly showSmallCountdownFor?: Temporal.Duration | null
     /**
      * How long before countdownTime to show the large countdown view.
      */
-    readonly showLargeCountdownFor: Temporal.Duration
+    readonly showLargeCountdownFor?: Temporal.Duration | null
 }
+
+/**
+ * Fallback countdown used as the default/cleared state when no countdown is configured.
+ */
+export const FALLBACK_COUNTDOWN: Countdown = { countdownId: FALLBACK_APP_ID };
 
 export type RawJsonCountdown = RawJson<Countdown>;
 
@@ -40,18 +47,9 @@ export const COUNTDOWN_CONVERTER: JsonConverter<Countdown, RawJsonCountdown> = {
         if (!countdownId) {
             return null;
         }
-        const countdownTime = DATE_TIME_CONVERTER.fromJson(parsed.countdownTime);
-        if (!countdownTime) {
-            return null;
-        }
-        const showSmallCountdownFor = DURATION_CONVERTER.fromJson(parsed.showSmallCountdownFor);
-        if (!showSmallCountdownFor) {
-            return null;
-        }
-        const showLargeCountdownFor = DURATION_CONVERTER.fromJson(parsed.showLargeCountdownFor);
-        if (!showLargeCountdownFor) {
-            return null;
-        }
+        const countdownTime = DATE_TIME_CONVERTER.fromJson(parsed.countdownTime) ?? null;
+        const showSmallCountdownFor = DURATION_CONVERTER.fromJson(parsed.showSmallCountdownFor) ?? null;
+        const showLargeCountdownFor = DURATION_CONVERTER.fromJson(parsed.showLargeCountdownFor) ?? null;
         return { countdownId, countdownTime, showSmallCountdownFor, showLargeCountdownFor };
     },
     toJson(data: Countdown | null | undefined): RawJsonCountdown | null {
