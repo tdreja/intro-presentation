@@ -24,6 +24,7 @@ export default defineConfig([
       '@typescript-eslint/no-empty-object-type': ['error', { allowInterfaces: 'always' }],
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@stylistic/indent': ['error', 4],
+      '@stylistic/jsx-indent-props': ['error', 4],
       '@stylistic/semi': ['error', 'always'],
     },
   },

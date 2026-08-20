@@ -1,6 +1,5 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
-import { PLACEHOLDER_IMAGE } from './model/slides/Image.ts';
 import { findSlide, type SlideShow } from './model/slides/SlideShow.ts';
 import { type AppId, newAppId } from './model/identifier/AppId.ts';
 import type { Countdown } from './model/slides/Countdown.ts';
@@ -16,6 +15,7 @@ import { FALLBACK_SLIDESHOW, SlideShowContext, type SlideShowState } from './com
 import { CurrentSlideContext, type CurrentSlideState } from './communication/context/CurrentSlide.context.ts';
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
 import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
+import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
 
 const channel: BroadcastChannel = new BroadcastChannel('intro-presentation-channel');
 let lastListener: ChannelListener = () => {
@@ -89,8 +89,7 @@ export const App = (): ReactElement => {
             <SlideShowContext.Provider value={slideShowState}>
                 <CurrentSlideContext.Provider value={currentSlideState}>
                     <CountdownContext.Provider value={countdownState}>
-                        <p>Test</p>
-                        <img src={PLACEHOLDER_IMAGE} alt="Placeholder" />
+                        <SlideShowPage />
                     </CountdownContext.Provider>
                 </CurrentSlideContext.Provider>
             </SlideShowContext.Provider>
