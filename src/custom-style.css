@@ -1,3 +1,33 @@
 :root {
     --navbar-height: 56px;
+    --time-per-slide: 10000ms;
+}
+
+.slide-dot {
+    position: relative;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.35);
+    background: currentColor;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.slide-dot--active {
+    width: 30px;
+    border-radius: 5px;
+}
+
+.slide-dot-fill {
+    position: absolute;
+    inset: 0;
+    background: white;
+    transform-origin: left center;
+    animation: slide-dot-fill var(--time-per-slide) linear forwards;
+}
+
+@keyframes slide-dot-fill {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
 }

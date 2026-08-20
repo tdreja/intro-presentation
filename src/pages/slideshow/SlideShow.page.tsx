@@ -1,4 +1,4 @@
-import { useEffect, type ReactElement } from 'react';
+import { useEffect, type CSSProperties, type ReactElement } from 'react';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/Slide.ts';
@@ -10,9 +10,12 @@ export const SlideShowPage = (): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
     const [slideshow] = useSlideShow();
 
+    const timePerSlideMs = slideshow.timePerSlide.total('milliseconds');
+
     useEffect(() => {
         const ms = slideshow.timePerSlide.total('milliseconds');
         const timer = setTimeout(() => {
+            console.log('Switching to next slide');
             setCurrentSlideId(findNextSlideId(slideshow, currentSlide?.slideId));
         }, ms);
         return () => clearTimeout(timer);
@@ -40,9 +43,22 @@ export const SlideShowPage = (): ReactElement => {
                 {renderSlide()}
             </div>
             <nav
-                className="navbar bg-body-secondary border-top flex-shrink-0"
+                className="navbar bg-body-secondary border-top flex-shrink-0 justify-content-center gap-2"
                 style={{ height: 'var(--navbar-height)' }}
-            />
+            >
+                {slideshow.slides.map((slide) => {
+                    const isActive = slide.slideId === currentSlide?.slideId;
+                    return (
+                        <span
+                            key={slide.slideId}
+                            className={`slide-dot${isActive ? ' slide-dot--active' : ''}`}
+                            style={isActive ? { '--time-per-slide': `${timePerSlideMs}ms` } as CSSProperties : undefined}
+                        >
+                            {isActive && <span className="slide-dot-fill" />}
+                        </span>
+                    );
+                })}
+            </nav>
         </div>
     );
 };
