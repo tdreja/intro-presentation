@@ -86,6 +86,7 @@ describe('EVENT_CONVERTER — fromJson', () => {
             source: SOURCE_ID,
             type: 'update-countdown',
             payload: {
+                countdownId: 'countdown-2026-09-01-09-00-00-000',
                 countdownTime: '2026-09-01T09:00:00',
                 showSmallCountdownFor: 'PT5M',
                 showLargeCountdownFor: 'PT1M',
@@ -160,6 +161,7 @@ describe('EVENT_CONVERTER — toJson', () => {
         const result = EVENT_CONVERTER.toJson(event);
         expect(result?.type).toBe('update-countdown');
         expect(result?.payload).toEqual({
+            countdownId: 'countdown-2026-09-01-09-00-00-000',
             countdownTime: '2026-09-01T09:00:00',
             showSmallCountdownFor: 'PT5M',
             showLargeCountdownFor: 'PT1M',
@@ -192,6 +194,7 @@ const MINIMAL_SLIDESHOW: SlideShow = {
 };
 
 const MINIMAL_COUNTDOWN: Countdown = {
+    countdownId: 'countdown-2026-09-01-09-00-00-000',
     countdownTime: Temporal.PlainDateTime.from('2026-09-01T09:00:00'),
     showSmallCountdownFor: Temporal.Duration.from({ minutes: 5 }),
     showLargeCountdownFor: Temporal.Duration.from({ minutes: 1 }),

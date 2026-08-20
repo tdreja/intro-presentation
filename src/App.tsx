@@ -16,7 +16,6 @@ import { CurrentSlideContext, type CurrentSlideState } from './communication/con
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
 import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
 import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
-import { Temporal } from '@js-temporal/polyfill';
 
 const channel: BroadcastChannel = new BroadcastChannel('intro-presentation-channel');
 let lastListener: ChannelListener = () => {
@@ -42,7 +41,7 @@ export const App = (): ReactElement => {
         const fromHtml = COUNTDOWN_CONVERTER.fromJson(window.startupCountdown);
         const fromStorage = countdownFromStorage();
         if (fromHtml && fromStorage) {
-            return Temporal.PlainDateTime.compare(fromHtml.countdownTime, fromStorage.countdownTime) >= 0 ? fromHtml : fromStorage;
+            return fromHtml.countdownId >= fromStorage.countdownId ? fromHtml : fromStorage;
         }
         else if (fromHtml) {
             return fromHtml;

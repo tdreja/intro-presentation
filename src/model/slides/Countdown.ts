@@ -1,11 +1,16 @@
 import { Temporal } from '@js-temporal/polyfill';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { DATE_TIME_CONVERTER, DURATION_CONVERTER } from '../json/common.ts';
+import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
 
 /**
  * Countdown configuration describing when and how long to display countdown views.
  */
 export interface Countdown {
+    /**
+     * Unique identifier for this countdown configuration.
+     */
+    readonly countdownId: AppId
     /**
      * The target date and time to count down to.
      */
@@ -31,6 +36,10 @@ export const COUNTDOWN_CONVERTER: JsonConverter<Countdown, RawJsonCountdown> = {
             return null;
         }
         const parsed = json as RawJsonCountdown;
+        const countdownId = APP_ID_CONVERTER.fromJson(parsed.countdownId);
+        if (!countdownId) {
+            return null;
+        }
         const countdownTime = DATE_TIME_CONVERTER.fromJson(parsed.countdownTime);
         if (!countdownTime) {
             return null;
@@ -43,13 +52,14 @@ export const COUNTDOWN_CONVERTER: JsonConverter<Countdown, RawJsonCountdown> = {
         if (!showLargeCountdownFor) {
             return null;
         }
-        return { countdownTime, showSmallCountdownFor, showLargeCountdownFor };
+        return { countdownId, countdownTime, showSmallCountdownFor, showLargeCountdownFor };
     },
     toJson(data: Countdown | null | undefined): RawJsonCountdown | null {
         if (!data) {
             return null;
         }
         return {
+            countdownId: APP_ID_CONVERTER.toJson(data.countdownId),
             countdownTime: DATE_TIME_CONVERTER.toJson(data.countdownTime),
             showSmallCountdownFor: DURATION_CONVERTER.toJson(data.showSmallCountdownFor),
             showLargeCountdownFor: DURATION_CONVERTER.toJson(data.showLargeCountdownFor),

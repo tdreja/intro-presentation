@@ -4,12 +4,14 @@ import { COUNTDOWN_CONVERTER } from './Countdown';
 import type { Countdown } from './Countdown';
 
 const VALID_COUNTDOWN: Countdown = {
+    countdownId: 'countdown-2026-09-01-09-00-00-000',
     countdownTime: Temporal.PlainDateTime.from('2026-09-01T09:00:00'),
     showSmallCountdownFor: Temporal.Duration.from({ minutes: 30 }),
     showLargeCountdownFor: Temporal.Duration.from({ minutes: 5 }),
 };
 
 const VALID_JSON = {
+    countdownId: 'countdown-2026-09-01-09-00-00-000',
     countdownTime: '2026-09-01T09:00:00',
     showSmallCountdownFor: 'PT30M',
     showLargeCountdownFor: 'PT5M',
@@ -23,6 +25,7 @@ describe('COUNTDOWN_CONVERTER.fromJson', () => {
     test('returns a valid Countdown from a complete JSON object', () => {
         const result = COUNTDOWN_CONVERTER.fromJson(VALID_JSON);
         expect(result).not.toBeNull();
+        expect(result!.countdownId).toBe('countdown-2026-09-01-09-00-00-000');
         expect(result!.countdownTime.year).toBe(2026);
         expect(result!.countdownTime.month).toBe(9);
         expect(result!.countdownTime.day).toBe(1);
@@ -37,6 +40,16 @@ describe('COUNTDOWN_CONVERTER.fromJson', () => {
 
     test('returns null for undefined', () => {
         expect(COUNTDOWN_CONVERTER.fromJson(undefined)).toBeNull();
+    });
+
+    test('returns null when countdownId is missing', () => {
+        const json = { ...VALID_JSON, countdownId: undefined };
+        expect(COUNTDOWN_CONVERTER.fromJson(json)).toBeNull();
+    });
+
+    test('returns null when countdownId is invalid', () => {
+        const json = { ...VALID_JSON, countdownId: 'not-an-id' };
+        expect(COUNTDOWN_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null when countdownTime is missing', () => {
@@ -75,9 +88,10 @@ describe('COUNTDOWN_CONVERTER.fromJson', () => {
 // ---------------------------------------------------------------------------
 
 describe('COUNTDOWN_CONVERTER.toJson', () => {
-    test('serializes all three fields correctly', () => {
+    test('serializes all fields correctly', () => {
         const result = COUNTDOWN_CONVERTER.toJson(VALID_COUNTDOWN);
         expect(result).not.toBeNull();
+        expect(result!.countdownId).toBe('countdown-2026-09-01-09-00-00-000');
         expect(result!.countdownTime).toContain('2026-09-01');
         expect(result!.showSmallCountdownFor).toBe('PT30M');
         expect(result!.showLargeCountdownFor).toBe('PT5M');
@@ -87,6 +101,7 @@ describe('COUNTDOWN_CONVERTER.toJson', () => {
         const json = COUNTDOWN_CONVERTER.toJson(VALID_COUNTDOWN);
         const restored = COUNTDOWN_CONVERTER.fromJson(json);
         expect(restored).not.toBeNull();
+        expect(restored!.countdownId).toBe(VALID_COUNTDOWN.countdownId);
         expect(Temporal.PlainDateTime.compare(restored!.countdownTime, VALID_COUNTDOWN.countdownTime)).toBe(0);
         expect(restored!.showSmallCountdownFor.minutes).toBe(VALID_COUNTDOWN.showSmallCountdownFor.minutes);
         expect(restored!.showLargeCountdownFor.minutes).toBe(VALID_COUNTDOWN.showLargeCountdownFor.minutes);
