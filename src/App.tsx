@@ -1,6 +1,6 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
-import { findSlide, type SlideShow } from './model/slides/SlideShow.ts';
+import { findSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './model/slides/SlideShow.ts';
 import { type AppId, newAppId } from './model/identifier/AppId.ts';
 import type { Countdown } from './model/slides/Countdown.ts';
 import {
@@ -32,7 +32,10 @@ export const App = (): ReactElement => {
     });
 
     // Prepare the local state for this app!
-    const [localSlideShow, setLocalSlideShow] = useState<SlideShow>(() => slideShowFromStorage() || FALLBACK_SLIDESHOW);
+    const [localSlideShow, setLocalSlideShow] = useState<SlideShow>(() => {
+        const fromHtml = SLIDE_SHOW_CONVERTER.fromJson(window.DEFAULT_SLIDESHOW);
+        return pickNewest(slideShowFromStorage(), fromHtml) ?? FALLBACK_SLIDESHOW;
+    });
     const [localCurrentSlide, setLocalCurrentSlide] = useState<AppId | null>(() => currentSlideIdFromStorage());
     const [localCountdown, setLocalCountdown] = useState<Countdown | null>(() => countdownFromStorage());
 

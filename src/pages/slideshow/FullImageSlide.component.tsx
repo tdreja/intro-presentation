@@ -15,7 +15,7 @@ export const FullImageSlideComponent = ({ slide }: Props): ReactElement => {
                 style={{ objectFit: 'cover' }}
             />
             {slide.headline && (
-                <div className="position-absolute top-0 start-0 m-3 px-3 py-2 rounded fs-3 text-white bg-dark bg-opacity-50">
+                <div className="position-absolute top-0 start-0 end-0 m-3 px-3 py-2 rounded fs-3 text-white bg-dark bg-opacity-50 text-center">
                     {slide.headline}
                 </div>
             )}

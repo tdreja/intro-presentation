@@ -50,7 +50,7 @@ export const HalfTextHalfImageSlideComponent = ({ slide }: Props): ReactElement 
     return (
         <div className="d-flex flex-column w-100 h-100 overflow-hidden">
             {slide.headline && (
-                <h2 className="p-3 mb-0 border-bottom flex-shrink-0">{slide.headline}</h2>
+                <h2 className="p-3 mb-0 border-bottom flex-shrink-0 text-center">{slide.headline}</h2>
             )}
             <div className="d-flex flex-grow-1 overflow-hidden">
                 {imageFirst ? [imageCol, textCol] : [textCol, imageCol]}
