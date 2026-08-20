@@ -64,3 +64,19 @@ export const COUNTDOWN_CONVERTER: JsonConverter<Countdown, RawJsonCountdown> = {
         };
     },
 };
+
+function isAllowed(countdown: Countdown): boolean {
+    if (!countdown.countdownTime) {
+        return true;
+    }
+    return Temporal.PlainDateTime.compare(countdown.countdownTime, Temporal.Now.plainDateTimeISO()) > 0;
+}
+
+export function pickNewestAllowedCountdown(countdownA: Countdown | null | undefined, countdownB: Countdown | null | undefined): Countdown | null {
+    const allowedA = countdownA && isAllowed(countdownA) ? countdownA : null;
+    const allowedB = countdownB && isAllowed(countdownB) ? countdownB : null;
+    if (allowedA && allowedB) {
+        return allowedA.countdownId >= allowedB.countdownId ? allowedA : allowedB;
+    }
+    return allowedA ?? allowedB ?? null;
+}

@@ -1,179 +1,83 @@
 import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import { COUNTDOWN_CONVERTER, FALLBACK_COUNTDOWN } from './Countdown';
-import type { Countdown } from './Countdown';
-
-const FULL_COUNTDOWN: Countdown = {
-    countdownId: 'countdown-2026-09-01-09-00-00-000',
-    countdownTime: Temporal.PlainDateTime.from('2026-09-01T09:00:00'),
-    showSmallCountdownFor: Temporal.Duration.from({ minutes: 30 }),
-    showLargeCountdownFor: Temporal.Duration.from({ minutes: 5 }),
-};
-
-const FULL_JSON = {
-    countdownId: 'countdown-2026-09-01-09-00-00-000',
-    countdownTime: '2026-09-01T09:00:00',
-    showSmallCountdownFor: 'PT30M',
-    showLargeCountdownFor: 'PT5M',
-};
-
-const MINIMAL_JSON = {
-    countdownId: 'countdown-2026-09-01-09-00-00-000',
-};
+import { type Countdown, pickNewestAllowedCountdown } from './Countdown';
+import type { AppId } from '../identifier/AppId';
 
 // ---------------------------------------------------------------------------
-// FALLBACK_COUNTDOWN
+// Fixtures
 // ---------------------------------------------------------------------------
 
-describe('FALLBACK_COUNTDOWN', () => {
-    test('has a countdownId', () => {
-        expect(FALLBACK_COUNTDOWN.countdownId).toBeTruthy();
-    });
+const OLDER_ID = 'cd-2026-01-01-00-00-00-000' as AppId;
+const NEWER_ID = 'cd-2026-06-01-00-00-00-000' as AppId;
 
-    test('has no countdownTime', () => {
-        expect(FALLBACK_COUNTDOWN.countdownTime).toBeUndefined();
-    });
+const PAST_TIME = Temporal.PlainDateTime.from('2020-01-01T00:00:00');
+const FUTURE_TIME = Temporal.PlainDateTime.from('2099-01-01T00:00:00');
 
-    test('has no showSmallCountdownFor', () => {
-        expect(FALLBACK_COUNTDOWN.showSmallCountdownFor).toBeUndefined();
-    });
-
-    test('has no showLargeCountdownFor', () => {
-        expect(FALLBACK_COUNTDOWN.showLargeCountdownFor).toBeUndefined();
-    });
-});
+const OLDER_FUTURE: Countdown = { countdownId: OLDER_ID, countdownTime: FUTURE_TIME };
+const NEWER_FUTURE: Countdown = { countdownId: NEWER_ID, countdownTime: FUTURE_TIME };
+const OLDER_PAST: Countdown = { countdownId: OLDER_ID, countdownTime: PAST_TIME };
+const NEWER_PAST: Countdown = { countdownId: NEWER_ID, countdownTime: PAST_TIME };
+const OLDER_NO_TIME: Countdown = { countdownId: OLDER_ID };
+const NEWER_NO_TIME: Countdown = { countdownId: NEWER_ID };
 
 // ---------------------------------------------------------------------------
-// COUNTDOWN_CONVERTER.fromJson
+// Tests
 // ---------------------------------------------------------------------------
 
-describe('COUNTDOWN_CONVERTER.fromJson', () => {
-    test('returns a valid Countdown from a complete JSON object', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson(FULL_JSON);
-        expect(result).not.toBeNull();
-        expect(result!.countdownId).toBe('countdown-2026-09-01-09-00-00-000');
-        expect(result!.countdownTime?.year).toBe(2026);
-        expect(result!.countdownTime?.month).toBe(9);
-        expect(result!.countdownTime?.day).toBe(1);
-        expect(result!.countdownTime?.hour).toBe(9);
-        expect(result!.showSmallCountdownFor?.minutes).toBe(30);
-        expect(result!.showLargeCountdownFor?.minutes).toBe(5);
+describe('pickNewestAllowedCountdown', () => {
+    test('1. both null: returns null', () => {
+        expect(pickNewestAllowedCountdown(null, null)).toBeNull();
     });
 
-    test('returns a valid Countdown from a minimal JSON object with only countdownId', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson(MINIMAL_JSON);
-        expect(result).not.toBeNull();
-        expect(result!.countdownId).toBe('countdown-2026-09-01-09-00-00-000');
-        expect(result!.countdownTime).toBeNull();
-        expect(result!.showSmallCountdownFor).toBeNull();
-        expect(result!.showLargeCountdownFor).toBeNull();
+    test('2. only A (future time), B null: returns A', () => {
+        expect(pickNewestAllowedCountdown(OLDER_FUTURE, null)).toBe(OLDER_FUTURE);
     });
 
-    test('countdownTime is null when missing from JSON', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson({ ...FULL_JSON, countdownTime: undefined });
-        expect(result).not.toBeNull();
-        expect(result!.countdownTime).toBeNull();
+    test('3. A null, only B (future time): returns B', () => {
+        expect(pickNewestAllowedCountdown(null, OLDER_FUTURE)).toBe(OLDER_FUTURE);
     });
 
-    test('countdownTime is null when invalid in JSON', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson({ ...FULL_JSON, countdownTime: 'not-a-date' });
-        expect(result).not.toBeNull();
-        expect(result!.countdownTime).toBeNull();
+    test('4. A newer+future, B older+future: returns A', () => {
+        expect(pickNewestAllowedCountdown(NEWER_FUTURE, OLDER_FUTURE)).toBe(NEWER_FUTURE);
     });
 
-    test('showSmallCountdownFor is null when missing from JSON', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson({ ...FULL_JSON, showSmallCountdownFor: undefined });
-        expect(result).not.toBeNull();
-        expect(result!.showSmallCountdownFor).toBeNull();
+    test('5. A older+future, B newer+future: returns B', () => {
+        expect(pickNewestAllowedCountdown(OLDER_FUTURE, NEWER_FUTURE)).toBe(NEWER_FUTURE);
     });
 
-    test('showSmallCountdownFor is null when invalid in JSON', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson({ ...FULL_JSON, showSmallCountdownFor: 'not-a-duration' });
-        expect(result).not.toBeNull();
-        expect(result!.showSmallCountdownFor).toBeNull();
+    test('6. A newer+past (rejected), B older+future: returns B', () => {
+        expect(pickNewestAllowedCountdown(NEWER_PAST, OLDER_FUTURE)).toBe(OLDER_FUTURE);
     });
 
-    test('showLargeCountdownFor is null when missing from JSON', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson({ ...FULL_JSON, showLargeCountdownFor: undefined });
-        expect(result).not.toBeNull();
-        expect(result!.showLargeCountdownFor).toBeNull();
+    test('7. A newer+future, B older+past (rejected): returns A', () => {
+        expect(pickNewestAllowedCountdown(NEWER_FUTURE, OLDER_PAST)).toBe(NEWER_FUTURE);
     });
 
-    test('showLargeCountdownFor is null when invalid in JSON', () => {
-        const result = COUNTDOWN_CONVERTER.fromJson({ ...FULL_JSON, showLargeCountdownFor: 'not-a-duration' });
-        expect(result).not.toBeNull();
-        expect(result!.showLargeCountdownFor).toBeNull();
+    test('8. both past time: returns null', () => {
+        expect(pickNewestAllowedCountdown(OLDER_PAST, NEWER_PAST)).toBeNull();
     });
 
-    test('returns null for null', () => {
-        expect(COUNTDOWN_CONVERTER.fromJson(null)).toBeNull();
+    test('9. A newer+no time (allowed), B older+future: returns A', () => {
+        expect(pickNewestAllowedCountdown(NEWER_NO_TIME, OLDER_FUTURE)).toBe(NEWER_NO_TIME);
     });
 
-    test('returns null for undefined', () => {
-        expect(COUNTDOWN_CONVERTER.fromJson(undefined)).toBeNull();
+    test('10. A older+no time (allowed), B newer+future: returns B', () => {
+        expect(pickNewestAllowedCountdown(OLDER_NO_TIME, NEWER_FUTURE)).toBe(NEWER_FUTURE);
     });
 
-    test('returns null when countdownId is missing', () => {
-        const json = { ...FULL_JSON, countdownId: undefined };
-        expect(COUNTDOWN_CONVERTER.fromJson(json)).toBeNull();
+    test('11. both no time: returns the one with newer ID', () => {
+        expect(pickNewestAllowedCountdown(OLDER_NO_TIME, NEWER_NO_TIME)).toBe(NEWER_NO_TIME);
     });
 
-    test('returns null when countdownId is invalid', () => {
-        const json = { ...FULL_JSON, countdownId: 'not-an-id' };
-        expect(COUNTDOWN_CONVERTER.fromJson(json)).toBeNull();
-    });
-});
-
-// ---------------------------------------------------------------------------
-// COUNTDOWN_CONVERTER.toJson
-// ---------------------------------------------------------------------------
-
-describe('COUNTDOWN_CONVERTER.toJson', () => {
-    test('serializes all fields correctly', () => {
-        const result = COUNTDOWN_CONVERTER.toJson(FULL_COUNTDOWN);
-        expect(result).not.toBeNull();
-        expect(result!.countdownId).toBe('countdown-2026-09-01-09-00-00-000');
-        expect(result!.countdownTime).toContain('2026-09-01');
-        expect(result!.showSmallCountdownFor).toBe('PT30M');
-        expect(result!.showLargeCountdownFor).toBe('PT5M');
+    test('12. A undefined, B future: returns B', () => {
+        expect(pickNewestAllowedCountdown(undefined, OLDER_FUTURE)).toBe(OLDER_FUTURE);
     });
 
-    test('serializes a minimal (ID-only) countdown correctly', () => {
-        const minimal: Countdown = { countdownId: 'countdown-2026-09-01-09-00-00-000' };
-        const result = COUNTDOWN_CONVERTER.toJson(minimal);
-        expect(result).not.toBeNull();
-        expect(result!.countdownId).toBe('countdown-2026-09-01-09-00-00-000');
-        expect(result!.countdownTime).toBeNull();
-        expect(result!.showSmallCountdownFor).toBeNull();
-        expect(result!.showLargeCountdownFor).toBeNull();
+    test('13. A future, B undefined: returns A', () => {
+        expect(pickNewestAllowedCountdown(OLDER_FUTURE, undefined)).toBe(OLDER_FUTURE);
     });
 
-    test('round-trips a full countdown through toJson and fromJson', () => {
-        const json = COUNTDOWN_CONVERTER.toJson(FULL_COUNTDOWN);
-        const restored = COUNTDOWN_CONVERTER.fromJson(json);
-        expect(restored).not.toBeNull();
-        expect(restored!.countdownId).toBe(FULL_COUNTDOWN.countdownId);
-        expect(Temporal.PlainDateTime.compare(restored!.countdownTime!, FULL_COUNTDOWN.countdownTime!)).toBe(0);
-        expect(restored!.showSmallCountdownFor?.minutes).toBe(FULL_COUNTDOWN.showSmallCountdownFor?.minutes);
-        expect(restored!.showLargeCountdownFor?.minutes).toBe(FULL_COUNTDOWN.showLargeCountdownFor?.minutes);
-    });
-
-    test('round-trips a minimal (ID-only) countdown through toJson and fromJson', () => {
-        const minimal: Countdown = { countdownId: 'countdown-2026-09-01-09-00-00-000' };
-        const json = COUNTDOWN_CONVERTER.toJson(minimal);
-        const restored = COUNTDOWN_CONVERTER.fromJson(json);
-        expect(restored).not.toBeNull();
-        expect(restored!.countdownId).toBe(minimal.countdownId);
-        expect(restored!.countdownTime).toBeNull();
-        expect(restored!.showSmallCountdownFor).toBeNull();
-        expect(restored!.showLargeCountdownFor).toBeNull();
-    });
-
-    test('returns null for null', () => {
-        expect(COUNTDOWN_CONVERTER.toJson(null)).toBeNull();
-    });
-
-    test('returns null for undefined', () => {
-        expect(COUNTDOWN_CONVERTER.toJson(undefined)).toBeNull();
+    test('14. both undefined: returns null', () => {
+        expect(pickNewestAllowedCountdown(undefined, undefined)).toBeNull();
     });
 });

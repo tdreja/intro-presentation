@@ -2,7 +2,12 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
 import { findSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './model/slides/SlideShow.ts';
 import { type AppId, newAppId } from './model/identifier/AppId.ts';
-import { type Countdown, COUNTDOWN_CONVERTER, FALLBACK_COUNTDOWN } from './model/slides/Countdown.ts';
+import {
+    type Countdown,
+    COUNTDOWN_CONVERTER,
+    FALLBACK_COUNTDOWN,
+    pickNewestAllowedCountdown,
+} from './model/slides/Countdown.ts';
 import {
     countdownFromStorage,
     countdownToStorage,
@@ -40,18 +45,7 @@ export const App = (): ReactElement => {
     const [localCountdown, setLocalCountdown] = useState<Countdown>(() => {
         const fromHtml = COUNTDOWN_CONVERTER.fromJson(window.startupCountdown);
         const fromStorage = countdownFromStorage();
-        if (fromHtml && fromStorage) {
-            return fromHtml.countdownId >= fromStorage.countdownId ? fromHtml : fromStorage;
-        }
-        else if (fromHtml) {
-            return fromHtml;
-        }
-        else if (fromStorage) {
-            return fromStorage;
-        }
-        else {
-            return FALLBACK_COUNTDOWN;
-        }
+        return pickNewestAllowedCountdown(fromHtml, fromStorage) ?? FALLBACK_COUNTDOWN;
     });
 
     // Add setters with attachment to the eventbus
