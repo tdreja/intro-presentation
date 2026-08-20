@@ -11,7 +11,6 @@ export const PLACEHOLDER_SLIDE: FullImageSlide = {
 };
 
 export const FALLBACK_SLIDESHOW: SlideShow = {
-    currentSlideIndex: 0,
     id: FALLBACK_APP_ID,
     slides: [
         PLACEHOLDER_SLIDE,

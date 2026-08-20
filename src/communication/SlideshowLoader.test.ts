@@ -22,8 +22,8 @@ const SLIDE: FullImageSlide = {
     image: PLACEHOLDER_IMAGE,
 };
 
-const OLDER_SHOW: SlideShow = { id: OLDER_ID, slides: [SLIDE], currentSlideIndex: 0 };
-const NEWER_SHOW: SlideShow = { id: NEWER_ID, slides: [SLIDE], currentSlideIndex: 0 };
+const OLDER_SHOW: SlideShow = { id: OLDER_ID, slides: [SLIDE] };
+const NEWER_SHOW: SlideShow = { id: NEWER_ID, slides: [SLIDE] };
 
 // ---------------------------------------------------------------------------
 // localStorage mock
@@ -149,7 +149,6 @@ describe('storeSlideshowToStorage — empty storage', () => {
         const parsed = SLIDE_SHOW_CONVERTER.fromJson(JSON.parse(storedValue));
         expect(parsed).not.toBeNull();
         expect(parsed!.id).toBe(OLDER_SHOW.id);
-        expect(parsed!.currentSlideIndex).toBe(OLDER_SHOW.currentSlideIndex);
         expect(parsed!.slides).toHaveLength(OLDER_SHOW.slides.length);
     });
 });

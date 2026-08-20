@@ -1,25 +1,16 @@
 import { APP_ID_CONVERTER, type AppId } from '../identifier/AppId.ts';
 import { SLIDE_CONVERTER, type Slide } from './Slide.ts';
-import { Temporal } from '@js-temporal/polyfill';
 import type { JsonConverter, RawJson } from '../json/json.ts';
-import { ArrayConverter, DATE_TIME_CONVERTER, NUMBER_CONVERTER } from '../json/common.ts';
+import { ArrayConverter } from '../json/common.ts';
 
 /**
- * Represents a slideshow with multiple slides, the current slide index, and a countdown timer target.
+ * Represents a slideshow with multiple slides.
  */
 export interface SlideShow {
     /**
      * All slides in the slideshow, in order
      */
     readonly slides: Slide[]
-    /**
-     * Which slide is currently being shown?
-     */
-    readonly currentSlideIndex: number
-    /**
-     * Target date and time for the countdown, if it is active
-     */
-    readonly countdownTarget?: Temporal.PlainDateTime
     /**
      * Unique ID of the slideshow, referencing its creation date. This ID is used to identify the slideshow across multiple tabs and devices.
      */
@@ -44,9 +35,7 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         if (slides === null) {
             return null;
         }
-        const currentSlideIndex = NUMBER_CONVERTER.fromJson(parsed.currentSlideIndex) ?? 0;
-        const countdownTarget = DATE_TIME_CONVERTER.fromJson(parsed.countdownTarget) ?? undefined;
-        return { id, slides, currentSlideIndex, countdownTarget };
+        return { id, slides };
     },
     toJson(data: SlideShow | null | undefined): RawJsonSlideShow | null {
         if (!data) {
@@ -55,8 +44,6 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         return {
             id: APP_ID_CONVERTER.toJson(data.id),
             slides: SLIDES_CONVERTER.toJson(data.slides),
-            currentSlideIndex: NUMBER_CONVERTER.toJson(data.currentSlideIndex),
-            countdownTarget: DATE_TIME_CONVERTER.toJson(data.countdownTarget),
         };
     },
 };

@@ -1,5 +1,4 @@
 import { describe, test, expect } from 'vitest';
-import { Temporal } from '@js-temporal/polyfill';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
 import type { FullImageSlide } from './Slide';
@@ -18,14 +17,6 @@ const FULL_IMAGE_SLIDE: FullImageSlide = {
 const MINIMAL_SLIDESHOW: SlideShow = {
     id: VALID_SHOW_ID,
     slides: [FULL_IMAGE_SLIDE],
-    currentSlideIndex: 0,
-};
-
-const COUNTDOWN_TARGET = Temporal.PlainDateTime.from('2026-12-31T23:59:59.000');
-
-const SLIDESHOW_WITH_COUNTDOWN: SlideShow = {
-    ...MINIMAL_SLIDESHOW,
-    countdownTarget: COUNTDOWN_TARGET,
 };
 
 // ---------------------------------------------------------------------------
@@ -42,23 +33,23 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — null / invalid guards', () => {
     });
 
     test('returns null when id is missing', () => {
-        const json = { slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0 } as never;
+        const json = { slides: [FULL_IMAGE_SLIDE] } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null when id has an invalid format', () => {
-        const json = { id: 'not-a-valid-id', slides: [FULL_IMAGE_SLIDE], currentSlideIndex: 0 } as never;
+        const json = { id: 'not-a-valid-id', slides: [FULL_IMAGE_SLIDE] } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null when slides is null', () => {
-        const json = { id: VALID_SHOW_ID, slides: null, currentSlideIndex: 0 } as never;
+        const json = { id: VALID_SHOW_ID, slides: null } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null when slides contains an invalid slide', () => {
         const badSlide = { slideType: 'full-image' }; // missing slideId and image
-        const json = { id: VALID_SHOW_ID, slides: [badSlide], currentSlideIndex: 0 } as never;
+        const json = { id: VALID_SHOW_ID, slides: [badSlide] } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
 });
@@ -75,7 +66,6 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
             slideType: 'full-image' as const,
             image: VALID_IMAGE,
         }],
-        currentSlideIndex: 0,
     };
 
     test('returns a SlideShow for minimal valid JSON', () => {
@@ -94,46 +84,8 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
         expect(result.slides[0].slideId).toBe(VALID_SLIDE_ID);
     });
 
-    test('currentSlideIndex defaults to 0 when missing', () => {
-        const json = { id: VALID_SHOW_ID, slides: [] } as never;
-        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
-        expect(result.currentSlideIndex).toBe(0);
-    });
-
-    test('currentSlideIndex defaults to 0 when null', () => {
-        const json = { id: VALID_SHOW_ID, slides: [], currentSlideIndex: null } as never;
-        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
-        expect(result.currentSlideIndex).toBe(0);
-    });
-
-    test('currentSlideIndex is set when present', () => {
-        const json = { ...validJson, currentSlideIndex: 3 };
-        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
-        expect(result.currentSlideIndex).toBe(3);
-    });
-
-    test('countdownTarget is undefined when missing', () => {
-        const result = SLIDE_SHOW_CONVERTER.fromJson(validJson)!;
-        expect(result.countdownTarget).toBeUndefined();
-    });
-
-    test('countdownTarget is set when present', () => {
-        const json = { ...validJson, countdownTarget: '2026-12-31T23:59:59' };
-        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
-        expect(result.countdownTarget).toBeDefined();
-        expect(result.countdownTarget?.year).toBe(2026);
-        expect(result.countdownTarget?.month).toBe(12);
-        expect(result.countdownTarget?.day).toBe(31);
-    });
-
-    test('countdownTarget is undefined when the string is invalid', () => {
-        const json = { ...validJson, countdownTarget: 'not-a-date' };
-        const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
-        expect(result.countdownTarget).toBeUndefined();
-    });
-
     test('empty slides array is preserved', () => {
-        const json = { id: VALID_SHOW_ID, slides: [], currentSlideIndex: 0 };
+        const json = { id: VALID_SHOW_ID, slides: [] };
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result.slides).toEqual([]);
     });
@@ -169,23 +121,6 @@ describe('SLIDE_SHOW_CONVERTER.toJson — valid inputs', () => {
         const slides = result.slides as unknown[];
         expect(slides).toHaveLength(1);
     });
-
-    test('serializes currentSlideIndex', () => {
-        const slideshow: SlideShow = { ...MINIMAL_SLIDESHOW, currentSlideIndex: 2 };
-        const result = SLIDE_SHOW_CONVERTER.toJson(slideshow)!;
-        expect(result.currentSlideIndex).toBe(2);
-    });
-
-    test('serializes countdownTarget as ISO string when present', () => {
-        const result = SLIDE_SHOW_CONVERTER.toJson(SLIDESHOW_WITH_COUNTDOWN)!;
-        expect(typeof result.countdownTarget).toBe('string');
-        expect(result.countdownTarget as string).toContain('2026-12-31');
-    });
-
-    test('countdownTarget is null in JSON when absent on the object', () => {
-        const result = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
-        expect(result.countdownTarget).toBeNull();
-    });
 });
 
 // ---------------------------------------------------------------------------
@@ -193,34 +128,22 @@ describe('SLIDE_SHOW_CONVERTER.toJson — valid inputs', () => {
 // ---------------------------------------------------------------------------
 
 describe('SLIDE_SHOW_CONVERTER round-trip', () => {
-    test('SlideShow without countdown survives a full round-trip', () => {
+    test('SlideShow survives a full round-trip', () => {
         const json = SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!;
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result).not.toBeNull();
         expect(result.id).toBe(MINIMAL_SLIDESHOW.id);
-        expect(result.currentSlideIndex).toBe(MINIMAL_SLIDESHOW.currentSlideIndex);
         expect(result.slides).toHaveLength(MINIMAL_SLIDESHOW.slides.length);
         expect(result.slides[0].slideId).toBe(MINIMAL_SLIDESHOW.slides[0].slideId);
         expect(result.slides[0].slideType).toBe(MINIMAL_SLIDESHOW.slides[0].slideType);
-        expect(result.countdownTarget).toBeUndefined();
-    });
-
-    test('SlideShow with countdown survives a full round-trip', () => {
-        const json = SLIDE_SHOW_CONVERTER.toJson(SLIDESHOW_WITH_COUNTDOWN)!;
-        const result = SLIDE_SHOW_CONVERTER.fromJson(json);
-        expect(result).not.toBeNull();
-        expect(result!.id).toBe(VALID_SHOW_ID);
-        expect(result!.countdownTarget?.toString()).toBe(COUNTDOWN_TARGET.toString());
     });
 
     test('SlideShow with empty slides array round-trips correctly', () => {
-        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [], currentSlideIndex: 0 };
+        const empty: SlideShow = { id: VALID_SHOW_ID, slides: [] };
         const json = SLIDE_SHOW_CONVERTER.toJson(empty)!;
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result).not.toBeNull();
         expect(result.id).toBe(VALID_SHOW_ID);
         expect(result.slides).toEqual([]);
-        expect(result.currentSlideIndex).toBe(0);
-        expect(result.countdownTarget).toBeUndefined();
     });
 });

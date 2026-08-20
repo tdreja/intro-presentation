@@ -24,7 +24,6 @@ const SLIDE: FullImageSlide = {
 const SLIDESHOW: SlideShow = {
     id: SHOW_ID,
     slides: [SLIDE],
-    currentSlideIndex: 0,
 };
 
 const GO_TO_SLIDE: GoToSlideEvent = {
@@ -255,13 +254,12 @@ describe('AppEventBus — dispatchEvent (with channel)', () => {
         expect(restored).toEqual(GO_TO_SLIDE);
     });
 
-    test('22. ReplaceSlideshowEvent: posted JSON round-trips back; payload id and currentSlideIndex survive', () => {
+    test('22. ReplaceSlideshowEvent: posted JSON round-trips back; payload id survives', () => {
         bus.dispatchEvent(REPLACE_SLIDESHOW);
         const posted = ch.postMessage.mock.calls[0][0] as string;
         const restored = EVENT_CONVERTER.fromJson(JSON.parse(posted)) as ReplaceSlideshowEvent;
         expect(restored).not.toBeNull();
         expect(restored.payload.id).toBe(SHOW_ID);
-        expect(restored.payload.currentSlideIndex).toBe(0);
     });
 
     test('23. GoToSlideEvent remoteOnly: true — postMessage IS called', () => {
@@ -393,7 +391,6 @@ describe('AppEventBus — full round-trip', () => {
         expect(fn).toHaveBeenCalledTimes(1);
         const received = fn.mock.calls[0][0] as ReplaceSlideshowEvent;
         expect(received.payload.id).toBe(SHOW_ID);
-        expect(received.payload.currentSlideIndex).toBe(0);
         expect(received.payload.slides).toHaveLength(1);
     });
 });

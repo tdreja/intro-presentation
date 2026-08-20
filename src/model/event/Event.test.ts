@@ -46,7 +46,7 @@ describe('EVENT_CONVERTER — fromJson', () => {
     });
 
     test('parses a valid replace-slideshow event with an object payload', () => {
-        const payload = { id: 'ss-2026-01-01-00-00-00-000', slides: [], currentSlideIndex: 0 };
+        const payload = { id: 'ss-2026-01-01-00-00-00-000', slides: [] };
         const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: true, payload });
         expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: true, payload });
     });
@@ -91,7 +91,7 @@ describe('EVENT_CONVERTER — toJson', () => {
         const payload = { some: 'object' };
         const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload };
         const result = EVENT_CONVERTER.toJson(event);
-        expect(result?.payload).toEqual({ id: null, slides: null, currentSlideIndex: null, countdownTarget: null });
+        expect(result?.payload).toEqual({ id: null, slides: null });
     });
 
     test('round-trip: toJson then fromJson returns an equal event', () => {
@@ -109,7 +109,6 @@ describe('EVENT_CONVERTER — toJson', () => {
 const MINIMAL_SLIDESHOW: SlideShow = {
     id: 'ss-2026-01-01-00-00-00-000' as AppId,
     slides: [],
-    currentSlideIndex: 0,
 };
 
 // ---------------------------------------------------------------------------
