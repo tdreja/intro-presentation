@@ -56,11 +56,9 @@ export class AppEventBus {
     }
 
     public dispatchEvent<PAYLOAD>(event: AppEvent<PAYLOAD>): void {
-        if (!event.remoteOnly) {
-            for (const listener of this._listeners.values()) {
-                if (listener.eventType === event.type) {
-                    listener.onEvent(event);
-                }
+        for (const listener of this._listeners.values()) {
+            if (listener.eventType === event.type) {
+                listener.onEvent(event);
             }
         }
         if (this._channel) {

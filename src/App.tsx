@@ -32,15 +32,15 @@ export const App = (): ReactElement => {
     // Add setters with attachment to the eventbus
     const setSlideShow = useCallback((slide: SlideShow) => {
         setLocalSlideShow(slide);
-        eventBus.dispatchEvent(replaceSlideshowEvent(source, slide, true));
+        eventBus.dispatchEvent(replaceSlideshowEvent(source, slide));
     }, [eventBus, source, setLocalSlideShow]);
     const setCurrentSlide = useCallback((slideId: AppId | null) => {
         setLocalCurrentSlide(slideId);
-        eventBus.dispatchEvent(goToSlideEvent(source, slideId, true));
+        eventBus.dispatchEvent(goToSlideEvent(source, slideId));
     }, [eventBus, source, setLocalCurrentSlide]);
     const setCountdown = useCallback((countdown: Countdown | null) => {
         setLocalCountdown(countdown);
-        eventBus.dispatchEvent(updateCountdownEvent(source, countdown, true));
+        eventBus.dispatchEvent(updateCountdownEvent(source, countdown));
     }, [eventBus, source, setLocalCountdown]);
 
     // Attach listeners for the remote events!

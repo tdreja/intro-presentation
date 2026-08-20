@@ -29,15 +29,13 @@ const SLIDESHOW: SlideShow = {
 const GO_TO_SLIDE: GoToSlideEvent = {
     id: EVT_ID,
     type: 'go-to-slide',
-    remoteOnly: false,
-    payload: 3,
+    payload: SLIDE_ID,
     source: SOURCE_ID,
 };
 
 const REPLACE_SLIDESHOW: ReplaceSlideshowEvent = {
     id: EVT_ID,
     type: 'replace-slideshow',
-    remoteOnly: false,
     payload: SLIDESHOW,
     source: SOURCE_ID,
 };
@@ -204,22 +202,6 @@ describe('AppEventBus — dispatchEvent (local, no channel)', () => {
         expect(goFn).toHaveBeenCalledTimes(1);
         expect(replaceFn).not.toHaveBeenCalled();
     });
-
-    test('17. GoToSlideEvent with remoteOnly: true — local listener is NOT called', () => {
-        const bus = new AppEventBus();
-        const fn = vi.fn();
-        bus.registerListener('l', 'go-to-slide', fn);
-        bus.dispatchEvent({ ...GO_TO_SLIDE, remoteOnly: true });
-        expect(fn).not.toHaveBeenCalled();
-    });
-
-    test('18. ReplaceSlideshowEvent with remoteOnly: true — local listener is NOT called', () => {
-        const bus = new AppEventBus();
-        const fn = vi.fn();
-        bus.registerListener('l', 'replace-slideshow', fn);
-        bus.dispatchEvent({ ...REPLACE_SLIDESHOW, remoteOnly: true });
-        expect(fn).not.toHaveBeenCalled();
-    });
 });
 
 // ---------------------------------------------------------------------------
@@ -262,17 +244,7 @@ describe('AppEventBus — dispatchEvent (with channel)', () => {
         expect(restored.payload.id).toBe(SHOW_ID);
     });
 
-    test('23. GoToSlideEvent remoteOnly: true — postMessage IS called', () => {
-        bus.dispatchEvent({ ...GO_TO_SLIDE, remoteOnly: true });
-        expect(ch.postMessage).toHaveBeenCalledTimes(1);
-    });
-
-    test('24. ReplaceSlideshowEvent remoteOnly: true — postMessage IS called', () => {
-        bus.dispatchEvent({ ...REPLACE_SLIDESHOW, remoteOnly: true });
-        expect(ch.postMessage).toHaveBeenCalledTimes(1);
-    });
-
-    test('25. GoToSlideEvent remoteOnly: false — both local listener AND postMessage fire', () => {
+    test('23. GoToSlideEvent: both local listener AND postMessage fire', () => {
         const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus.dispatchEvent(GO_TO_SLIDE);
@@ -280,7 +252,7 @@ describe('AppEventBus — dispatchEvent (with channel)', () => {
         expect(ch.postMessage).toHaveBeenCalledTimes(1);
     });
 
-    test('26. ReplaceSlideshowEvent remoteOnly: false — both local listener AND postMessage fire', () => {
+    test('24. ReplaceSlideshowEvent: both local listener AND postMessage fire', () => {
         const fn = vi.fn();
         bus.registerListener('l', 'replace-slideshow', fn);
         bus.dispatchEvent(REPLACE_SLIDESHOW);
@@ -307,12 +279,12 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
         expect(fn).not.toHaveBeenCalled();
     });
 
-    test('28. valid go-to-slide JSON: matching listener called with parsed GoToSlideEvent, payload equals 3', () => {
+    test('28. valid go-to-slide JSON: matching listener called with parsed GoToSlideEvent, payload equals SLIDE_ID', () => {
         const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
         bus._channelListener(makeMessageEvent(GO_TO_SLIDE));
         expect(fn).toHaveBeenCalledTimes(1);
-        expect((fn.mock.calls[0][0] as GoToSlideEvent).payload).toBe(3);
+        expect((fn.mock.calls[0][0] as GoToSlideEvent).payload).toBe(SLIDE_ID);
     });
 
     test('29. valid replace-slideshow JSON: listener called; payload.id equals SHOW_ID and slides has length 1', () => {
@@ -342,7 +314,7 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
     test('32. JSON with missing id: EVENT_CONVERTER returns null, listener not called', () => {
         const fn = vi.fn();
         bus.registerListener('l', 'go-to-slide', fn);
-        const badJson = JSON.stringify({ type: 'go-to-slide', remoteOnly: false, payload: 5 });
+        const badJson = JSON.stringify({ type: 'go-to-slide', payload: 5 });
         expect(() => bus._channelListener({ data: badJson } as MessageEvent)).not.toThrow();
         expect(fn).not.toHaveBeenCalled();
     });
@@ -360,7 +332,7 @@ describe('AppEventBus — onChannelEvent (via _channelListener)', () => {
 // ---------------------------------------------------------------------------
 
 describe('AppEventBus — full round-trip', () => {
-    test('34. GoToSlideEvent: dispatched string fed back into receiving bus; listener gets payload 3', () => {
+    test('34. GoToSlideEvent: dispatched string fed back into receiving bus; listener gets payload SLIDE_ID', () => {
         const senderCh = makeMockChannel();
         const sender = new AppEventBus(senderCh as unknown as BroadcastChannel);
         const receiver = new AppEventBus();
@@ -373,7 +345,7 @@ describe('AppEventBus — full round-trip', () => {
         receiver._channelListener({ data: posted } as MessageEvent);
 
         expect(fn).toHaveBeenCalledTimes(1);
-        expect((fn.mock.calls[0][0] as GoToSlideEvent).payload).toBe(3);
+        expect((fn.mock.calls[0][0] as GoToSlideEvent).payload).toBe(SLIDE_ID);
     });
 
     test('35. ReplaceSlideshowEvent: dispatched string fed back into receiving bus; payload survives round-trip', () => {

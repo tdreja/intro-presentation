@@ -1,7 +1,7 @@
 import { APP_ID_CONVERTER, type AppId, newAppId } from '../identifier/AppId.ts';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../slides/SlideShow.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
-import { BOOLEAN_CONVERTER, STRING_CONVERTER } from '../json/common.ts';
+import { STRING_CONVERTER } from '../json/common.ts';
 import { type Countdown, COUNTDOWN_CONVERTER } from '../slides/Countdown.ts';
 
 export type EventType = 'replace-slideshow' | 'go-to-slide' | 'update-countdown';
@@ -18,10 +18,6 @@ export interface AppEvent<PAYLOAD> {
      * Type of the event
      */
     readonly type: EventType
-    /**
-     * Should the event only be transmitted to remote receivers?
-     */
-    readonly remoteOnly: boolean
     /**
      * Payload of the event, can be any type depending on the event type
      */
@@ -44,11 +40,10 @@ export interface ReplaceSlideshowEvent extends AppEvent<SlideShow> {
     readonly type: 'replace-slideshow'
 }
 
-export function replaceSlideshowEvent(source: AppId, slideShow: SlideShow, remoteOnly?: boolean): ReplaceSlideshowEvent {
+export function replaceSlideshowEvent(source: AppId, slideShow: SlideShow): ReplaceSlideshowEvent {
     return {
         id: newAppId('event'),
         type: 'replace-slideshow',
-        remoteOnly: !!remoteOnly,
         payload: slideShow,
         source,
     };
@@ -68,11 +63,10 @@ export interface GoToSlideEvent extends AppEvent<AppId | null> {
     readonly type: 'go-to-slide'
 }
 
-export function goToSlideEvent(source: AppId, slideId: AppId | null, remoteOnly?: boolean): GoToSlideEvent {
+export function goToSlideEvent(source: AppId, slideId: AppId | null): GoToSlideEvent {
     return {
         id: newAppId('event'),
         type: 'go-to-slide',
-        remoteOnly: !!remoteOnly,
         payload: slideId,
         source,
     };
@@ -89,11 +83,10 @@ export interface UpdateCountdownEvent extends AppEvent<Countdown | null> {
     readonly type: 'update-countdown'
 }
 
-export function updateCountdownEvent(source: AppId, countdown: Countdown | null, remoteOnly?: boolean): UpdateCountdownEvent {
+export function updateCountdownEvent(source: AppId, countdown: Countdown | null): UpdateCountdownEvent {
     return {
         id: newAppId('event'),
         type: 'update-countdown',
-        remoteOnly: !!remoteOnly,
         payload: countdown,
         source,
     };
@@ -124,7 +117,6 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
         if (!type) {
             return null;
         }
-        const remoteOnly = BOOLEAN_CONVERTER.fromJson(parsed.remoteOnly) ?? false;
         switch (type) {
             case 'replace-slideshow': {
                 const slideshow = SLIDE_SHOW_CONVERTER.fromJson(parsed.payload);
@@ -132,7 +124,6 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                     return {
                         id,
                         type,
-                        remoteOnly,
                         payload: slideshow,
                         source,
                     } as ReplaceSlideshowEvent;
@@ -143,7 +134,6 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 return {
                     id,
                     type,
-                    remoteOnly,
                     payload: APP_ID_CONVERTER.fromJson(parsed.payload),
                     source,
                 } as GoToSlideEvent;
@@ -152,7 +142,6 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 return {
                     id,
                     type,
-                    remoteOnly,
                     payload: COUNTDOWN_CONVERTER.fromJson(parsed.payload),
                     source,
                 } as UpdateCountdownEvent;
@@ -183,7 +172,6 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
         return {
             id: APP_ID_CONVERTER.toJson(data.id),
             type: data.type,
-            remoteOnly: BOOLEAN_CONVERTER.toJson(data.remoteOnly),
             payload,
             source: APP_ID_CONVERTER.toJson(data.source),
         };

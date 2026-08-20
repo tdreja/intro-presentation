@@ -19,7 +19,7 @@ const SOURCE_ID = 'src-2026-08-19-10-00-00-000' as AppId;
 const SLIDE_ID = 'slide-2026-08-19-10-00-00-000' as AppId;
 
 function makeGoToSlide(overrides: Partial<AppEvent<AppId | null>> = {}): AppEvent<AppId | null> {
-    return { id: VALID_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID, source: SOURCE_ID, ...overrides };
+    return { id: VALID_ID, type: 'go-to-slide', payload: SLIDE_ID, source: SOURCE_ID, ...overrides };
 }
 
 // ---------------------------------------------------------------------------
@@ -36,50 +36,45 @@ describe('EVENT_CONVERTER — fromJson', () => {
     });
 
     test('returns null when id is missing', () => {
-        expect(EVENT_CONVERTER.fromJson({ type: 'go-to-slide', remoteOnly: false, payload: 1 })).toBeNull();
+        expect(EVENT_CONVERTER.fromJson({ type: 'go-to-slide', payload: 1 })).toBeNull();
     });
 
     test('returns null when id has invalid format', () => {
-        expect(EVENT_CONVERTER.fromJson({ id: 'not-an-id', type: 'go-to-slide', remoteOnly: false, payload: 1 })).toBeNull();
+        expect(EVENT_CONVERTER.fromJson({ id: 'not-an-id', type: 'go-to-slide', payload: 1 })).toBeNull();
     });
 
     test('returns null when type is missing', () => {
-        expect(EVENT_CONVERTER.fromJson({ id: VALID_ID, remoteOnly: false, payload: 1 })).toBeNull();
+        expect(EVENT_CONVERTER.fromJson({ id: VALID_ID, payload: 1 })).toBeNull();
     });
 
     test('returns null when type is an unknown string', () => {
-        expect(EVENT_CONVERTER.fromJson({ id: VALID_ID, type: 'unknown-type', remoteOnly: false, payload: 1 })).toBeNull();
+        expect(EVENT_CONVERTER.fromJson({ id: VALID_ID, type: 'unknown-type', payload: 1 })).toBeNull();
     });
 
     test('parses a valid go-to-slide event with a number payload', () => {
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: 7 });
-        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: null });
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: 7 });
+        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: null });
     });
 
     test('parses a valid go-to-slide event with an AppId payload', () => {
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID });
-        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID });
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID });
+        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID });
     });
 
     test('parses a go-to-slide event with null payload', () => {
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: null });
-        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: null });
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: null });
+        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: null });
     });
 
     test('parses a valid replace-slideshow event with an object payload', () => {
         const payload = { id: 'ss-2026-01-01-00-00-00-000', slides: [] };
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: true, payload });
-        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: true, payload });
-    });
-
-    test('remoteOnly defaults to false when absent', () => {
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID });
-        expect(result?.remoteOnly).toBe(false);
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload });
+        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload });
     });
 
     test('returns null when replace-slideshow payload is not a valid SlideShow', () => {
         const payload = { nested: { value: 42 } };
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, type: 'replace-slideshow', remoteOnly: false, payload });
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, type: 'replace-slideshow', payload });
         expect(result).toBeNull();
     });
 
@@ -88,7 +83,6 @@ describe('EVENT_CONVERTER — fromJson', () => {
             id: VALID_ID,
             source: SOURCE_ID,
             type: 'update-countdown',
-            remoteOnly: false,
             payload: {
                 countdownTime: '2026-09-01T09:00:00',
                 showSmallCountdownFor: 'PT5M',
@@ -101,13 +95,13 @@ describe('EVENT_CONVERTER — fromJson', () => {
     });
 
     test('returns update-countdown event with null payload when payload is not a valid Countdown', () => {
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: { bad: true } });
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: { bad: true } });
         expect(result?.type).toBe('update-countdown');
         expect(result?.payload).toBeNull();
     });
 
     test('parses an update-countdown event with null payload', () => {
-        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: null });
+        const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: null });
         expect(result?.type).toBe('update-countdown');
         expect(result?.payload).toBeNull();
     });
@@ -129,23 +123,18 @@ describe('EVENT_CONVERTER — toJson', () => {
     test('serializes a go-to-slide event to the expected shape', () => {
         const event = makeGoToSlide();
         const result = EVENT_CONVERTER.toJson(event);
-        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID });
+        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID });
     });
 
     test('serializes a go-to-slide event with null payload', () => {
         const event = makeGoToSlide({ payload: null });
         const result = EVENT_CONVERTER.toJson(event);
-        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: null });
-    });
-
-    test('serializes remoteOnly: true correctly', () => {
-        const event = makeGoToSlide({ remoteOnly: true });
-        expect(EVENT_CONVERTER.toJson(event)?.remoteOnly).toBe(true);
+        expect(result).toEqual({ id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: null });
     });
 
     test('serializes replace-slideshow payload via SLIDE_SHOW_CONVERTER (missing fields serialize as null)', () => {
         const payload = { some: 'object' };
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload };
         const result = EVENT_CONVERTER.toJson(event);
         expect(result?.payload).toEqual({ id: null, slides: null });
     });
@@ -165,7 +154,7 @@ describe('EVENT_CONVERTER — toJson', () => {
     });
 
     test('serializes an update-countdown event to the expected shape', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: MINIMAL_COUNTDOWN };
         const result = EVENT_CONVERTER.toJson(event);
         expect(result?.type).toBe('update-countdown');
         expect(result?.payload).toEqual({
@@ -176,14 +165,14 @@ describe('EVENT_CONVERTER — toJson', () => {
     });
 
     test('round-trip: toJson then fromJson for update-countdown returns an equal event', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: true, payload: MINIMAL_COUNTDOWN };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: MINIMAL_COUNTDOWN };
         const json = EVENT_CONVERTER.toJson(event);
         const restored = EVENT_CONVERTER.fromJson(json);
         expect(restored).toEqual(event);
     });
 
     test('round-trip: toJson then fromJson for update-countdown with null payload', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: null };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: null };
         const json = EVENT_CONVERTER.toJson(event);
         const restored = EVENT_CONVERTER.fromJson(json);
         expect(restored).toEqual(event);
@@ -222,18 +211,6 @@ describe('goToSlideEvent', () => {
         expect(goToSlideEvent(SOURCE_ID, null).payload).toBeNull();
     });
 
-    test('remoteOnly defaults to false when omitted', () => {
-        expect(goToSlideEvent(SOURCE_ID, SLIDE_ID).remoteOnly).toBe(false);
-    });
-
-    test('remoteOnly is true when passed true', () => {
-        expect(goToSlideEvent(SOURCE_ID, SLIDE_ID, true).remoteOnly).toBe(true);
-    });
-
-    test('remoteOnly is false when passed false explicitly', () => {
-        expect(goToSlideEvent(SOURCE_ID, SLIDE_ID, false).remoteOnly).toBe(false);
-    });
-
     test('id starts with the event- prefix', () => {
         expect(goToSlideEvent(SOURCE_ID, SLIDE_ID).id).toMatch(/^event-/);
     });
@@ -250,18 +227,6 @@ describe('replaceSlideshowEvent', () => {
 
     test('sets payload to the given SlideShow', () => {
         expect(replaceSlideshowEvent(SOURCE_ID, MINIMAL_SLIDESHOW).payload).toEqual(MINIMAL_SLIDESHOW);
-    });
-
-    test('remoteOnly defaults to false when omitted', () => {
-        expect(replaceSlideshowEvent(SOURCE_ID, MINIMAL_SLIDESHOW).remoteOnly).toBe(false);
-    });
-
-    test('remoteOnly is true when passed true', () => {
-        expect(replaceSlideshowEvent(SOURCE_ID, MINIMAL_SLIDESHOW, true).remoteOnly).toBe(true);
-    });
-
-    test('remoteOnly is false when passed false explicitly', () => {
-        expect(replaceSlideshowEvent(SOURCE_ID, MINIMAL_SLIDESHOW, false).remoteOnly).toBe(false);
     });
 
     test('id starts with the event- prefix', () => {
@@ -290,18 +255,6 @@ describe('updateCountdownEvent', () => {
         expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).source).toBe(SOURCE_ID);
     });
 
-    test('remoteOnly defaults to false when omitted', () => {
-        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).remoteOnly).toBe(false);
-    });
-
-    test('remoteOnly is true when passed true', () => {
-        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN, true).remoteOnly).toBe(true);
-    });
-
-    test('remoteOnly is false when passed false explicitly', () => {
-        expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN, false).remoteOnly).toBe(false);
-    });
-
     test('id starts with the event- prefix', () => {
         expect(updateCountdownEvent(SOURCE_ID, MINIMAL_COUNTDOWN).id).toMatch(/^event-/);
     });
@@ -313,22 +266,22 @@ describe('updateCountdownEvent', () => {
 
 describe('asGoToSlideEvent', () => {
     test('returns the event when type is go-to-slide', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID };
         expect(asGoToSlideEvent(event)).toBe(event);
     });
 
     test('returns the event when type is go-to-slide with null payload', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: null };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: null };
         expect(asGoToSlideEvent(event)).toBe(event);
     });
 
     test('returns null when type is replace-slideshow', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload: MINIMAL_SLIDESHOW };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload: MINIMAL_SLIDESHOW };
         expect(asGoToSlideEvent(event)).toBeNull();
     });
 
     test('returns null when type is update-countdown', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: MINIMAL_COUNTDOWN };
         expect(asGoToSlideEvent(event)).toBeNull();
     });
 });
@@ -339,17 +292,17 @@ describe('asGoToSlideEvent', () => {
 
 describe('asReplaceSlideshowEvent', () => {
     test('returns the event when type is replace-slideshow', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload: MINIMAL_SLIDESHOW };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload: MINIMAL_SLIDESHOW };
         expect(asReplaceSlideshowEvent(event)).toBe(event);
     });
 
     test('returns null when type is go-to-slide', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID };
         expect(asReplaceSlideshowEvent(event)).toBeNull();
     });
 
     test('returns null when type is update-countdown', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: MINIMAL_COUNTDOWN };
         expect(asReplaceSlideshowEvent(event)).toBeNull();
     });
 });
@@ -360,17 +313,17 @@ describe('asReplaceSlideshowEvent', () => {
 
 describe('asUpdateCountdownEvent', () => {
     test('returns the event when type is update-countdown', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', remoteOnly: false, payload: MINIMAL_COUNTDOWN };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: MINIMAL_COUNTDOWN };
         expect(asUpdateCountdownEvent(event)).toBe(event);
     });
 
     test('returns null when type is go-to-slide', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', remoteOnly: false, payload: SLIDE_ID };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'go-to-slide', payload: SLIDE_ID };
         expect(asUpdateCountdownEvent(event)).toBeNull();
     });
 
     test('returns null when type is replace-slideshow', () => {
-        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', remoteOnly: false, payload: MINIMAL_SLIDESHOW };
+        const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload: MINIMAL_SLIDESHOW };
         expect(asUpdateCountdownEvent(event)).toBeNull();
     });
 });
