@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import { findNextSlideId, findSlide, indexOfSlide, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
+import { findNextSlideId, findSlide, indexOfSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
 import type { FullImageSlide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
@@ -333,5 +333,54 @@ describe('SLIDE_SHOW_CONVERTER round-trip — timePerSlide', () => {
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result).not.toBeNull();
         expect(Temporal.Duration.compare(result.timePerSlide, VALID_TIME_PER_SLIDE)).toBe(0);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// pickNewest
+// ---------------------------------------------------------------------------
+
+const OLDER_SHOW_ID = 'show-2026-01-01-00-00-00-000' as AppId;
+const NEWER_SHOW_ID = 'show-2026-12-31-23-59-59-999' as AppId;
+
+const OLDER_SLIDESHOW: SlideShow = { id: OLDER_SHOW_ID, slides: [FULL_IMAGE_SLIDE], timePerSlide: VALID_TIME_PER_SLIDE };
+const NEWER_SLIDESHOW: SlideShow = { id: NEWER_SHOW_ID, slides: [FULL_IMAGE_SLIDE], timePerSlide: VALID_TIME_PER_SLIDE };
+
+describe('pickNewest', () => {
+    test('returns null when both arguments are undefined', () => {
+        expect(pickNewest()).toBeNull();
+    });
+
+    test('returns null when both arguments are null', () => {
+        expect(pickNewest(null, null)).toBeNull();
+    });
+
+    test('returns B when A is null', () => {
+        expect(pickNewest(null, NEWER_SLIDESHOW)).toBe(NEWER_SLIDESHOW);
+    });
+
+    test('returns A when B is null', () => {
+        expect(pickNewest(OLDER_SLIDESHOW, null)).toBe(OLDER_SLIDESHOW);
+    });
+
+    test('returns A when only A is provided', () => {
+        expect(pickNewest(OLDER_SLIDESHOW)).toBe(OLDER_SLIDESHOW);
+    });
+
+    test('returns B when only B is provided', () => {
+        expect(pickNewest(undefined, NEWER_SLIDESHOW)).toBe(NEWER_SLIDESHOW);
+    });
+
+    test('returns A when A has a newer id than B', () => {
+        expect(pickNewest(NEWER_SLIDESHOW, OLDER_SLIDESHOW)).toBe(NEWER_SLIDESHOW);
+    });
+
+    test('returns B when B has a newer id than A', () => {
+        expect(pickNewest(OLDER_SLIDESHOW, NEWER_SLIDESHOW)).toBe(NEWER_SLIDESHOW);
+    });
+
+    test('returns A when both ids are equal', () => {
+        const sameIdShow: SlideShow = { id: OLDER_SHOW_ID, slides: [], timePerSlide: VALID_TIME_PER_SLIDE };
+        expect(pickNewest(OLDER_SLIDESHOW, sameIdShow)).toBe(OLDER_SLIDESHOW);
     });
 });

@@ -85,3 +85,10 @@ export function findNextSlideId(slideShow?: SlideShow | null, currentSlideId?: A
     }
     return null;
 }
+
+export function pickNewest(slideShowA?: SlideShow | null, slideShowB?: SlideShow | null): SlideShow | null {
+    if (slideShowA && slideShowB) {
+        return slideShowA.id >= slideShowB.id ? slideShowA : slideShowB;
+    }
+    return slideShowA ?? slideShowB ?? null;
+}
