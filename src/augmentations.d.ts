@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { RawJsonSlideShow } from './model/slides/SlideShow.ts';
+import type { RawJsonCountdown } from './model/slides/Countdown.ts';
 
 declare module '*.svg?raw' {
     const content: string;
@@ -9,6 +10,7 @@ declare module '*.svg?raw' {
 
 declare global {
     interface Window {
-        DEFAULT_SLIDESHOW?: RawJsonSlideShow;
+        startupSlideShow?: RawJsonSlideShow
+        startupCountdown?: RawJsonCountdown
     }
 }

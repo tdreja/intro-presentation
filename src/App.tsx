@@ -2,7 +2,7 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
 import { findSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './model/slides/SlideShow.ts';
 import { type AppId, newAppId } from './model/identifier/AppId.ts';
-import type { Countdown } from './model/slides/Countdown.ts';
+import { type Countdown, COUNTDOWN_CONVERTER } from './model/slides/Countdown.ts';
 import {
     countdownFromStorage,
     countdownToStorage,
@@ -16,6 +16,7 @@ import { CurrentSlideContext, type CurrentSlideState } from './communication/con
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
 import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
 import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
+import { Temporal } from '@js-temporal/polyfill';
 
 const channel: BroadcastChannel = new BroadcastChannel('intro-presentation-channel');
 let lastListener: ChannelListener = () => {
@@ -33,11 +34,26 @@ export const App = (): ReactElement => {
 
     // Prepare the local state for this app!
     const [localSlideShow, setLocalSlideShow] = useState<SlideShow>(() => {
-        const fromHtml = SLIDE_SHOW_CONVERTER.fromJson(window.DEFAULT_SLIDESHOW);
+        const fromHtml = SLIDE_SHOW_CONVERTER.fromJson(window.startupSlideShow);
         return pickNewest(slideShowFromStorage(), fromHtml) ?? FALLBACK_SLIDESHOW;
     });
     const [localCurrentSlide, setLocalCurrentSlide] = useState<AppId | null>(() => currentSlideIdFromStorage());
-    const [localCountdown, setLocalCountdown] = useState<Countdown | null>(() => countdownFromStorage());
+    const [localCountdown, setLocalCountdown] = useState<Countdown | null>(() => {
+        const fromHtml = COUNTDOWN_CONVERTER.fromJson(window.startupCountdown);
+        const fromStorage = countdownFromStorage();
+        if (fromHtml && fromStorage) {
+            return Temporal.PlainDateTime.compare(fromHtml.countdownTime, fromStorage.countdownTime) >= 0 ? fromHtml : fromStorage;
+        }
+        else if (fromHtml) {
+            return fromHtml;
+        }
+        else if (fromStorage) {
+            return fromStorage;
+        }
+        else {
+            return null;
+        }
+    });
 
     // Add setters with attachment to the eventbus
     const setSlideShow = useCallback((slide: SlideShow) => {
