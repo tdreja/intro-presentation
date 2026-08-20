@@ -2,18 +2,21 @@ import { type ReactElement, useCallback, useEffect, useMemo, useState } from 're
 import { AppEventBus, AppEventContext, type ChannelListener } from './communication/AppEventBus.ts';
 import { PLACEHOLDER_IMAGE } from './model/slides/Image.ts';
 import { findSlide, type SlideShow } from './model/slides/SlideShow.ts';
-import type { AppId } from './model/identifier/AppId.ts';
+import { type AppId, newAppId } from './model/identifier/AppId.ts';
 import type { Countdown } from './model/slides/Countdown.ts';
 import { countdownFromStorage, currentSlideIdFromStorage, slideShowFromStorage } from './communication/LocalStorage.ts';
 import { FALLBACK_SLIDESHOW, SlideShowContext, type SlideShowState } from './communication/context/Slideshow.context.ts';
 import { CurrentSlideContext, type CurrentSlideState } from './communication/context/CurrentSlide.context.ts';
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
+import { goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
 
 const channel: BroadcastChannel = new BroadcastChannel('intro-presentation-channel');
 let lastListener: ChannelListener = () => {
 };
 
 export const App = (): ReactElement => {
+    const [source] = useState<AppId>(() => newAppId('app'));
+
     // Set up the event bus
     const [eventBus] = useState<AppEventBus>(() => {
         const bus = new AppEventBus(channel, lastListener);
@@ -29,16 +32,16 @@ export const App = (): ReactElement => {
     // Add setters with attachment to the eventbus
     const setSlideShow = useCallback((slide: SlideShow) => {
         setLocalSlideShow(slide);
-        // TODO send event
-    }, [setLocalSlideShow]);
+        eventBus.dispatchEvent(replaceSlideshowEvent(source, slide, true));
+    }, [eventBus, source, setLocalSlideShow]);
     const setCurrentSlide = useCallback((slideId: AppId | null) => {
         setLocalCurrentSlide(slideId);
-        // TODO send event
-    }, [setLocalCurrentSlide]);
+        eventBus.dispatchEvent(goToSlideEvent(source, slideId, true));
+    }, [eventBus, source, setLocalCurrentSlide]);
     const setCountdown = useCallback((countdown: Countdown | null) => {
         setLocalCountdown(countdown);
-        // TODO send event
-    }, [setLocalCountdown]);
+        eventBus.dispatchEvent(updateCountdownEvent(source, countdown, true));
+    }, [eventBus, source, setLocalCountdown]);
 
     // Attach listeners for the remote events!
     useEffect(() => {

@@ -1,7 +1,7 @@
 import { APP_ID_CONVERTER, type AppId, newAppId } from '../identifier/AppId.ts';
 import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../slides/SlideShow.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
-import { BOOLEAN_CONVERTER, NUMBER_CONVERTER, STRING_CONVERTER } from '../json/common.ts';
+import { BOOLEAN_CONVERTER, STRING_CONVERTER } from '../json/common.ts';
 import { type Countdown, COUNTDOWN_CONVERTER } from '../slides/Countdown.ts';
 
 export type EventType = 'replace-slideshow' | 'go-to-slide' | 'update-countdown';
@@ -64,16 +64,16 @@ export function asReplaceSlideshowEvent(event: AppEvent<unknown>): ReplaceSlides
 /**
  * Event sent, whenever the current slide index changes
  */
-export interface GoToSlideEvent extends AppEvent<number> {
+export interface GoToSlideEvent extends AppEvent<AppId | null> {
     readonly type: 'go-to-slide'
 }
 
-export function goToSlideEvent(source: AppId, slideIndex: number, remoteOnly?: boolean): GoToSlideEvent {
+export function goToSlideEvent(source: AppId, slideId: AppId | null, remoteOnly?: boolean): GoToSlideEvent {
     return {
         id: newAppId('event'),
         type: 'go-to-slide',
         remoteOnly: !!remoteOnly,
-        payload: slideIndex,
+        payload: slideId,
         source,
     };
 }
@@ -85,11 +85,11 @@ export function asGoToSlideEvent(event: AppEvent<unknown>): GoToSlideEvent | nul
     return null;
 }
 
-export interface UpdateCountdownEvent extends AppEvent<Countdown> {
+export interface UpdateCountdownEvent extends AppEvent<Countdown | null> {
     readonly type: 'update-countdown'
 }
 
-export function updateCountdownEvent(source: AppId, countdown: Countdown, remoteOnly?: boolean): UpdateCountdownEvent {
+export function updateCountdownEvent(source: AppId, countdown: Countdown | null, remoteOnly?: boolean): UpdateCountdownEvent {
     return {
         id: newAppId('event'),
         type: 'update-countdown',
@@ -140,30 +140,22 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 return null;
             }
             case 'go-to-slide': {
-                const nr = NUMBER_CONVERTER.fromJson(parsed.payload);
-                if (nr !== null) {
-                    return {
-                        id,
-                        type,
-                        remoteOnly,
-                        payload: nr,
-                        source,
-                    } as GoToSlideEvent;
-                }
-                return null;
+                return {
+                    id,
+                    type,
+                    remoteOnly,
+                    payload: APP_ID_CONVERTER.fromJson(parsed.payload),
+                    source,
+                } as GoToSlideEvent;
             }
             case 'update-countdown': {
-                const countdown = COUNTDOWN_CONVERTER.fromJson(parsed.payload);
-                if (countdown) {
-                    return {
-                        id,
-                        type,
-                        remoteOnly,
-                        payload: countdown,
-                        source,
-                    } as UpdateCountdownEvent;
-                }
-                return null;
+                return {
+                    id,
+                    type,
+                    remoteOnly,
+                    payload: COUNTDOWN_CONVERTER.fromJson(parsed.payload),
+                    source,
+                } as UpdateCountdownEvent;
             }
             default:
                 return null;
@@ -179,10 +171,10 @@ export const EVENT_CONVERTER: JsonConverter<AppEvent<unknown>, RawJsonEvent> = {
                 payload = SLIDE_SHOW_CONVERTER.toJson(data.payload as SlideShow);
                 break;
             case 'go-to-slide':
-                payload = NUMBER_CONVERTER.toJson(data.payload as number);
+                payload = APP_ID_CONVERTER.toJson(data.payload as AppId | null);
                 break;
             case 'update-countdown':
-                payload = COUNTDOWN_CONVERTER.toJson(data.payload as Countdown);
+                payload = COUNTDOWN_CONVERTER.toJson(data.payload as Countdown | null);
                 break;
             default:
                 payload = undefined;
