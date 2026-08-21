@@ -37,8 +37,8 @@ export function slideShowFromStorage(): SlideShow | null {
     return fromStorage(SLIDE_SHOW_CONVERTER, 'slide-show');
 }
 
-export function currentSlideIdToStorage(currentSlideId: AppId) {
-    return toStorage(APP_ID_CONVERTER, 'current-slide-id', currentSlideId, (newer, older) => newer >= older);
+export function currentSlideIdToStorage(currentSlideId: AppId | null) {
+    return toStorage(APP_ID_CONVERTER, 'current-slide-id', currentSlideId, (newer, older) => !!(newer && older) && newer >= older);
 }
 
 export function currentSlideIdFromStorage(): AppId | null {

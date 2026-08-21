@@ -47,6 +47,7 @@ export const SlideShowPage = (): ReactElement => {
                 slideShow={slideshow}
                 currentSlideId={currentSlide?.slideId}
                 countdown={countdown}
+                onNextSlide={() => setCurrentSlideId(findNextSlideId(slideshow, currentSlide?.slideId))}
             />
         </div>
     );

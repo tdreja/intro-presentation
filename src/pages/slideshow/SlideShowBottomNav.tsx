@@ -8,9 +8,10 @@ type Props = {
     slideShow: SlideShow
     currentSlideId: string | undefined
     countdown: Countdown
+    onNextSlide: () => void
 };
 
-export const SlideShowBottomNav = ({ slideShow, currentSlideId, countdown }: Props): ReactElement => {
+export const SlideShowBottomNav = ({ slideShow, currentSlideId, countdown, onNextSlide }: Props): ReactElement => {
     const timePerSlideMs = slideShow.timePerSlide.total('milliseconds');
     return (
         <nav
@@ -22,6 +23,13 @@ export const SlideShowBottomNav = ({ slideShow, currentSlideId, countdown }: Pro
                 currentSlideId={currentSlideId}
                 timePerSlideMs={timePerSlideMs}
             />
+            <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={onNextSlide}
+                aria-label="Next slide"
+            >
+                &#8250;
+            </button>
             <CountdownComponent countdown={countdown} />
         </nav>
     );

@@ -62,7 +62,10 @@ export class AppEventBus {
             }
         }
         if (this._channel) {
-            this._channel.postMessage(JSON.stringify(EVENT_CONVERTER.toJson(event)));
+            const json = EVENT_CONVERTER.toJson(event);
+            if (json) {
+                this._channel.postMessage(JSON.stringify(json));
+            }
         }
     }
 

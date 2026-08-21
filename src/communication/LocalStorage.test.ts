@@ -192,8 +192,8 @@ describe('countdownToStorage / countdownFromStorage round-trip', () => {
         const result = countdownFromStorage();
         expect(result).not.toBeNull();
         expect(result!.countdownId).toBe(OLDER_COUNTDOWN.countdownId);
-        expect(result!.showSmallCountdownFor.minutes).toBe(30);
-        expect(result!.showLargeCountdownFor.minutes).toBe(5);
+        expect(result!.showSmallCountdownFor!.minutes).toBe(30);
+        expect(result!.showLargeCountdownFor!.minutes).toBe(5);
     });
 
     test('does not overwrite when stored countdownId is the same', () => {
