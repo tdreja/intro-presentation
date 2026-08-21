@@ -1,6 +1,7 @@
 import { useEffect, type ReactElement } from 'react';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
+import { useCountdown } from '../../communication/context/Countdown.context.ts';
 import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/Slide.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
@@ -10,6 +11,7 @@ import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
 export const SlideShowPage = (): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
     const [slideshow] = useSlideShow();
+    const [countdown] = useCountdown();
 
     useEffect(() => {
         const ms = slideshow.timePerSlide.total('milliseconds');
@@ -44,6 +46,7 @@ export const SlideShowPage = (): ReactElement => {
             <SlideShowBottomNav
                 slideShow={slideshow}
                 currentSlideId={currentSlide?.slideId}
+                countdown={countdown}
             />
         </div>
     );
