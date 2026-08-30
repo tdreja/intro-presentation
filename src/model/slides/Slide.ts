@@ -3,6 +3,7 @@ import { APP_ID_CONVERTER, type AppId, newAppId } from '../identifier/AppId.ts';
 import { type Base64Image, BASE_64_IMAGE_CONVERTER } from './Image.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { STRING_CONVERTER } from '../json/common.ts';
+import { type QrCode, QR_CODE_CONVERTER } from './QrCode.ts';
 
 export function createSlideId(date?: Temporal.PlainDateTime | null): AppId {
     return newAppId('slide', date);
@@ -34,6 +35,10 @@ export interface Slide {
      * Optional headline for the slide, used as optional title in the layout
      */
     readonly headline?: string | null
+    /**
+     * Optional QR code to be rendered on the slide
+     */
+    readonly qrCode?: QrCode | null
 }
 
 /**
@@ -100,13 +105,15 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
         if (!slideId) {
             return null;
         }
-        const headline = STRING_CONVERTER.fromJson(parsed.headline);
+        const headline = STRING_CONVERTER.fromJson(parsed.headline) ?? undefined;
+        const qrCode = QR_CODE_CONVERTER.fromJson(parsed.qrCode) ?? undefined;
         switch (slideType) {
             case 'full-image': {
                 const img = BASE_64_IMAGE_CONVERTER.fromJson(parsed.image);
                 if (img) {
                     return {
                         headline,
+                        qrCode,
                         slideType: 'full-image',
                         image: img,
                         slideId,
@@ -121,6 +128,7 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                 if (img && text && layout) {
                     return {
                         headline,
+                        qrCode,
                         slideId,
                         slideType: 'half-text-half-image',
                         image: img,
@@ -147,6 +155,7 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                     slideType: fullImageSlide.slideType,
                     image: BASE_64_IMAGE_CONVERTER.toJson(fullImageSlide.image),
                     headline: fullImageSlide.headline,
+                    qrCode: QR_CODE_CONVERTER.toJson(fullImageSlide.qrCode),
                 };
             }
             case 'half-text-half-image': {
@@ -158,6 +167,7 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                     image: BASE_64_IMAGE_CONVERTER.toJson(halfTextHalfImageSlide.image),
                     layout: halfTextHalfImageSlide.layout,
                     headline: halfTextHalfImageSlide.headline,
+                    qrCode: QR_CODE_CONVERTER.toJson(halfTextHalfImageSlide.qrCode),
                 };
             }
             default:

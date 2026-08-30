@@ -20,6 +20,10 @@ export interface SlideShow {
      * Duration each slide is shown before advancing to the next one automatically.
      */
     readonly timePerSlide: Temporal.Duration
+    /**
+     * Whether the slideshow is displayed in dark mode. Null or absent means the system default is used.
+     */
+    readonly darkMode?: boolean | null
 }
 
 export type RawJsonSlideShow = RawJson<SlideShow>;
@@ -44,7 +48,7 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         if (!timePerSlide) {
             return null;
         }
-        return { id, slides, timePerSlide };
+        return { id, slides, timePerSlide, darkMode: parsed.darkMode ?? null };
     },
     toJson(data: SlideShow | null | undefined): RawJsonSlideShow | null {
         if (!data) {
@@ -54,6 +58,7 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
             id: APP_ID_CONVERTER.toJson(data.id),
             slides: SLIDES_CONVERTER.toJson(data.slides),
             timePerSlide: DURATION_CONVERTER.toJson(data.timePerSlide),
+            darkMode: data.darkMode ?? null,
         };
     },
 };

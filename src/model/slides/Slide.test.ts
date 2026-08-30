@@ -3,6 +3,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import { createSlideId, SLIDE_CONVERTER, type FullImageSlide, type HalfTextHalfImageSlide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
+import type { QrCode } from './QrCode';
 
 const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
@@ -16,6 +17,11 @@ const FULL_IMAGE_SLIDE: FullImageSlide = {
 const FULL_IMAGE_SLIDE_WITH_HEADLINE: FullImageSlide = {
     ...FULL_IMAGE_SLIDE,
     headline: 'My Headline',
+};
+
+const FULL_IMAGE_SLIDE_WITH_QR: FullImageSlide = {
+    ...FULL_IMAGE_SLIDE,
+    qrCode: { data: 'https://example.com/qr', corner: 'top-right' } satisfies QrCode,
 };
 
 const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
@@ -121,9 +127,20 @@ describe('SLIDE_CONVERTER.fromJson — full-image', () => {
         expect(result.headline).toBe('My Headline');
     });
 
-    test('headline is null when omitted', () => {
+    test('headline is undefined when omitted', () => {
         const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.headline).toBeNull();
+        expect(result.headline).toBeUndefined();
+    });
+
+    test('qrCode is set when provided', () => {
+        const json = { ...validJson, qrCode: { data: 'https://example.com/qr', corner: 'top-right' } };
+        const result = SLIDE_CONVERTER.fromJson(json)!;
+        expect(result.qrCode).toEqual({ data: 'https://example.com/qr', corner: 'top-right' });
+    });
+
+    test('qrCode is undefined when omitted', () => {
+        const result = SLIDE_CONVERTER.fromJson(validJson)!;
+        expect(result.qrCode).toBeUndefined();
     });
 
     test('returns null when image is missing', () => {
@@ -234,6 +251,16 @@ describe('SLIDE_CONVERTER.toJson — full-image', () => {
         const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
         expect(result.headline).toBeUndefined();
     });
+
+    test('includes qrCode when set', () => {
+        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
+        expect(result.qrCode).toEqual({ data: 'https://example.com/qr', corner: 'top-right' });
+    });
+
+    test('qrCode is null when not set on the slide', () => {
+        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
+        expect(result.qrCode).toBeNull();
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -266,6 +293,12 @@ describe('SLIDE_CONVERTER round-trip', () => {
         const json = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_HEADLINE)!;
         const result = SLIDE_CONVERTER.fromJson(json);
         expect(result).toEqual(FULL_IMAGE_SLIDE_WITH_HEADLINE);
+    });
+
+    test('FullImageSlide with qrCode survives a full round-trip', () => {
+        const json = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
+        const result = SLIDE_CONVERTER.fromJson(json);
+        expect(result).toEqual(FULL_IMAGE_SLIDE_WITH_QR);
     });
 
     test('HalfTextHalfImageSlide survives a full round-trip', () => {
