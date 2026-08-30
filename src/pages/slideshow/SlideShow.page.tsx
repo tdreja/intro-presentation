@@ -7,6 +7,7 @@ import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
 import { HalfTextHalfImageSlideComponent } from './HalfTextHalfImageSlide.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
+import { QrCodeOverlay } from './QrCodeOverlay.component.tsx';
 
 export const SlideShowPage = (): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
@@ -42,6 +43,7 @@ export const SlideShowPage = (): ReactElement => {
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-grow-1 overflow-hidden position-relative">
                 {renderSlide()}
+                {currentSlide?.qrCode && <QrCodeOverlay qrCode={currentSlide.qrCode} />}
             </div>
             <SlideShowBottomNav
                 slideShow={slideshow}
