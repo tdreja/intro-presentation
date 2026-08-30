@@ -324,7 +324,7 @@ describe('SLIDE_SHOW_CONVERTER.toJson — timePerSlide', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Round-trip: timePerSlide
+// SLIDE_SHOW_CONVERTER round-trip — timePerSlide
 // ---------------------------------------------------------------------------
 
 describe('SLIDE_SHOW_CONVERTER round-trip — timePerSlide', () => {
@@ -333,6 +333,88 @@ describe('SLIDE_SHOW_CONVERTER round-trip — timePerSlide', () => {
         const result = SLIDE_SHOW_CONVERTER.fromJson(json)!;
         expect(result).not.toBeNull();
         expect(Temporal.Duration.compare(result.timePerSlide, VALID_TIME_PER_SLIDE)).toBe(0);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// SLIDE_SHOW_CONVERTER — darkMode
+// ---------------------------------------------------------------------------
+
+const BASE_VALID_JSON = {
+    id: VALID_SHOW_ID,
+    slides: [{
+        slideId: VALID_SLIDE_ID,
+        slideType: 'full-image' as const,
+        image: VALID_IMAGE,
+    }],
+    timePerSlide: 'PT10S',
+};
+
+describe('SLIDE_SHOW_CONVERTER.fromJson — darkMode', () => {
+    test('reads darkMode: true', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson({ ...BASE_VALID_JSON, darkMode: true })!;
+        expect(result.darkMode).toBe(true);
+    });
+
+    test('reads darkMode: false', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson({ ...BASE_VALID_JSON, darkMode: false })!;
+        expect(result.darkMode).toBe(false);
+    });
+
+    test('reads darkMode: null as null', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson({ ...BASE_VALID_JSON, darkMode: null })!;
+        expect(result.darkMode).toBeNull();
+    });
+
+    test('reads absent darkMode as null', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson(BASE_VALID_JSON)!;
+        expect(result.darkMode).toBeNull();
+    });
+});
+
+describe('SLIDE_SHOW_CONVERTER.toJson — darkMode', () => {
+    test('serializes darkMode: true', () => {
+        const show: SlideShow = { ...MINIMAL_SLIDESHOW, darkMode: true };
+        expect(SLIDE_SHOW_CONVERTER.toJson(show)!.darkMode).toBe(true);
+    });
+
+    test('serializes darkMode: false', () => {
+        const show: SlideShow = { ...MINIMAL_SLIDESHOW, darkMode: false };
+        expect(SLIDE_SHOW_CONVERTER.toJson(show)!.darkMode).toBe(false);
+    });
+
+    test('serializes darkMode: null as null', () => {
+        const show: SlideShow = { ...MINIMAL_SLIDESHOW, darkMode: null };
+        expect(SLIDE_SHOW_CONVERTER.toJson(show)!.darkMode).toBeNull();
+    });
+
+    test('serializes absent darkMode as null', () => {
+        expect(SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW)!.darkMode).toBeNull();
+    });
+});
+
+describe('SLIDE_SHOW_CONVERTER round-trip — darkMode', () => {
+    test('darkMode: true survives a round-trip', () => {
+        const show: SlideShow = { ...MINIMAL_SLIDESHOW, darkMode: true };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(SLIDE_SHOW_CONVERTER.toJson(show))!;
+        expect(result.darkMode).toBe(true);
+    });
+
+    test('darkMode: false survives a round-trip', () => {
+        const show: SlideShow = { ...MINIMAL_SLIDESHOW, darkMode: false };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(SLIDE_SHOW_CONVERTER.toJson(show))!;
+        expect(result.darkMode).toBe(false);
+    });
+
+    test('darkMode: null survives a round-trip', () => {
+        const show: SlideShow = { ...MINIMAL_SLIDESHOW, darkMode: null };
+        const result = SLIDE_SHOW_CONVERTER.fromJson(SLIDE_SHOW_CONVERTER.toJson(show))!;
+        expect(result.darkMode).toBeNull();
+    });
+
+    test('absent darkMode survives a round-trip as null', () => {
+        const result = SLIDE_SHOW_CONVERTER.fromJson(SLIDE_SHOW_CONVERTER.toJson(MINIMAL_SLIDESHOW))!;
+        expect(result.darkMode).toBeNull();
     });
 });
 
