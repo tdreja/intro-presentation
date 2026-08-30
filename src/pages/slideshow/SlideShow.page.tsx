@@ -23,6 +23,11 @@ export const SlideShowPage = (): ReactElement => {
         return () => clearTimeout(timer);
     }, [slideshow, currentSlide, setCurrentSlideId]);
 
+    useEffect(() => {
+        document.documentElement.setAttribute('data-bs-theme', slideshow.darkMode === true ? 'dark' : 'light');
+        return () => document.documentElement.removeAttribute('data-bs-theme');
+    }, [slideshow.darkMode]);
+
     const renderSlide = (): ReactElement => {
         if (!currentSlide) {
             return (
@@ -43,7 +48,7 @@ export const SlideShowPage = (): ReactElement => {
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-grow-1 overflow-hidden position-relative">
                 {renderSlide()}
-                {currentSlide?.qrCode && <QrCodeOverlay qrCode={currentSlide.qrCode} />}
+                {currentSlide?.qrCode && <QrCodeOverlay qrCode={currentSlide.qrCode} darkMode={slideshow.darkMode} />}
             </div>
             <SlideShowBottomNav
                 slideShow={slideshow}

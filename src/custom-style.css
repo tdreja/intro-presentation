@@ -31,3 +31,13 @@
     from { transform: scaleX(0); }
     to   { transform: scaleX(1); }
 }
+
+#qrcode {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.75);
+}
+
+[data-bs-theme="dark"] #qrcode {
+    background: rgba(30, 30, 30, 0.5);
+}

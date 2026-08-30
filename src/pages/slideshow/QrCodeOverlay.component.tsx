@@ -9,19 +9,29 @@ const CORNER_STYLE: Record<QrCode['corner'], CSSProperties> = {
     'bottom-right': { bottom: '1rem', right: '1rem' },
 };
 
+const QR_FG_LIGHT = '#1a1a1a';
+const QR_FG_DARK = '#ffffff';
+
 interface QrCodeOverlayProps {
     qrCode: QrCode
+    darkMode?: boolean | null
 }
 
-export const QrCodeOverlay = ({ qrCode }: QrCodeOverlayProps): ReactElement => {
+export const QrCodeOverlay = ({ qrCode, darkMode }: QrCodeOverlayProps): ReactElement => {
     return (
-        <div style={{
-            position: 'absolute',
-            zIndex: 10,
-            ...CORNER_STYLE[qrCode.corner],
-        }}
+        <div
+            id="qrcode"
+            style={{
+                position: 'absolute',
+                zIndex: 10,
+                ...CORNER_STYLE[qrCode.corner],
+            }}
         >
-            <QRCodeSVG value={qrCode.data} />
+            <QRCodeSVG
+                value={qrCode.data}
+                bgColor="transparent"
+                fgColor={darkMode === true ? QR_FG_DARK : QR_FG_LIGHT}
+            />
         </div>
     );
 };
