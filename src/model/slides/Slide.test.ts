@@ -3,6 +3,7 @@ import { Temporal } from '@js-temporal/polyfill';
 import { createSlideId, SLIDE_CONVERTER, type FullImageSlide, type HalfTextHalfImageSlide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
+import type { QrCode } from './QrCode';
 
 const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
@@ -20,7 +21,7 @@ const FULL_IMAGE_SLIDE_WITH_HEADLINE: FullImageSlide = {
 
 const FULL_IMAGE_SLIDE_WITH_QR: FullImageSlide = {
     ...FULL_IMAGE_SLIDE,
-    qrCode: 'https://example.com/qr',
+    qrCode: { data: 'https://example.com/qr', corner: 'top-right' } satisfies QrCode,
 };
 
 const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
@@ -132,9 +133,9 @@ describe('SLIDE_CONVERTER.fromJson — full-image', () => {
     });
 
     test('qrCode is set when provided', () => {
-        const json = { ...validJson, qrCode: 'https://example.com/qr' };
+        const json = { ...validJson, qrCode: { data: 'https://example.com/qr', corner: 'top-right' } };
         const result = SLIDE_CONVERTER.fromJson(json)!;
-        expect(result.qrCode).toBe('https://example.com/qr');
+        expect(result.qrCode).toEqual({ data: 'https://example.com/qr', corner: 'top-right' });
     });
 
     test('qrCode is undefined when omitted', () => {
@@ -253,12 +254,12 @@ describe('SLIDE_CONVERTER.toJson — full-image', () => {
 
     test('includes qrCode when set', () => {
         const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
-        expect(result.qrCode).toBe('https://example.com/qr');
+        expect(result.qrCode).toEqual({ data: 'https://example.com/qr', corner: 'top-right' });
     });
 
-    test('qrCode is undefined when not set on the slide', () => {
+    test('qrCode is null when not set on the slide', () => {
         const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
-        expect(result.qrCode).toBeUndefined();
+        expect(result.qrCode).toBeNull();
     });
 });
 
