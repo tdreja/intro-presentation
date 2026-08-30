@@ -21,6 +21,7 @@ import { CurrentSlideContext, type CurrentSlideState } from './communication/con
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
 import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
 import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
+import { Editor } from './pages/Editor.tsx';
 
 export const App = (): ReactElement => {
     const [source] = useState<AppId>(() => newAppId('app'));
@@ -96,6 +97,7 @@ export const App = (): ReactElement => {
             <SlideShowContext.Provider value={slideShowState}>
                 <CurrentSlideContext.Provider value={currentSlideState}>
                     <CountdownContext.Provider value={countdownState}>
+                        <Editor />
                         <SlideShowPage />
                     </CountdownContext.Provider>
                 </CurrentSlideContext.Provider>
