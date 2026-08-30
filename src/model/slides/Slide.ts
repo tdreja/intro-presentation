@@ -34,6 +34,10 @@ export interface Slide {
      * Optional headline for the slide, used as optional title in the layout
      */
     readonly headline?: string | null
+    /**
+     * Optional QR code data string to be rendered as a QR code on the slide
+     */
+    readonly qrCode?: string | null
 }
 
 /**
@@ -100,13 +104,15 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
         if (!slideId) {
             return null;
         }
-        const headline = STRING_CONVERTER.fromJson(parsed.headline);
+        const headline = STRING_CONVERTER.fromJson(parsed.headline) ?? undefined;
+        const qrCode = STRING_CONVERTER.fromJson(parsed.qrCode) ?? undefined;
         switch (slideType) {
             case 'full-image': {
                 const img = BASE_64_IMAGE_CONVERTER.fromJson(parsed.image);
                 if (img) {
                     return {
                         headline,
+                        qrCode,
                         slideType: 'full-image',
                         image: img,
                         slideId,
@@ -121,6 +127,7 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                 if (img && text && layout) {
                     return {
                         headline,
+                        qrCode,
                         slideId,
                         slideType: 'half-text-half-image',
                         image: img,
@@ -147,6 +154,7 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                     slideType: fullImageSlide.slideType,
                     image: BASE_64_IMAGE_CONVERTER.toJson(fullImageSlide.image),
                     headline: fullImageSlide.headline,
+                    qrCode: fullImageSlide.qrCode,
                 };
             }
             case 'half-text-half-image': {
@@ -158,6 +166,7 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
                     image: BASE_64_IMAGE_CONVERTER.toJson(halfTextHalfImageSlide.image),
                     layout: halfTextHalfImageSlide.layout,
                     headline: halfTextHalfImageSlide.headline,
+                    qrCode: halfTextHalfImageSlide.qrCode,
                 };
             }
             default:

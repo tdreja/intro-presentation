@@ -18,6 +18,11 @@ const FULL_IMAGE_SLIDE_WITH_HEADLINE: FullImageSlide = {
     headline: 'My Headline',
 };
 
+const FULL_IMAGE_SLIDE_WITH_QR: FullImageSlide = {
+    ...FULL_IMAGE_SLIDE,
+    qrCode: 'https://example.com/qr',
+};
+
 const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
     slideId: VALID_SLIDE_ID,
     slideType: 'half-text-half-image',
@@ -121,9 +126,20 @@ describe('SLIDE_CONVERTER.fromJson — full-image', () => {
         expect(result.headline).toBe('My Headline');
     });
 
-    test('headline is null when omitted', () => {
+    test('headline is undefined when omitted', () => {
         const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.headline).toBeNull();
+        expect(result.headline).toBeUndefined();
+    });
+
+    test('qrCode is set when provided', () => {
+        const json = { ...validJson, qrCode: 'https://example.com/qr' };
+        const result = SLIDE_CONVERTER.fromJson(json)!;
+        expect(result.qrCode).toBe('https://example.com/qr');
+    });
+
+    test('qrCode is undefined when omitted', () => {
+        const result = SLIDE_CONVERTER.fromJson(validJson)!;
+        expect(result.qrCode).toBeUndefined();
     });
 
     test('returns null when image is missing', () => {
@@ -234,6 +250,16 @@ describe('SLIDE_CONVERTER.toJson — full-image', () => {
         const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
         expect(result.headline).toBeUndefined();
     });
+
+    test('includes qrCode when set', () => {
+        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
+        expect(result.qrCode).toBe('https://example.com/qr');
+    });
+
+    test('qrCode is undefined when not set on the slide', () => {
+        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
+        expect(result.qrCode).toBeUndefined();
+    });
 });
 
 // ---------------------------------------------------------------------------
@@ -266,6 +292,12 @@ describe('SLIDE_CONVERTER round-trip', () => {
         const json = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_HEADLINE)!;
         const result = SLIDE_CONVERTER.fromJson(json);
         expect(result).toEqual(FULL_IMAGE_SLIDE_WITH_HEADLINE);
+    });
+
+    test('FullImageSlide with qrCode survives a full round-trip', () => {
+        const json = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
+        const result = SLIDE_CONVERTER.fromJson(json);
+        expect(result).toEqual(FULL_IMAGE_SLIDE_WITH_QR);
     });
 
     test('HalfTextHalfImageSlide survives a full round-trip', () => {
