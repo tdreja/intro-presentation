@@ -48,7 +48,8 @@ export const SLIDE_SHOW_CONVERTER: JsonConverter<SlideShow, RawJsonSlideShow> = 
         if (!timePerSlide) {
             return null;
         }
-        return { id, slides, timePerSlide, darkMode: parsed.darkMode ?? null };
+        const darkMode: boolean = !!parsed.darkMode;
+        return { id, slides, timePerSlide, darkMode };
     },
     toJson(data: SlideShow | null | undefined): RawJsonSlideShow | null {
         if (!data) {

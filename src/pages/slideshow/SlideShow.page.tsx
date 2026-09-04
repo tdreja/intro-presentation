@@ -2,10 +2,8 @@ import { useEffect, type ReactElement } from 'react';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import { useCountdown } from '../../communication/context/Countdown.context.ts';
-import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/Slide.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
-import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
-import { HalfTextHalfImageSlideComponent } from './HalfTextHalfImageSlide.component.tsx';
+import { SlideSectionComponent } from './SlideSection.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
 import { QrCodeOverlay } from './QrCodeOverlay.component.tsx';
 
@@ -36,12 +34,22 @@ export const SlideShowPage = (): ReactElement => {
                 </div>
             );
         }
-        switch (currentSlide.slideType) {
-            case 'full-image':
-                return <FullImageSlideComponent slide={currentSlide as FullImageSlide} />;
-            case 'half-text-half-image':
-                return <HalfTextHalfImageSlideComponent slide={currentSlide as HalfTextHalfImageSlide} />;
-        }
+        return (
+            <div className="d-flex flex-column w-100 h-100 overflow-hidden position-relative">
+                {currentSlide.headline && (
+                    <div
+                        className="flex-shrink-0 m-3 px-3 py-2 rounded fs-3 text-white bg-dark bg-opacity-50 text-center"
+                    >
+                        {currentSlide.headline}
+                    </div>
+                )}
+                <div className="d-flex flex-grow-1 overflow-hidden">
+                    {currentSlide.sections.map((section, index) => (
+                        <SlideSectionComponent key={index} section={section} />
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     return (

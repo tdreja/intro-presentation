@@ -10,12 +10,12 @@ afterEach(cleanup);
 
 const SLIDE_A: Slide = {
     slideId: 'slide-2026-01-01-00-00-00-001' as AppId,
-    slideType: 'full-image',
+    sections: [],
 };
 
 const SLIDE_B: Slide = {
     slideId: 'slide-2026-01-01-00-00-00-002' as AppId,
-    slideType: 'full-image',
+    sections: [],
 };
 
 const SLIDES = [SLIDE_A, SLIDE_B];

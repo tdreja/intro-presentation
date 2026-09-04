@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import { findNextSlideId, findSlide, indexOfSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
-import type { FullImageSlide } from './Slide';
+import type { ImageSlideSection, Slide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
 
 const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000' as AppId;
@@ -10,10 +10,11 @@ const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
 const VALID_TIME_PER_SLIDE = Temporal.Duration.from({ seconds: 10 });
 
-const FULL_IMAGE_SLIDE: FullImageSlide = {
+const IMAGE_SECTION: ImageSlideSection = { widthPercent: 100, image: VALID_IMAGE };
+
+const FULL_IMAGE_SLIDE: Slide = {
     slideId: VALID_SLIDE_ID,
-    slideType: 'full-image',
-    image: VALID_IMAGE,
+    sections: [IMAGE_SECTION],
 };
 
 const MINIMAL_SLIDESHOW: SlideShow = {
@@ -51,7 +52,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — null / invalid guards', () => {
     });
 
     test('returns null when slides contains an invalid slide', () => {
-        const badSlide = { slideType: 'full-image' }; // missing slideId and image
+        const badSlide = { sections: [IMAGE_SECTION] }; // missing slideId
         const json = { id: VALID_SHOW_ID, slides: [badSlide], timePerSlide: 'PT10S' } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
@@ -66,8 +67,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
         id: VALID_SHOW_ID,
         slides: [{
             slideId: VALID_SLIDE_ID,
-            slideType: 'full-image' as const,
-            image: VALID_IMAGE,
+            sections: [IMAGE_SECTION],
         }],
         timePerSlide: 'PT10S',
     };
@@ -84,7 +84,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
     test('slides array is populated correctly', () => {
         const result = SLIDE_SHOW_CONVERTER.fromJson(validJson)!;
         expect(result.slides).toHaveLength(1);
-        expect(result.slides[0].slideType).toBe('full-image');
+        expect(result.slides[0].sections).toEqual([IMAGE_SECTION]);
         expect(result.slides[0].slideId).toBe(VALID_SLIDE_ID);
     });
 
@@ -139,7 +139,7 @@ describe('SLIDE_SHOW_CONVERTER round-trip', () => {
         expect(result.id).toBe(MINIMAL_SLIDESHOW.id);
         expect(result.slides).toHaveLength(MINIMAL_SLIDESHOW.slides.length);
         expect(result.slides[0].slideId).toBe(MINIMAL_SLIDESHOW.slides[0].slideId);
-        expect(result.slides[0].slideType).toBe(MINIMAL_SLIDESHOW.slides[0].slideType);
+        expect(result.slides[0].sections).toEqual(MINIMAL_SLIDESHOW.slides[0].sections);
     });
 
     test('SlideShow with empty slides array round-trips correctly', () => {
@@ -197,8 +197,8 @@ const SLIDE_2_ID = 'slide-2026-08-18-10-00-00-001' as AppId;
 const SLIDE_3_ID = 'slide-2026-08-18-10-00-00-002' as AppId;
 const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
 
-const SLIDE_2: FullImageSlide = { slideId: SLIDE_2_ID, slideType: 'full-image', image: VALID_IMAGE };
-const SLIDE_3: FullImageSlide = { slideId: SLIDE_3_ID, slideType: 'full-image', image: VALID_IMAGE };
+const SLIDE_2: Slide = { slideId: SLIDE_2_ID, sections: [IMAGE_SECTION] };
+const SLIDE_3: Slide = { slideId: SLIDE_3_ID, sections: [IMAGE_SECTION] };
 
 const TWO_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2], timePerSlide: VALID_TIME_PER_SLIDE };
 const THREE_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2, SLIDE_3], timePerSlide: VALID_TIME_PER_SLIDE };
@@ -290,8 +290,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — timePerSlide', () => {
         id: VALID_SHOW_ID,
         slides: [{
             slideId: VALID_SLIDE_ID,
-            slideType: 'full-image' as const,
-            image: VALID_IMAGE,
+            sections: [IMAGE_SECTION],
         }],
     };
 
@@ -344,8 +343,7 @@ const BASE_VALID_JSON = {
     id: VALID_SHOW_ID,
     slides: [{
         slideId: VALID_SLIDE_ID,
-        slideType: 'full-image' as const,
-        image: VALID_IMAGE,
+        sections: [IMAGE_SECTION],
     }],
     timePerSlide: 'PT10S',
 };

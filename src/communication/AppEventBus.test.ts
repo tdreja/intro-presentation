@@ -4,7 +4,7 @@ import { AppEventBus } from './AppEventBus';
 import { EVENT_CONVERTER, type AppEvent, type GoToSlideEvent, type ReplaceSlideshowEvent } from '../model/event/Event';
 import { PLACEHOLDER_IMAGE } from '../model/slides/Image';
 import type { AppId } from '../model/identifier/AppId';
-import type { FullImageSlide } from '../model/slides/Slide';
+import type { ImageSlideSection, Slide } from '../model/slides/Slide';
 import type { SlideShow } from '../model/slides/SlideShow';
 
 // ---------------------------------------------------------------------------
@@ -16,10 +16,13 @@ const SOURCE_ID = 'src-2026-08-19-10-00-00-000' as AppId;
 const SHOW_ID = 'show-2026-01-01-10-00-00-000' as AppId;
 const SLIDE_ID = 'slide-2026-01-01-10-00-00-000' as AppId;
 
-const SLIDE: FullImageSlide = {
+const IMAGE_SECTION: ImageSlideSection = { widthPercent: 100, image: PLACEHOLDER_IMAGE };
+
+const SLIDE: Slide = {
     slideId: SLIDE_ID,
-    slideType: 'full-image',
-    image: PLACEHOLDER_IMAGE,
+    sections: [
+        IMAGE_SECTION,
+    ],
 };
 
 const SLIDESHOW: SlideShow = {
