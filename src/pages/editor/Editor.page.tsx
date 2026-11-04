@@ -1,6 +1,8 @@
 import { type ReactElement, useState } from 'react';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
+import { useCountdown } from '../../communication/context/Countdown.context.ts';
+import { downloadPresentation } from '../../download/PresentationDownload.ts';
 import type { AppId } from '../../model/identifier/AppId.ts';
 import { findSlide, indexOfSlide } from '../../model/slides/SlideShow.ts';
 import type { Slide } from '../../model/slides/Slide.ts';
@@ -19,6 +21,7 @@ type Props = {
 export const EditorPage = ({ onClose }: Props): ReactElement => {
     const [slideShow, setSlideShow] = useSlideShow();
     const [currentSlide] = useCurrentSlide();
+    const [countdown] = useCountdown();
     const [selectedSlideId, setSelectedSlideId] = useState<AppId | null>(
         () => currentSlide?.slideId ?? slideShow.slides[0]?.slideId ?? null,
     );
@@ -51,9 +54,19 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                 style={{ height: 'var(--navbar-height)' }}
             >
                 <span className="navbar-brand mb-0 h1 fs-5">Slideshow editor</span>
-                <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onClose}>
-                    &#9654; Back to slideshow
-                </button>
+                <div className="d-flex gap-2">
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => downloadPresentation(slideShow, countdown)}
+                        title="Download this page with the current slideshow and countdown"
+                    >
+                        &#10515; Download
+                    </button>
+                    <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onClose}>
+                        &#9654; Back to slideshow
+                    </button>
+                </div>
             </nav>
             <div className="d-flex flex-grow-1 overflow-hidden">
                 <aside className="flex-shrink-0 d-flex flex-column border-end bg-body-tertiary" style={{ width: 'var(--overview-width)' }}>
