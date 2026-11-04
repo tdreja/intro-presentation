@@ -145,6 +145,12 @@ describe('slideShowToStorage / slideShowFromStorage round-trip', () => {
         slideShowToStorage(makeSlideShow(NEWER_SLIDE_ID));
         expect(slideShowFromStorage()!.id).toBe(NEWER_SLIDE_ID);
     });
+
+    test('overwrites a slideshow with the same id (e.g. after re-encoding its images)', () => {
+        slideShowToStorage(makeSlideShow(OLDER_SLIDE_ID));
+        slideShowToStorage({ ...makeSlideShow(OLDER_SLIDE_ID), darkMode: true });
+        expect(slideShowFromStorage()!.darkMode).toBe(true);
+    });
 });
 
 // ---------------------------------------------------------------------------

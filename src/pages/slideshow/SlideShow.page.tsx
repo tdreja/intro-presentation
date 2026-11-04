@@ -2,12 +2,9 @@ import { useEffect, type ReactElement } from 'react';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import { useCountdown } from '../../communication/context/Countdown.context.ts';
-import type { FullImageSlide, HalfTextHalfImageSlide } from '../../model/slides/Slide.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
-import { FullImageSlideComponent } from './FullImageSlide.component.tsx';
-import { HalfTextHalfImageSlideComponent } from './HalfTextHalfImageSlide.component.tsx';
+import { SlideComponent } from './Slide.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
-import { QrCodeOverlay } from './QrCodeOverlay.component.tsx';
 
 export const SlideShowPage = (): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
@@ -36,19 +33,13 @@ export const SlideShowPage = (): ReactElement => {
                 </div>
             );
         }
-        switch (currentSlide.slideType) {
-            case 'full-image':
-                return <FullImageSlideComponent slide={currentSlide as FullImageSlide} />;
-            case 'half-text-half-image':
-                return <HalfTextHalfImageSlideComponent slide={currentSlide as HalfTextHalfImageSlide} />;
-        }
+        return <SlideComponent slide={currentSlide} darkMode={slideshow.darkMode} />;
     };
 
     return (
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-grow-1 overflow-hidden position-relative">
                 {renderSlide()}
-                {currentSlide?.qrCode && <QrCodeOverlay qrCode={currentSlide.qrCode} darkMode={slideshow.darkMode} />}
             </div>
             <SlideShowBottomNav
                 slideShow={slideshow}
