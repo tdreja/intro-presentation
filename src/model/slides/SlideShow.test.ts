@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import { findNextSlideId, findSlide, indexOfSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
+import { findNextSlideId, findSlide, findSlideOrFirst, indexOfSlide, pickNewest, SLIDE_SHOW_CONVERTER, type SlideShow } from './SlideShow';
 import type { AppId } from '../identifier/AppId';
 import type { Slide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
@@ -460,5 +460,31 @@ describe('pickNewest', () => {
     test('returns A when both ids are equal', () => {
         const sameIdShow: SlideShow = { id: OLDER_SHOW_ID, slides: [], timePerSlide: VALID_TIME_PER_SLIDE };
         expect(pickNewest(OLDER_SLIDESHOW, sameIdShow)).toBe(OLDER_SLIDESHOW);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// findSlideOrFirst
+// ---------------------------------------------------------------------------
+
+describe('findSlideOrFirst', () => {
+    const SECOND_SLIDE: Slide = { ...FULL_IMAGE_SLIDE, slideId: 'slide-2026-08-18-10-00-00-001' as AppId };
+    const TWO_SLIDES: SlideShow = { ...MINIMAL_SLIDESHOW, slides: [FULL_IMAGE_SLIDE, SECOND_SLIDE] };
+
+    test('returns the slide with the given ID', () => {
+        expect(findSlideOrFirst(TWO_SLIDES, SECOND_SLIDE.slideId)).toBe(SECOND_SLIDE);
+    });
+
+    test('returns the first slide for an unknown ID', () => {
+        expect(findSlideOrFirst(TWO_SLIDES, 'slide-2020-01-01-00-00-00-000' as AppId)).toBe(FULL_IMAGE_SLIDE);
+    });
+
+    test('returns the first slide without an ID', () => {
+        expect(findSlideOrFirst(TWO_SLIDES, null)).toBe(FULL_IMAGE_SLIDE);
+    });
+
+    test('returns null for an empty or missing slideshow', () => {
+        expect(findSlideOrFirst({ ...MINIMAL_SLIDESHOW, slides: [] }, VALID_SLIDE_ID)).toBeNull();
+        expect(findSlideOrFirst(null, VALID_SLIDE_ID)).toBeNull();
     });
 });

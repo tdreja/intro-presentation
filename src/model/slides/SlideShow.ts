@@ -71,6 +71,14 @@ export function findSlide(slideShow?: SlideShow | null, slideId?: AppId | null):
     return null;
 }
 
+/**
+ * The slide with the given ID, or the first slide when the ID is missing or not part of the slideshow,
+ * e.g. when the stored current slide belongs to a presentation that has since been replaced.
+ */
+export function findSlideOrFirst(slideShow?: SlideShow | null, slideId?: AppId | null): Slide | null {
+    return findSlide(slideShow, slideId) ?? slideShow?.slides[0] ?? null;
+}
+
 export function indexOfSlide(slideShow?: SlideShow | null, slideId?: AppId | null): number {
     if (slideShow && slideId) {
         return slideShow.slides.findIndex(slide => slide.slideId === slideId);
