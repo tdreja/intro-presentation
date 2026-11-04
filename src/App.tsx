@@ -21,6 +21,7 @@ import { CurrentSlideContext, type CurrentSlideState } from './communication/con
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
 import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
 import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
+import { compressSlideShowImages } from './model/slides/ImageCompression.ts';
 
 export const App = (): ReactElement => {
     const [source] = useState<AppId>(() => newAppId('app'));
@@ -60,6 +61,21 @@ export const App = (): ReactElement => {
         countdownToStorage(countdown);
         eventBus.dispatchEvent(updateCountdownEvent(source, countdown));
     }, [eventBus, source, setLocalCountdown]);
+
+    // Re-encode raster images as WEBP (max 2000px wide) in the background, then keep the smaller copy.
+    // Not broadcast: every tab loading the same slideshow does this itself.
+    useEffect(() => {
+        let cancelled = false;
+        compressSlideShowImages(localSlideShow).then((compressed) => {
+            if (!cancelled && compressed !== localSlideShow) {
+                setLocalSlideShow(compressed);
+                slideShowToStorage(compressed);
+            }
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [localSlideShow]);
 
     // Attach listeners for the remote events!
     useEffect(() => {

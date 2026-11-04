@@ -30,7 +30,8 @@ export function toStorage<DATA, JSON>(
 }
 
 export function slideShowToStorage(slideShow: SlideShow) {
-    return toStorage(SLIDE_SHOW_CONVERTER, 'slide-show', slideShow, (newer, older) => newer.id >= older.id);
+    // Same id overwrites, so a re-encoded (smaller) copy of the same slideshow replaces the original
+    return toStorage(SLIDE_SHOW_CONVERTER, 'slide-show', slideShow, (newer, older) => newer.id > older.id);
 }
 
 export function slideShowFromStorage(): SlideShow | null {

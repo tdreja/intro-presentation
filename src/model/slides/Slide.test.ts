@@ -1,35 +1,19 @@
 import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import { createSlideId, SLIDE_CONVERTER, type FullImageSlide, type HalfTextHalfImageSlide } from './Slide';
+import { createSlideId, SLIDE_CONVERTER, type Slide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
-import type { QrCode } from './QrCode';
 
 const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
 
-const FULL_IMAGE_SLIDE: FullImageSlide = {
+const MIXED_SLIDE: Slide = {
     slideId: VALID_SLIDE_ID,
-    slideType: 'full-image',
-    image: VALID_IMAGE,
-};
-
-const FULL_IMAGE_SLIDE_WITH_HEADLINE: FullImageSlide = {
-    ...FULL_IMAGE_SLIDE,
-    headline: 'My Headline',
-};
-
-const FULL_IMAGE_SLIDE_WITH_QR: FullImageSlide = {
-    ...FULL_IMAGE_SLIDE,
-    qrCode: { data: 'https://example.com/qr', corner: 'top-right' } satisfies QrCode,
-};
-
-const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
-    slideId: VALID_SLIDE_ID,
-    slideType: 'half-text-half-image',
-    text: 'Hello **World**',
-    image: VALID_IMAGE,
-    layout: 'half-half',
+    slices: [
+        { sliceType: 'text', width: 50, text: 'Hello **World**' },
+        { sliceType: 'image', width: 30, image: VALID_IMAGE },
+        { sliceType: 'qr-code', width: 20, data: 'https://example.com' },
+    ],
 };
 
 // ---------------------------------------------------------------------------
@@ -37,274 +21,115 @@ const HALF_TEXT_SLIDE: HalfTextHalfImageSlide = {
 // ---------------------------------------------------------------------------
 
 describe('createSlideId', () => {
-    const APP_ID_REGEX = /^[a-zA-Z]+-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
-
     test('returns a string matching the slide-YYYY-MM-DD-HH-mm-ss-mmm pattern', () => {
-        const id = createSlideId();
-        expect(id).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/);
+        expect(createSlideId()).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/);
     });
 
     test('uses the supplied PlainDateTime when provided', () => {
         const date = Temporal.PlainDateTime.from('2026-03-15T12:34:56.789');
-        const id = createSlideId(date);
-        expect(id).toBe('slide-2026-03-15-12-34-56-789');
-    });
-
-    test('returns a valid AppId pattern', () => {
-        const id = createSlideId();
-        expect(id).toMatch(APP_ID_REGEX);
+        expect(createSlideId(date)).toBe('slide-2026-03-15-12-34-56-789');
     });
 });
 
 // ---------------------------------------------------------------------------
-// SLIDE_CONVERTER.fromJson — null / invalid guards
+// SLIDE_CONVERTER.fromJson
 // ---------------------------------------------------------------------------
 
-describe('SLIDE_CONVERTER.fromJson — null / invalid guards', () => {
-    test('returns null for null', () => {
-        expect(SLIDE_CONVERTER.fromJson(null)).toBeNull();
-    });
-
-    test('returns null for undefined', () => {
-        expect(SLIDE_CONVERTER.fromJson(undefined)).toBeNull();
-    });
-
-    test('returns null when slideType is missing', () => {
-        const json = { slideId: VALID_SLIDE_ID, image: VALID_IMAGE } as never;
+describe('SLIDE_CONVERTER.fromJson — invalid input', () => {
+    test.each([null, undefined, 'slide', 42])('returns null for %s', (json) => {
         expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null when slideId is missing', () => {
-        const json = { slideType: 'full-image', image: VALID_IMAGE } as never;
-        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
+        expect(SLIDE_CONVERTER.fromJson({ slices: MIXED_SLIDE.slices })).toBeNull();
     });
 
     test('returns null when slideId has an invalid format', () => {
-        const json = { slideId: 'not-a-valid-id', slideType: 'full-image', image: VALID_IMAGE } as never;
-        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
+        expect(SLIDE_CONVERTER.fromJson({ slideId: 'not-a-valid-id', slices: MIXED_SLIDE.slices })).toBeNull();
     });
 
-    test('returns null for an unknown slideType', () => {
-        const json = { slideId: VALID_SLIDE_ID, slideType: 'unknown-type', image: VALID_IMAGE } as never;
-        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
-    });
-});
-
-// ---------------------------------------------------------------------------
-// SLIDE_CONVERTER.fromJson — full-image
-// ---------------------------------------------------------------------------
-
-describe('SLIDE_CONVERTER.fromJson — full-image', () => {
-    const validJson = {
-        slideId: VALID_SLIDE_ID,
-        slideType: 'full-image' as const,
-        image: VALID_IMAGE,
-    };
-
-    test('returns a FullImageSlide for valid JSON', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson);
-        expect(result).not.toBeNull();
+    test('returns null when slices is missing', () => {
+        expect(SLIDE_CONVERTER.fromJson({ slideId: VALID_SLIDE_ID })).toBeNull();
     });
 
-    test('slideType is full-image', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.slideType).toBe('full-image');
+    test('returns null when slices is empty', () => {
+        expect(SLIDE_CONVERTER.fromJson({ slideId: VALID_SLIDE_ID, slices: [] })).toBeNull();
     });
 
-    test('slideId matches the input', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.slideId).toBe(VALID_SLIDE_ID);
+    test('returns null when one slice is invalid', () => {
+        const slices = [...MIXED_SLIDE.slices, { sliceType: 'video', width: 10 }];
+        expect(SLIDE_CONVERTER.fromJson({ slideId: VALID_SLIDE_ID, slices })).toBeNull();
     });
 
-    test('image matches the input', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson) as FullImageSlide;
-        expect(result.image).toBe(VALID_IMAGE);
-    });
-
-    test('headline is set when provided', () => {
-        const json = { ...validJson, headline: 'My Headline' };
-        const result = SLIDE_CONVERTER.fromJson(json)!;
-        expect(result.headline).toBe('My Headline');
-    });
-
-    test('headline is undefined when omitted', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.headline).toBeUndefined();
-    });
-
-    test('qrCode is set when provided', () => {
-        const json = { ...validJson, qrCode: { data: 'https://example.com/qr', corner: 'top-right' } };
-        const result = SLIDE_CONVERTER.fromJson(json)!;
-        expect(result.qrCode).toEqual({ data: 'https://example.com/qr', corner: 'top-right' });
-    });
-
-    test('qrCode is undefined when omitted', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.qrCode).toBeUndefined();
-    });
-
-    test('returns null when image is missing', () => {
-        const json = { slideId: VALID_SLIDE_ID, slideType: 'full-image' as const } as never;
-        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
-    });
-
-    test('returns null when image has an invalid format', () => {
-        const json = { slideId: VALID_SLIDE_ID, slideType: 'full-image' as const, image: 'not-a-base64-image' } as never;
+    test('returns null for a slide in the old format', () => {
+        const json = { slideId: VALID_SLIDE_ID, slideType: 'full-image', image: VALID_IMAGE };
         expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
     });
 });
 
-// ---------------------------------------------------------------------------
-// SLIDE_CONVERTER.fromJson — half-text-half-image
-// ---------------------------------------------------------------------------
-
-describe('SLIDE_CONVERTER.fromJson — half-text-half-image', () => {
-    const validJson = {
-        slideId: VALID_SLIDE_ID,
-        slideType: 'half-text-half-image' as const,
-        text: 'Hello **World**',
-        image: VALID_IMAGE,
-        layout: 'half-half' as const,
-    };
-
-    test('returns a HalfTextHalfImageSlide for valid JSON', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson);
-        expect(result).not.toBeNull();
+describe('SLIDE_CONVERTER.fromJson — valid input', () => {
+    test('reads slideId and all slices in order', () => {
+        expect(SLIDE_CONVERTER.fromJson(MIXED_SLIDE)).toEqual(MIXED_SLIDE);
     });
 
-    test('slideType is half-text-half-image', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson)!;
-        expect(result.slideType).toBe('half-text-half-image');
+    test('keeps widths that already add up to 100', () => {
+        const result = SLIDE_CONVERTER.fromJson(MIXED_SLIDE)!;
+        expect(result.slices.map(s => s.width)).toEqual([50, 30, 20]);
     });
 
-    test('text, image, and layout are set correctly', () => {
-        const result = SLIDE_CONVERTER.fromJson(validJson) as HalfTextHalfImageSlide;
-        expect(result.text).toBe('Hello **World**');
-        expect(result.image).toBe(VALID_IMAGE);
-        expect(result.layout).toBe('half-half');
-    });
-
-    test('headline is set when provided', () => {
-        const json = { ...validJson, headline: 'Section Title' };
+    test('scales widths that add up to less than 100', () => {
+        const json = {
+            slideId: VALID_SLIDE_ID,
+            slices: [
+                { sliceType: 'text', width: 30, text: 'a' },
+                { sliceType: 'text', width: 30, text: 'b' },
+            ],
+        };
         const result = SLIDE_CONVERTER.fromJson(json)!;
-        expect(result.headline).toBe('Section Title');
+        expect(result.slices.map(s => s.width)).toEqual([50, 50]);
     });
 
-    test('returns null when image is missing', () => {
-        const { slideId, slideType, text, layout } = validJson;
-        expect(SLIDE_CONVERTER.fromJson({ slideId, slideType, text, layout } as never)).toBeNull();
+    test('scales widths that add up to more than 100', () => {
+        const json = {
+            slideId: VALID_SLIDE_ID,
+            slices: [
+                { sliceType: 'text', width: 150, text: 'a' },
+                { sliceType: 'text', width: 50, text: 'b' },
+            ],
+        };
+        const result = SLIDE_CONVERTER.fromJson(json)!;
+        expect(result.slices.map(s => s.width)).toEqual([75, 25]);
     });
 
-    test('returns null when text is missing', () => {
-        const { slideId, slideType, image, layout } = validJson;
-        expect(SLIDE_CONVERTER.fromJson({ slideId, slideType, image, layout } as never)).toBeNull();
+    test('a single slice always fills the slide', () => {
+        const json = { slideId: VALID_SLIDE_ID, slices: [{ sliceType: 'image', width: 40, image: VALID_IMAGE }] };
+        expect(SLIDE_CONVERTER.fromJson(json)!.slices[0].width).toBe(100);
     });
-
-    test('returns null when layout is missing', () => {
-        const { slideId, slideType, text, image } = validJson;
-        expect(SLIDE_CONVERTER.fromJson({ slideId, slideType, text, image } as never)).toBeNull();
-    });
-
-    test.each(['half-half', 'one-third-left', 'one-third-right'] as const)(
-        'all SlideLayout values round-trip correctly: %s',
-        (layout) => {
-            const json = { ...validJson, layout };
-            const result = SLIDE_CONVERTER.fromJson(json) as HalfTextHalfImageSlide;
-            expect(result).not.toBeNull();
-            expect(result.layout).toBe(layout);
-        },
-    );
 });
 
 // ---------------------------------------------------------------------------
-// SLIDE_CONVERTER.toJson — null guards
+// SLIDE_CONVERTER.toJson
 // ---------------------------------------------------------------------------
 
-describe('SLIDE_CONVERTER.toJson — null guards', () => {
-    test('returns null for null', () => {
+describe('SLIDE_CONVERTER.toJson', () => {
+    test('returns null for null and undefined', () => {
         expect(SLIDE_CONVERTER.toJson(null)).toBeNull();
-    });
-
-    test('returns null for undefined', () => {
         expect(SLIDE_CONVERTER.toJson(undefined)).toBeNull();
     });
-});
 
-// ---------------------------------------------------------------------------
-// SLIDE_CONVERTER.toJson — full-image
-// ---------------------------------------------------------------------------
-
-describe('SLIDE_CONVERTER.toJson — full-image', () => {
-    test('serializes slideId, slideType, and image correctly', () => {
-        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
-        expect(result.slideId).toBe(VALID_SLIDE_ID);
-        expect(result.slideType).toBe('full-image');
-        expect(result.image).toBe(VALID_IMAGE);
+    test('serializes slideId and slices', () => {
+        expect(SLIDE_CONVERTER.toJson(MIXED_SLIDE)).toEqual({
+            slideId: VALID_SLIDE_ID,
+            slices: [
+                { sliceType: 'text', width: 50, text: 'Hello **World**' },
+                { sliceType: 'image', width: 30, image: VALID_IMAGE },
+                { sliceType: 'qr-code', width: 20, data: 'https://example.com' },
+            ],
+        });
     });
 
-    test('includes headline when set', () => {
-        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_HEADLINE)!;
-        expect(result.headline).toBe('My Headline');
-    });
-
-    test('headline is undefined when not set on the slide', () => {
-        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
-        expect(result.headline).toBeUndefined();
-    });
-
-    test('includes qrCode when set', () => {
-        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
-        expect(result.qrCode).toEqual({ data: 'https://example.com/qr', corner: 'top-right' });
-    });
-
-    test('qrCode is null when not set on the slide', () => {
-        const result = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE)!;
-        expect(result.qrCode).toBeNull();
-    });
-});
-
-// ---------------------------------------------------------------------------
-// SLIDE_CONVERTER.toJson — half-text-half-image
-// ---------------------------------------------------------------------------
-
-describe('SLIDE_CONVERTER.toJson — half-text-half-image', () => {
-    test('serializes all fields correctly', () => {
-        const result = SLIDE_CONVERTER.toJson(HALF_TEXT_SLIDE)!;
-        expect(result.slideId).toBe(VALID_SLIDE_ID);
-        expect(result.slideType).toBe('half-text-half-image');
-        expect(result.text).toBe('Hello **World**');
-        expect(result.image).toBe(VALID_IMAGE);
-        expect(result.layout).toBe('half-half');
-    });
-
-    test('includes headline when set', () => {
-        const slide: HalfTextHalfImageSlide = { ...HALF_TEXT_SLIDE, headline: 'Section' };
-        const result = SLIDE_CONVERTER.toJson(slide)!;
-        expect(result.headline).toBe('Section');
-    });
-});
-
-// ---------------------------------------------------------------------------
-// Round-trip: fromJson ∘ toJson
-// ---------------------------------------------------------------------------
-
-describe('SLIDE_CONVERTER round-trip', () => {
-    test('FullImageSlide survives a full round-trip', () => {
-        const json = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_HEADLINE)!;
-        const result = SLIDE_CONVERTER.fromJson(json);
-        expect(result).toEqual(FULL_IMAGE_SLIDE_WITH_HEADLINE);
-    });
-
-    test('FullImageSlide with qrCode survives a full round-trip', () => {
-        const json = SLIDE_CONVERTER.toJson(FULL_IMAGE_SLIDE_WITH_QR)!;
-        const result = SLIDE_CONVERTER.fromJson(json);
-        expect(result).toEqual(FULL_IMAGE_SLIDE_WITH_QR);
-    });
-
-    test('HalfTextHalfImageSlide survives a full round-trip', () => {
-        const slideWithHeadline: HalfTextHalfImageSlide = { ...HALF_TEXT_SLIDE, headline: 'Title' };
-        const json = SLIDE_CONVERTER.toJson(slideWithHeadline)!;
-        const result = SLIDE_CONVERTER.fromJson(json);
-        expect(result).toEqual(slideWithHeadline);
+    test('survives a round-trip through JSON.stringify', () => {
+        const json = JSON.parse(JSON.stringify(SLIDE_CONVERTER.toJson(MIXED_SLIDE)));
+        expect(SLIDE_CONVERTER.fromJson(json)).toEqual(MIXED_SLIDE);
     });
 });
