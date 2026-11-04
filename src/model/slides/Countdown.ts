@@ -1,7 +1,7 @@
 import { Temporal } from '@js-temporal/polyfill';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { DATE_TIME_CONVERTER, DURATION_CONVERTER } from '../json/common.ts';
-import { APP_ID_CONVERTER, type AppId, FALLBACK_APP_ID } from '../identifier/AppId.ts';
+import { APP_ID_CONVERTER, type AppId, FALLBACK_APP_ID, newAppId } from '../identifier/AppId.ts';
 
 /**
  * Countdown configuration describing when and how long to display countdown views.
@@ -79,4 +79,62 @@ export function pickNewestAllowedCountdown(countdownA: Countdown | null | undefi
         return allowedA.countdownId >= allowedB.countdownId ? allowedA : allowedB;
     }
     return allowedA ?? allowedB ?? null;
+}
+
+/**
+ * Used when a countdown is switched on without durations: small countdown for the last hour.
+ */
+export const DEFAULT_SHOW_SMALL_COUNTDOWN_FOR = Temporal.Duration.from({ hours: 1 });
+/**
+ * Used when a countdown is switched on without durations: large countdown for the last 5 minutes.
+ */
+export const DEFAULT_SHOW_LARGE_COUNTDOWN_FOR = Temporal.Duration.from({ minutes: 5 });
+
+/**
+ * Suggested target when a countdown is switched on: the next full hour after now.
+ */
+export function defaultCountdownTime(now: Temporal.PlainDateTime = Temporal.Now.plainDateTimeISO()): Temporal.PlainDateTime {
+    return now.round({ smallestUnit: 'hour', roundingMode: 'floor' }).add({ hours: 1 });
+}
+
+/**
+ * Switches the countdown on (or moves it) to the given time. Missing durations get the defaults,
+ * otherwise nothing would ever be displayed. Gets a new ID, so it wins over older copies.
+ */
+export function enableCountdown(countdown: Countdown, countdownTime: Temporal.PlainDateTime): Countdown {
+    return {
+        countdownId: newAppId('countdown'),
+        countdownTime,
+        showSmallCountdownFor: countdown.showSmallCountdownFor ?? DEFAULT_SHOW_SMALL_COUNTDOWN_FOR,
+        showLargeCountdownFor: countdown.showLargeCountdownFor ?? DEFAULT_SHOW_LARGE_COUNTDOWN_FOR,
+    };
+}
+
+/**
+ * Switches the countdown off by clearing its time. Durations are kept for the next time it is switched on.
+ */
+export function disableCountdown(countdown: Countdown): Countdown {
+    return { ...countdown, countdownId: newAppId('countdown'), countdownTime: null };
+}
+
+/**
+ * Formats a time for an <input type="datetime-local">, e.g. 2026-11-04T18:30
+ */
+export function toDateTimeInputValue(time: Temporal.PlainDateTime): string {
+    return time.toString({ smallestUnit: 'minute' });
+}
+
+/**
+ * Parses the value of an <input type="datetime-local">; null while it is empty or incomplete.
+ */
+export function fromDateTimeInputValue(value: string): Temporal.PlainDateTime | null {
+    if (!value) {
+        return null;
+    }
+    try {
+        return Temporal.PlainDateTime.from(value);
+    }
+    catch {
+        return null;
+    }
 }

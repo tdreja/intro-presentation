@@ -1,6 +1,16 @@
 import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import { type Countdown, pickNewestAllowedCountdown } from './Countdown';
+import {
+    type Countdown,
+    DEFAULT_SHOW_LARGE_COUNTDOWN_FOR,
+    DEFAULT_SHOW_SMALL_COUNTDOWN_FOR,
+    defaultCountdownTime,
+    disableCountdown,
+    enableCountdown,
+    fromDateTimeInputValue,
+    pickNewestAllowedCountdown,
+    toDateTimeInputValue,
+} from './Countdown';
 import type { AppId } from '../identifier/AppId';
 
 // ---------------------------------------------------------------------------
@@ -79,5 +89,57 @@ describe('pickNewestAllowedCountdown', () => {
 
     test('14. both undefined: returns null', () => {
         expect(pickNewestAllowedCountdown(undefined, undefined)).toBeNull();
+    });
+});
+
+describe('defaultCountdownTime', () => {
+    test('is the next full hour', () => {
+        expect(defaultCountdownTime(Temporal.PlainDateTime.from('2026-11-04T18:42:13')).toString())
+            .toBe('2026-11-04T19:00:00');
+    });
+
+    test('moves a full hour to the next one', () => {
+        expect(defaultCountdownTime(Temporal.PlainDateTime.from('2026-11-04T23:00:00')).toString())
+            .toBe('2026-11-05T00:00:00');
+    });
+});
+
+describe('enableCountdown / disableCountdown', () => {
+    test('sets the time and default durations', () => {
+        const enabled = enableCountdown(OLDER_NO_TIME, FUTURE_TIME);
+        expect(enabled.countdownTime).toBe(FUTURE_TIME);
+        expect(enabled.showSmallCountdownFor).toBe(DEFAULT_SHOW_SMALL_COUNTDOWN_FOR);
+        expect(enabled.showLargeCountdownFor).toBe(DEFAULT_SHOW_LARGE_COUNTDOWN_FOR);
+        expect(enabled.countdownId > OLDER_ID).toBe(true);
+    });
+
+    test('keeps existing durations', () => {
+        const small = Temporal.Duration.from({ minutes: 20 });
+        const large = Temporal.Duration.from({ minutes: 2 });
+        const enabled = enableCountdown({ ...OLDER_NO_TIME, showSmallCountdownFor: small, showLargeCountdownFor: large }, FUTURE_TIME);
+        expect(enabled.showSmallCountdownFor).toBe(small);
+        expect(enabled.showLargeCountdownFor).toBe(large);
+    });
+
+    test('disabling clears the time, keeps the durations and gets a new ID', () => {
+        const enabled = enableCountdown(OLDER_NO_TIME, FUTURE_TIME);
+        const disabled = disableCountdown(enabled);
+        expect(disabled.countdownTime).toBeNull();
+        expect(disabled.showSmallCountdownFor).toBe(enabled.showSmallCountdownFor);
+        expect(disabled.countdownId >= enabled.countdownId).toBe(true);
+    });
+});
+
+describe('datetime-local input values', () => {
+    test('formats to minutes', () => {
+        expect(toDateTimeInputValue(Temporal.PlainDateTime.from('2026-11-04T18:30:45'))).toBe('2026-11-04T18:30');
+    });
+
+    test('parses a complete value', () => {
+        expect(fromDateTimeInputValue('2026-11-04T18:30')?.toString()).toBe('2026-11-04T18:30:00');
+    });
+
+    test.each(['', '2026-11-04T', 'nonsense'])('returns null for %j', (value) => {
+        expect(fromDateTimeInputValue(value)).toBeNull();
     });
 });

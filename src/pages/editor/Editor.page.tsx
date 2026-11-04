@@ -6,6 +6,7 @@ import { findSlide, indexOfSlide } from '../../model/slides/SlideShow.ts';
 import type { Slide } from '../../model/slides/Slide.ts';
 import { addSlide, createSlide, moveSlide, removeSlide, replaceSlide } from '../../model/slides/SlideEditing.ts';
 import { SlideOverview } from './SlideOverview.component.tsx';
+import { CountdownSettings } from './CountdownSettings.component.tsx';
 import { SliceRow } from './SliceRow.component.tsx';
 
 type Props = {
@@ -55,16 +56,19 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                 </button>
             </nav>
             <div className="d-flex flex-grow-1 overflow-hidden">
-                <aside className="flex-shrink-0 border-end overflow-auto bg-body-tertiary" style={{ width: 'var(--overview-width)' }}>
-                    <SlideOverview
-                        slides={slideShow.slides}
-                        selectedSlideId={selectedSlide?.slideId ?? null}
-                        darkMode={slideShow.darkMode}
-                        onSelect={setSelectedSlideId}
-                        onAdd={onAddSlide}
-                        onRemove={onRemoveSlide}
-                        onMove={onMoveSlide}
-                    />
+                <aside className="flex-shrink-0 d-flex flex-column border-end bg-body-tertiary" style={{ width: 'var(--overview-width)' }}>
+                    <CountdownSettings />
+                    <div className="flex-grow-1 overflow-auto">
+                        <SlideOverview
+                            slides={slideShow.slides}
+                            selectedSlideId={selectedSlide?.slideId ?? null}
+                            darkMode={slideShow.darkMode}
+                            onSelect={setSelectedSlideId}
+                            onAdd={onAddSlide}
+                            onRemove={onRemoveSlide}
+                            onMove={onMoveSlide}
+                        />
+                    </div>
                 </aside>
                 <main className="flex-grow-1 overflow-hidden">
                     {selectedSlide
