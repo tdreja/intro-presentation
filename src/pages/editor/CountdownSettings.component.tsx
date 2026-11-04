@@ -7,11 +7,16 @@ import {
     disableCountdown,
     enableCountdown,
     fromDateTimeInputValue,
+    SMALL_COUNTDOWN_MINUTES,
+    smallCountdownMinutesOf,
     toDateTimeInputValue,
 } from '../../model/slides/Countdown.ts';
 
+const minutesLabel = (minutes: number) => `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'}`;
+
 /**
- * Switches the countdown on and off and picks its target time. Changes apply immediately.
+ * Switches the countdown on and off, picks its target time and how long before it the small countdown shows.
+ * Changes apply immediately.
  */
 export const CountdownSettings = (): ReactElement => {
     const id = useId();
@@ -28,6 +33,13 @@ export const CountdownSettings = (): ReactElement => {
 
     const onToggle = (checked: boolean) => {
         setCountdown(checked ? enableCountdown(countdown, shownTime) : disableCountdown(countdown));
+    };
+
+    const onSmallChange = (value: string) => {
+        const minutes = SMALL_COUNTDOWN_MINUTES.find(option => String(option) === value);
+        if (minutes) {
+            setCountdown(enableCountdown(countdown, shownTime, minutes));
+        }
     };
 
     const onTimeChange = (value: string) => {
@@ -53,15 +65,30 @@ export const CountdownSettings = (): ReactElement => {
                 checked={enabled}
                 onChange={event => onToggle(event.target.checked)}
             />
-            <Form.Control
-                type="datetime-local"
-                size="sm"
-                aria-label="Countdown target time"
-                value={editValue ?? toDateTimeInputValue(shownTime)}
-                disabled={!enabled}
-                onChange={event => onTimeChange(event.target.value)}
-            />
-            {inPast && <div className="small text-warning-emphasis">This time is in the past.</div>}
+            {enabled && (
+                <>
+                    <Form.Control
+                        type="datetime-local"
+                        size="sm"
+                        aria-label="Countdown target time"
+                        value={editValue ?? toDateTimeInputValue(shownTime)}
+                        onChange={event => onTimeChange(event.target.value)}
+                    />
+                    {inPast && <div className="small text-warning-emphasis">This time is in the past.</div>}
+                    <Form.Group controlId={`${id}-small`} className="d-flex align-items-center gap-2">
+                        <Form.Label className="small mb-0 text-nowrap">Show for</Form.Label>
+                        <Form.Select
+                            size="sm"
+                            value={smallCountdownMinutesOf(countdown)}
+                            onChange={event => onSmallChange(event.target.value)}
+                        >
+                            {SMALL_COUNTDOWN_MINUTES.map(minutes => (
+                                <option key={minutes} value={minutes}>{minutesLabel(minutes)}</option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+                </>
+            )}
         </section>
     );
 };

@@ -2,13 +2,15 @@ import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import {
     type Countdown,
-    DEFAULT_SHOW_LARGE_COUNTDOWN_FOR,
-    DEFAULT_SHOW_SMALL_COUNTDOWN_FOR,
+    DEFAULT_SMALL_COUNTDOWN_MINUTES,
     defaultCountdownTime,
     disableCountdown,
     enableCountdown,
     fromDateTimeInputValue,
+    largeCountdownFor,
     pickNewestAllowedCountdown,
+    SMALL_COUNTDOWN_MINUTES,
+    smallCountdownMinutesOf,
     toDateTimeInputValue,
 } from './Countdown';
 import type { AppId } from '../identifier/AppId';
@@ -104,21 +106,48 @@ describe('defaultCountdownTime', () => {
     });
 });
 
+const minutes = (duration?: Temporal.Duration | null) => duration?.total('minutes');
+const seconds = (duration?: Temporal.Duration | null) => duration?.total('seconds');
+
+describe('small / large countdown durations', () => {
+    test.each(SMALL_COUNTDOWN_MINUTES)('recognizes the %s minute option', (option) => {
+        expect(smallCountdownMinutesOf({ ...OLDER_NO_TIME, showSmallCountdownFor: Temporal.Duration.from({ minutes: option }) }))
+            .toBe(option);
+    });
+
+    test('falls back to the default for missing or other durations', () => {
+        expect(smallCountdownMinutesOf(OLDER_NO_TIME)).toBe(DEFAULT_SMALL_COUNTDOWN_MINUTES);
+        expect(smallCountdownMinutesOf({ ...OLDER_NO_TIME, showSmallCountdownFor: Temporal.Duration.from({ hours: 1 }) }))
+            .toBe(DEFAULT_SMALL_COUNTDOWN_MINUTES);
+    });
+
+    test('large countdown is 10 seconds for a 1 minute small countdown', () => {
+        expect(seconds(largeCountdownFor(1))).toBe(10);
+    });
+
+    test.each([2, 5, 10, 15] as const)('large countdown is 1 minute for a %s minute small countdown', (option) => {
+        expect(seconds(largeCountdownFor(option))).toBe(60);
+    });
+});
+
 describe('enableCountdown / disableCountdown', () => {
-    test('sets the time and default durations', () => {
+    test('sets the time and the default durations', () => {
         const enabled = enableCountdown(OLDER_NO_TIME, FUTURE_TIME);
         expect(enabled.countdownTime).toBe(FUTURE_TIME);
-        expect(enabled.showSmallCountdownFor).toBe(DEFAULT_SHOW_SMALL_COUNTDOWN_FOR);
-        expect(enabled.showLargeCountdownFor).toBe(DEFAULT_SHOW_LARGE_COUNTDOWN_FOR);
+        expect(minutes(enabled.showSmallCountdownFor)).toBe(DEFAULT_SMALL_COUNTDOWN_MINUTES);
+        expect(seconds(enabled.showLargeCountdownFor)).toBe(60);
         expect(enabled.countdownId > OLDER_ID).toBe(true);
     });
 
-    test('keeps existing durations', () => {
-        const small = Temporal.Duration.from({ minutes: 20 });
-        const large = Temporal.Duration.from({ minutes: 2 });
-        const enabled = enableCountdown({ ...OLDER_NO_TIME, showSmallCountdownFor: small, showLargeCountdownFor: large }, FUTURE_TIME);
-        expect(enabled.showSmallCountdownFor).toBe(small);
-        expect(enabled.showLargeCountdownFor).toBe(large);
+    test('keeps the current small countdown option', () => {
+        const current = { ...OLDER_NO_TIME, showSmallCountdownFor: Temporal.Duration.from({ minutes: 10 }) };
+        expect(minutes(enableCountdown(current, FUTURE_TIME).showSmallCountdownFor)).toBe(10);
+    });
+
+    test('sets a given small countdown and derives the large one', () => {
+        const enabled = enableCountdown(OLDER_NO_TIME, FUTURE_TIME, 1);
+        expect(minutes(enabled.showSmallCountdownFor)).toBe(1);
+        expect(seconds(enabled.showLargeCountdownFor)).toBe(10);
     });
 
     test('disabling clears the time, keeps the durations and gets a new ID', () => {
