@@ -139,7 +139,7 @@ describe('EVENT_CONVERTER — toJson', () => {
         const payload = { some: 'object' };
         const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload };
         const result = EVENT_CONVERTER.toJson(event);
-        expect(result?.payload).toEqual({ id: null, slides: null, timePerSlide: null });
+        expect(result?.payload).toEqual({ id: null, slides: null, timePerSlide: null, darkMode: null });
     });
 
     test('round-trip: toJson then fromJson returns an equal event', () => {
