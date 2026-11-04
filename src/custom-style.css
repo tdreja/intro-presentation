@@ -1,6 +1,8 @@
 :root {
     --navbar-height: 56px;
     --time-per-slide: 10000ms;
+    /* Thumbnail (224px + 6px border) plus 2 × 16px padding */
+    --overview-width: 262px;
 }
 
 .slide-dot {
@@ -30,4 +32,46 @@
 @keyframes slide-dot-fill {
     from { transform: scaleX(0); }
     to   { transform: scaleX(1); }
+}
+
+.editor-toggle {
+    opacity: 0.25;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 10;
+}
+
+.editor-toggle:hover,
+.editor-toggle:focus-visible {
+    opacity: 1;
+}
+
+.slide-thumbnail {
+    aspect-ratio: 16 / 9;
+    pointer-events: none;
+}
+
+.slice-editor-text .milkdown {
+    /* Follow the Bootstrap theme (light/dark) instead of Crepe's own colors */
+    --crepe-color-background: var(--bs-body-bg);
+    --crepe-color-on-background: var(--bs-body-color);
+    --crepe-color-surface: var(--bs-tertiary-bg);
+    --crepe-color-surface-low: var(--bs-secondary-bg);
+    --crepe-color-on-surface: var(--bs-body-color);
+    --crepe-color-on-surface-variant: var(--bs-secondary-color);
+    --crepe-color-outline: var(--bs-border-color);
+    --crepe-color-hover: var(--bs-secondary-bg);
+    --crepe-color-selected: var(--bs-tertiary-bg);
+    --crepe-color-inline-area: var(--bs-tertiary-bg);
+    --crepe-font-title: var(--bs-body-font-family);
+    --crepe-font-default: var(--bs-body-font-family);
+    min-height: 100%;
+}
+
+.slice-editor-text .milkdown .ProseMirror {
+    padding: 1rem 1rem 1rem 3rem;
+}
+
+:is(.dropdown, .dropstart, .dropend, .dropup) .dropdown-toggle.no-caret::before,
+:is(.dropdown, .dropstart, .dropend, .dropup) .dropdown-toggle.no-caret::after {
+    display: none;
 }

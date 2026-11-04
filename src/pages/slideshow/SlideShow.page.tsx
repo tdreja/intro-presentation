@@ -6,7 +6,11 @@ import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { SlideComponent } from './Slide.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
 
-export const SlideShowPage = (): ReactElement => {
+type Props = {
+    onOpenEditor: () => void
+};
+
+export const SlideShowPage = ({ onOpenEditor }: Props): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
     const [slideshow] = useSlideShow();
     const [countdown] = useCountdown();
@@ -19,11 +23,6 @@ export const SlideShowPage = (): ReactElement => {
         }, ms);
         return () => clearTimeout(timer);
     }, [slideshow, currentSlide, setCurrentSlideId]);
-
-    useEffect(() => {
-        document.documentElement.setAttribute('data-bs-theme', slideshow.darkMode === true ? 'dark' : 'light');
-        return () => document.documentElement.removeAttribute('data-bs-theme');
-    }, [slideshow.darkMode]);
 
     const renderSlide = (): ReactElement => {
         if (!currentSlide) {
@@ -40,6 +39,15 @@ export const SlideShowPage = (): ReactElement => {
         <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <div className="flex-grow-1 overflow-hidden position-relative">
                 {renderSlide()}
+                <button
+                    type="button"
+                    className="btn btn-secondary editor-toggle position-absolute end-0 bottom-0 m-3"
+                    onClick={onOpenEditor}
+                    aria-label="Edit slideshow"
+                    title="Edit slideshow"
+                >
+                    &#9998;
+                </button>
             </div>
             <SlideShowBottomNav
                 slideShow={slideshow}

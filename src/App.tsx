@@ -21,10 +21,13 @@ import { CurrentSlideContext, type CurrentSlideState } from './communication/con
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
 import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEvent } from './model/event/Event.ts';
 import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
+import { EditorPage } from './pages/editor/Editor.page.tsx';
 import { compressSlideShowImages } from './model/slides/ImageCompression.ts';
 
 export const App = (): ReactElement => {
     const [source] = useState<AppId>(() => newAppId('app'));
+    // Local to this tab: each tab decides itself whether it presents or edits
+    const [mode, setMode] = useState<'slideshow' | 'editor'>('slideshow');
 
     // Set up the event bus — channel is created here so eventBus always owns it
     const [eventBus] = useState<AppEventBus>(() => {
@@ -77,6 +80,12 @@ export const App = (): ReactElement => {
         };
     }, [localSlideShow]);
 
+    // Theme for both the slideshow and the editor
+    useEffect(() => {
+        document.documentElement.setAttribute('data-bs-theme', localSlideShow.darkMode === true ? 'dark' : 'light');
+        return () => document.documentElement.removeAttribute('data-bs-theme');
+    }, [localSlideShow.darkMode]);
+
     // Attach listeners for the remote events!
     useEffect(() => {
         eventBus.registerListener('app-slide-show', 'replace-slideshow', (ev: AppEvent<SlideShow>) => {
@@ -112,7 +121,9 @@ export const App = (): ReactElement => {
             <SlideShowContext.Provider value={slideShowState}>
                 <CurrentSlideContext.Provider value={currentSlideState}>
                     <CountdownContext.Provider value={countdownState}>
-                        <SlideShowPage />
+                        {mode === 'editor'
+                            ? <EditorPage onClose={() => setMode('slideshow')} />
+                            : <SlideShowPage onOpenEditor={() => setMode('editor')} />}
                     </CountdownContext.Provider>
                 </CurrentSlideContext.Provider>
             </SlideShowContext.Provider>
