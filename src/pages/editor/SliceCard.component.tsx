@@ -1,6 +1,8 @@
-import type { ReactElement } from 'react';
+import { type ReactElement, useId } from 'react';
 import Form from 'react-bootstrap/Form';
-import type { Slice } from '../../model/slides/Slice.ts';
+import ToggleButton from 'react-bootstrap/ToggleButton';
+import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
+import { type Slice, VERTICAL_ALIGNS, type VerticalAlign, verticalAlignOf } from '../../model/slides/Slice.ts';
 import { MIN_SLICE_WIDTH } from '../../model/slides/SlideEditing.ts';
 import { ImageSliceEditor } from './slices/ImageSliceEditor.tsx';
 import { QrCodeSliceEditor } from './slices/QrCodeSliceEditor.tsx';
@@ -10,6 +12,12 @@ const TYPE_LABELS: Record<Slice['sliceType'], string> = {
     'image': 'Image',
     'text': 'Text',
     'qr-code': 'QR code',
+};
+
+const ALIGN_LABELS: Record<VerticalAlign, string> = {
+    top: 'Top',
+    middle: 'Middle',
+    bottom: 'Bottom',
 };
 
 type Props = {
@@ -42,6 +50,7 @@ const SliceEditor = ({ slice, darkMode, onUpdate }: Pick<Props, 'slice' | 'darkM
 export const SliceCard = (props: Props): ReactElement => {
     const { slice, canMoveLeft, canMoveRight, canRemove, onMove, onRemove, onWidthChange, onWidthCommit } = props;
     const width = Math.round(slice.width);
+    const alignName = useId();
     return (
         <div
             className="card h-100 overflow-hidden"
@@ -83,8 +92,25 @@ export const SliceCard = (props: Props): ReactElement => {
             <div className="card-body d-flex flex-column overflow-auto p-2" style={{ minHeight: 0 }}>
                 <SliceEditor slice={slice} darkMode={props.darkMode} onUpdate={props.onUpdate} />
             </div>
-            <div className="card-footer d-flex align-items-center gap-2 py-2">
-                <span className="small text-nowrap">Width</span>
+            <div className="card-footer d-flex align-items-center gap-2 pt-2 pb-0 border-bottom-0">
+                <span className="small text-nowrap" style={{ minWidth: '3.5em' }}>Align</span>
+                <ToggleButtonGroup
+                    type="radio"
+                    name={alignName}
+                    size="sm"
+                    value={verticalAlignOf(slice)}
+                    onChange={(verticalAlign: VerticalAlign) => props.onUpdate({ ...slice, verticalAlign })}
+                    aria-label="Vertical alignment"
+                >
+                    {VERTICAL_ALIGNS.map(align => (
+                        <ToggleButton key={align} id={`${alignName}-${align}`} value={align} variant="outline-secondary">
+                            {ALIGN_LABELS[align]}
+                        </ToggleButton>
+                    ))}
+                </ToggleButtonGroup>
+            </div>
+            <div className="card-footer d-flex align-items-center gap-2 py-2 border-top-0">
+                <span className="small text-nowrap" style={{ minWidth: '3.5em' }}>Width</span>
                 <Form.Range
                     min={MIN_SLICE_WIDTH}
                     max={100 - MIN_SLICE_WIDTH}
