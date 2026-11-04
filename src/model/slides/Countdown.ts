@@ -1,7 +1,7 @@
 import { Temporal } from '@js-temporal/polyfill';
 import type { JsonConverter, RawJson } from '../json/json.ts';
 import { DATE_TIME_CONVERTER, DURATION_CONVERTER } from '../json/common.ts';
-import { APP_ID_CONVERTER, type AppId, FALLBACK_APP_ID } from '../identifier/AppId.ts';
+import { APP_ID_CONVERTER, type AppId, FALLBACK_APP_ID, newAppId } from '../identifier/AppId.ts';
 
 /**
  * Countdown configuration describing when and how long to display countdown views.
@@ -79,4 +79,84 @@ export function pickNewestAllowedCountdown(countdownA: Countdown | null | undefi
         return allowedA.countdownId >= allowedB.countdownId ? allowedA : allowedB;
     }
     return allowedA ?? allowedB ?? null;
+}
+
+/**
+ * Choices for how long before the target the small countdown is shown, in minutes.
+ */
+export const SMALL_COUNTDOWN_MINUTES = [1, 2, 5, 10, 15] as const;
+export type SmallCountdownMinutes = typeof SMALL_COUNTDOWN_MINUTES[number];
+
+/**
+ * Used when a countdown is switched on without a valid small countdown duration.
+ */
+export const DEFAULT_SMALL_COUNTDOWN_MINUTES: SmallCountdownMinutes = 5;
+
+/**
+ * The small countdown option a countdown uses; durations that are not an option fall back to the default.
+ */
+export function smallCountdownMinutesOf(countdown: Countdown): SmallCountdownMinutes {
+    const seconds = countdown.showSmallCountdownFor?.total('seconds');
+    return SMALL_COUNTDOWN_MINUTES.find(minutes => minutes * 60 === seconds) ?? DEFAULT_SMALL_COUNTDOWN_MINUTES;
+}
+
+/**
+ * The large countdown is shown for the last minute, or the last 10 seconds when the small one only covers 1 minute.
+ */
+export function largeCountdownFor(smallMinutes: SmallCountdownMinutes): Temporal.Duration {
+    return smallMinutes <= 1 ? Temporal.Duration.from({ seconds: 10 }) : Temporal.Duration.from({ minutes: 1 });
+}
+
+/**
+ * Suggested target when a countdown is switched on: the next full hour after now.
+ */
+export function defaultCountdownTime(now: Temporal.PlainDateTime = Temporal.Now.plainDateTimeISO()): Temporal.PlainDateTime {
+    return now.round({ smallestUnit: 'hour', roundingMode: 'floor' }).add({ hours: 1 });
+}
+
+/**
+ * Switches the countdown on (or changes it) with the given time and small countdown duration,
+ * which defaults to the current option. The large duration follows from the small one.
+ * Gets a new ID, so it wins over older copies.
+ */
+export function enableCountdown(
+    countdown: Countdown,
+    countdownTime: Temporal.PlainDateTime,
+    smallMinutes: SmallCountdownMinutes = smallCountdownMinutesOf(countdown),
+): Countdown {
+    return {
+        countdownId: newAppId('countdown'),
+        countdownTime,
+        showSmallCountdownFor: Temporal.Duration.from({ minutes: smallMinutes }),
+        showLargeCountdownFor: largeCountdownFor(smallMinutes),
+    };
+}
+
+/**
+ * Switches the countdown off by clearing its time. Durations are kept for the next time it is switched on.
+ */
+export function disableCountdown(countdown: Countdown): Countdown {
+    return { ...countdown, countdownId: newAppId('countdown'), countdownTime: null };
+}
+
+/**
+ * Formats a time for an <input type="datetime-local">, e.g. 2026-11-04T18:30
+ */
+export function toDateTimeInputValue(time: Temporal.PlainDateTime): string {
+    return time.toString({ smallestUnit: 'minute' });
+}
+
+/**
+ * Parses the value of an <input type="datetime-local">; null while it is empty or incomplete.
+ */
+export function fromDateTimeInputValue(value: string): Temporal.PlainDateTime | null {
+    if (!value) {
+        return null;
+    }
+    try {
+        return Temporal.PlainDateTime.from(value);
+    }
+    catch {
+        return null;
+    }
 }

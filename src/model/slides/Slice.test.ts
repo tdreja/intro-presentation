@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { scaleSliceWidths, SLICE_CONVERTER, type Slice } from './Slice';
+import { defaultVerticalAlign, scaleSliceWidths, SLICE_CONVERTER, type Slice, VERTICAL_ALIGNS, verticalAlignOf } from './Slice';
 import { PLACEHOLDER_IMAGE } from './Image';
 
 const IMAGE_SLICE: Slice = { sliceType: 'image', width: 40, image: PLACEHOLDER_IMAGE };
@@ -89,6 +89,45 @@ describe('SLICE_CONVERTER.toJson', () => {
     test.each([IMAGE_SLICE, TEXT_SLICE, QR_SLICE])('round-trips a $sliceType slice', (slice) => {
         const json = JSON.parse(JSON.stringify(SLICE_CONVERTER.toJson(slice)));
         expect(SLICE_CONVERTER.fromJson(json)).toEqual(slice);
+    });
+
+    test('leaves out verticalAlign when it is not set', () => {
+        expect(SLICE_CONVERTER.toJson(TEXT_SLICE)).not.toHaveProperty('verticalAlign');
+    });
+
+    test.each(VERTICAL_ALIGNS)('round-trips verticalAlign %s', (verticalAlign) => {
+        const slice: Slice = { ...QR_SLICE, verticalAlign };
+        const json = JSON.parse(JSON.stringify(SLICE_CONVERTER.toJson(slice)));
+        expect(json.verticalAlign).toBe(verticalAlign);
+        expect(SLICE_CONVERTER.fromJson(json)).toEqual(slice);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Vertical alignment
+// ---------------------------------------------------------------------------
+
+describe('vertical alignment', () => {
+    test('text defaults to top, image and QR code to middle', () => {
+        expect(defaultVerticalAlign('text')).toBe('top');
+        expect(defaultVerticalAlign('image')).toBe('middle');
+        expect(defaultVerticalAlign('qr-code')).toBe('middle');
+    });
+
+    test('verticalAlignOf falls back to the default of the type', () => {
+        expect(verticalAlignOf(TEXT_SLICE)).toBe('top');
+        expect(verticalAlignOf(IMAGE_SLICE)).toBe('middle');
+        expect(verticalAlignOf({ ...TEXT_SLICE, verticalAlign: 'bottom' })).toBe('bottom');
+    });
+
+    test.each(VERTICAL_ALIGNS)('fromJson reads verticalAlign %s', (verticalAlign) => {
+        expect(SLICE_CONVERTER.fromJson({ ...IMAGE_SLICE, verticalAlign })!.verticalAlign).toBe(verticalAlign);
+    });
+
+    test.each(['center', 'TOP', 5, null])('fromJson drops the invalid verticalAlign %s', (verticalAlign) => {
+        const slice = SLICE_CONVERTER.fromJson({ ...TEXT_SLICE, verticalAlign });
+        expect(slice).toEqual(TEXT_SLICE);
+        expect(slice).not.toHaveProperty('verticalAlign');
     });
 });
 
