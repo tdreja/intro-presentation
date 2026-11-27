@@ -34,6 +34,84 @@
     to   { transform: scaleX(1); }
 }
 
+/*
+ * Text of a slide, spaced like in the Markdown editor (Milkdown Crepe, see its common/reset.css)
+ * instead of Bootstrap's bottom margins, so the slide looks like what was edited.
+ */
+.slide-text :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li, blockquote, pre, hr) {
+    margin: 0;
+}
+
+/* Fixed sizes like in the editor, instead of Bootstrap's headings that shrink with the window */
+.slide-text :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: 400;
+    padding: 2px 0;
+}
+
+.slide-text h1 { font-size: 2.625em; line-height: 1.1905; margin-top: 32px; }
+.slide-text h2 { font-size: 2.25em; line-height: 1.2222; margin-top: 28px; }
+.slide-text h3 { font-size: 2em; line-height: 1.25; margin-top: 24px; }
+.slide-text h4 { font-size: 1.75em; line-height: 1.2857; margin-top: 20px; }
+.slide-text h5 { font-size: 1.5em; line-height: 1.3333; margin-top: 16px; }
+.slide-text h6 { font-size: 1.125em; font-weight: 700; line-height: 1.5556; margin-top: 16px; }
+
+.slide-text p {
+    line-height: 1.5;
+    padding: 4px 0;
+}
+
+/* The editor wraps every list item in a paragraph; tight lists in the slideshow don't */
+.slide-text li:not(:has(> p)) {
+    line-height: 1.5;
+    padding: 4px 0;
+}
+
+.slide-text blockquote {
+    margin: 4px 0;
+}
+
+.slide-text pre {
+    padding: 10px;
+}
+
+.slide-text hr {
+    margin: 6px 0;
+}
+
+/* Slide change: the old slide leaves to the left while the new one comes in from the right */
+.slide-enter,
+.slide-leave {
+    animation-duration: 0.6s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+.slide-enter {
+    animation-name: slide-enter;
+}
+
+.slide-leave {
+    animation-name: slide-leave;
+}
+
+@keyframes slide-enter {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+}
+
+@keyframes slide-leave {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* Practically instant, but still ends with animationend, which removes the old slide */
+    .slide-enter,
+    .slide-leave {
+        animation-duration: 1ms;
+    }
+}
+
 .editor-toggle {
     opacity: 0.25;
     transition: opacity 0.2s ease-in-out;
@@ -58,7 +136,8 @@
     --crepe-color-surface-low: var(--bs-secondary-bg);
     --crepe-color-on-surface: var(--bs-body-color);
     --crepe-color-on-surface-variant: var(--bs-secondary-color);
-    --crepe-color-outline: var(--bs-border-color);
+    /* Crepe draws idle toolbar icons in this color (and fades it for dividers), so it needs text contrast, not border contrast */
+    --crepe-color-outline: var(--bs-secondary-color);
     --crepe-color-hover: var(--bs-secondary-bg);
     --crepe-color-selected: var(--bs-tertiary-bg);
     --crepe-color-inline-area: var(--bs-tertiary-bg);
@@ -69,6 +148,8 @@
 
 .slice-editor-text .milkdown .ProseMirror {
     padding: 1rem 1rem 1rem 3rem;
+    /* Set by the text editor, so the text is aligned like in the slideshow */
+    text-align: var(--slice-text-align, left);
 }
 
 :is(.dropdown, .dropstart, .dropend, .dropup) .dropdown-toggle.no-caret::before,

@@ -10,6 +10,7 @@ import {
     addSlide,
     createSlice,
     createSlide,
+    duplicateSlide,
     equalizeWidths,
     MIN_SLICE_WIDTH,
     moveSlice,
@@ -17,6 +18,7 @@ import {
     removeSlice,
     removeSlide,
     replaceSlide,
+    setDarkMode,
     setSliceWidth,
     updateSlice,
 } from './SlideEditing';
@@ -152,6 +154,26 @@ describe('slide operations', () => {
         expect(show.id).toMatch(/^show-/);
     });
 
+    test('duplicateSlide inserts a copy right after the original', () => {
+        const copyId = 'slide-2026-01-01-00-00-00-009' as AppId;
+        const show = duplicateSlide(SHOW, SLIDE_B.slideId, copyId);
+        expect(ids(show)).toEqual([SLIDE_A.slideId, SLIDE_B.slideId, copyId, SLIDE_C.slideId]);
+        expect(show.slides[2].slices).toEqual(SLIDE_B.slices);
+        expect(show.slides[2].slices).not.toBe(SLIDE_B.slices);
+        expect(show.id > SHOW.id).toBe(true);
+    });
+
+    test('duplicateSlide gives the copy a new ID by default', () => {
+        const show = duplicateSlide(SHOW, SLIDE_C.slideId);
+        expect(show.slides).toHaveLength(4);
+        expect(new Set(ids(show)).size).toBe(4);
+    });
+
+    test('duplicateSlide ignores unknown slides and taken IDs', () => {
+        expect(duplicateSlide(SHOW, 'slide-2026-01-01-00-00-00-999' as AppId)).toBe(SHOW);
+        expect(duplicateSlide(SHOW, SLIDE_A.slideId, SLIDE_C.slideId)).toBe(SHOW);
+    });
+
     test('removeSlide removes the slide', () => {
         expect(ids(removeSlide(SHOW, SLIDE_B.slideId))).toEqual([SLIDE_A.slideId, SLIDE_C.slideId]);
     });
@@ -172,6 +194,20 @@ describe('slide operations', () => {
         const show = replaceSlide(SHOW, changed);
         expect(show.slides[0]).toBe(changed);
         expect(show.id > SHOW.id).toBe(true);
+    });
+
+    test('setDarkMode switches the theme and bumps the ID', () => {
+        const dark = setDarkMode(SHOW, true);
+        expect(dark.darkMode).toBe(true);
+        expect(dark.slides).toBe(SHOW.slides);
+        expect(dark.id > SHOW.id).toBe(true);
+        expect(setDarkMode(dark, false).darkMode).toBe(false);
+    });
+
+    test('setDarkMode keeps the slideshow when nothing changes', () => {
+        expect(setDarkMode(SHOW, false)).toBe(SHOW);
+        const dark = { ...SHOW, darkMode: true };
+        expect(setDarkMode(dark, true)).toBe(dark);
     });
 
     test('never moves the ID backwards', () => {

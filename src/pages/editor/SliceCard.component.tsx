@@ -2,7 +2,15 @@ import { type ReactElement, useId } from 'react';
 import Form from 'react-bootstrap/Form';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
-import { type Slice, VERTICAL_ALIGNS, type VerticalAlign, verticalAlignOf } from '../../model/slides/Slice.ts';
+import {
+    type Slice,
+    TEXT_ALIGNS,
+    type TextAlign,
+    textAlignOf,
+    VERTICAL_ALIGNS,
+    type VerticalAlign,
+    verticalAlignOf,
+} from '../../model/slides/Slice.ts';
 import { MIN_SLICE_WIDTH } from '../../model/slides/SlideEditing.ts';
 import { ImageSliceEditor } from './slices/ImageSliceEditor.tsx';
 import { QrCodeSliceEditor } from './slices/QrCodeSliceEditor.tsx';
@@ -18,6 +26,12 @@ const ALIGN_LABELS: Record<VerticalAlign, string> = {
     top: 'Top',
     middle: 'Middle',
     bottom: 'Bottom',
+};
+
+const TEXT_ALIGN_LABELS: Record<TextAlign, string> = {
+    left: 'Left',
+    center: 'Center',
+    right: 'Right',
 };
 
 type Props = {
@@ -38,7 +52,7 @@ const SliceEditor = ({ slice, darkMode, onUpdate }: Pick<Props, 'slice' | 'darkM
         case 'image':
             return <ImageSliceEditor slice={slice} onUpdate={onUpdate} />;
         case 'text':
-            return <TextSliceEditor slice={slice} onUpdate={onUpdate} />;
+            return <TextSliceEditor slice={slice} textAlign={textAlignOf(slice)} onUpdate={onUpdate} />;
         case 'qr-code':
             return <QrCodeSliceEditor slice={slice} darkMode={darkMode} onUpdate={onUpdate} />;
     }
@@ -51,6 +65,7 @@ export const SliceCard = (props: Props): ReactElement => {
     const { slice, canMoveLeft, canMoveRight, canRemove, onMove, onRemove, onWidthChange, onWidthCommit } = props;
     const width = Math.round(slice.width);
     const alignName = useId();
+    const textAlignName = useId();
     return (
         <div
             className="card h-100 overflow-hidden"
@@ -109,6 +124,25 @@ export const SliceCard = (props: Props): ReactElement => {
                     ))}
                 </ToggleButtonGroup>
             </div>
+            {slice.sliceType === 'text' && (
+                <div className="card-footer d-flex align-items-center gap-2 pt-2 pb-0 border-top-0">
+                    <span className="small text-nowrap" style={{ minWidth: '3.5em' }}>Text</span>
+                    <ToggleButtonGroup
+                        type="radio"
+                        name={textAlignName}
+                        size="sm"
+                        value={textAlignOf(slice)}
+                        onChange={(textAlign: TextAlign) => props.onUpdate({ ...slice, textAlign })}
+                        aria-label="Horizontal text alignment"
+                    >
+                        {TEXT_ALIGNS.map(align => (
+                            <ToggleButton key={align} id={`${textAlignName}-${align}`} value={align} variant="outline-secondary">
+                                {TEXT_ALIGN_LABELS[align]}
+                            </ToggleButton>
+                        ))}
+                    </ToggleButtonGroup>
+                </div>
+            )}
             <div className="card-footer d-flex align-items-center gap-2 py-2 border-top-0">
                 <span className="small text-nowrap" style={{ minWidth: '3.5em' }}>Width</span>
                 <Form.Range

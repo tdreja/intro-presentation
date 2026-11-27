@@ -6,10 +6,14 @@ import {
     type ImageSlice,
     type QrCodeSlice,
     type Slice,
+    textAlignOf,
     type TextSlice,
     type VerticalAlign,
     verticalAlignOf,
 } from '../../model/slides/Slice.ts';
+import { remarkLineBreaks } from './RemarkLineBreaks.ts';
+
+const REMARK_PLUGINS = [remarkLineBreaks];
 
 const QR_FG_LIGHT = '#1a1a1a';
 const QR_FG_DARK = '#ffffff';
@@ -49,8 +53,8 @@ const ImageSliceComponent = ({ slice }: { slice: ImageSlice }): ReactElement => 
 
 const TextSliceComponent = ({ slice }: { slice: TextSlice }): ReactElement => (
     <div className="w-100 h-100 overflow-auto p-4 d-flex flex-column">
-        <div style={TEXT_MARGINS[verticalAlignOf(slice)]}>
-            <Markdown>{slice.text}</Markdown>
+        <div className="slide-text" style={{ ...TEXT_MARGINS[verticalAlignOf(slice)], textAlign: textAlignOf(slice) }}>
+            <Markdown remarkPlugins={REMARK_PLUGINS}>{slice.text}</Markdown>
         </div>
     </div>
 );

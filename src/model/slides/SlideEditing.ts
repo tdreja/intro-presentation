@@ -147,10 +147,33 @@ export function touchSlideShow(slideShow: SlideShow, slides: Slide[]): SlideShow
 }
 
 /**
+ * Switches the slideshow (and the editor) between the dark and the light theme.
+ */
+export function setDarkMode(slideShow: SlideShow, darkMode: boolean): SlideShow {
+    if ((slideShow.darkMode === true) === darkMode) {
+        return slideShow;
+    }
+    return touchSlideShow({ ...slideShow, darkMode }, slideShow.slides);
+}
+
+/**
  * Appends a slide at the end of the slideshow.
  */
 export function addSlide(slideShow: SlideShow, slide: Slide): SlideShow {
     return touchSlideShow(slideShow, [...slideShow.slides, slide]);
+}
+
+/**
+ * Inserts a copy of a slide right after it. Nothing changes if the slide doesn't exist or the copy's ID is already taken.
+ */
+export function duplicateSlide(slideShow: SlideShow, slideId: AppId, copyId: AppId = createSlideId()): SlideShow {
+    const index = slideShow.slides.findIndex(slide => slide.slideId === slideId);
+    if (index < 0 || slideShow.slides.some(slide => slide.slideId === copyId)) {
+        return slideShow;
+    }
+    // Slices are never mutated, so the copy can share them
+    const copy: Slide = { ...slideShow.slides[index], slideId: copyId, slices: [...slideShow.slides[index].slices] };
+    return touchSlideShow(slideShow, [...slideShow.slides.slice(0, index + 1), copy, ...slideShow.slides.slice(index + 1)]);
 }
 
 /**

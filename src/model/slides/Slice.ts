@@ -20,6 +20,13 @@ export type VerticalAlign = 'top' | 'middle' | 'bottom';
 export const VERTICAL_ALIGNS: readonly VerticalAlign[] = ['top', 'middle', 'bottom'];
 
 /**
+ * Horizontal alignment of the text within a text slice
+ */
+export type TextAlign = 'left' | 'center' | 'right';
+
+export const TEXT_ALIGNS: readonly TextAlign[] = ['left', 'center', 'right'];
+
+/**
  * Shared API for a vertical slice of a slide
  */
 interface BaseSlice {
@@ -54,6 +61,10 @@ export interface ImageSlice extends BaseSlice {
 export interface TextSlice extends BaseSlice {
     readonly sliceType: 'text'
     readonly text: Markdown
+    /**
+     * Horizontal alignment of the whole text. Absent means left, see {@link textAlignOf}.
+     */
+    readonly textAlign?: TextAlign
 }
 
 /**
@@ -93,6 +104,17 @@ function parseVerticalAlign(json: unknown): VerticalAlign | null {
 }
 
 /**
+ * Effective horizontal alignment of a text slice, left unless set.
+ */
+export function textAlignOf(slice: TextSlice): TextAlign {
+    return slice.textAlign ?? 'left';
+}
+
+function parseTextAlign(json: unknown): TextAlign | null {
+    return TEXT_ALIGNS.find(align => align === json) ?? null;
+}
+
+/**
  * Imports and exports slices to JSON. Widths are only checked to be positive here;
  * scaling them to add up to 100 happens on the slide.
  */
@@ -116,7 +138,12 @@ export const SLICE_CONVERTER: JsonConverter<Slice, RawJsonSlice> = {
             }
             case 'text': {
                 const text = STRING_CONVERTER.fromJson(parsed.text);
-                return text !== null ? { sliceType: 'text', ...common, text } : null;
+                if (text === null) {
+                    return null;
+                }
+                // Like the vertical alignment, an invalid or missing value is left out
+                const textAlign = parseTextAlign(parsed.textAlign);
+                return textAlign ? { sliceType: 'text', ...common, text, textAlign } : { sliceType: 'text', ...common, text };
             }
             case 'qr-code': {
                 const data = STRING_CONVERTER.fromJson(parsed.data);
@@ -136,7 +163,9 @@ export const SLICE_CONVERTER: JsonConverter<Slice, RawJsonSlice> = {
             case 'image':
                 return { sliceType: 'image', ...common, image: BASE_64_IMAGE_CONVERTER.toJson(data.image) };
             case 'text':
-                return { sliceType: 'text', ...common, text: data.text };
+                return data.textAlign
+                    ? { sliceType: 'text', ...common, text: data.text, textAlign: data.textAlign }
+                    : { sliceType: 'text', ...common, text: data.text };
             case 'qr-code':
                 return { sliceType: 'qr-code', ...common, data: data.data };
             default:
