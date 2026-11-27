@@ -6,6 +6,7 @@ import {
     type ImageSlice,
     type QrCodeSlice,
     type Slice,
+    textAlignOf,
     type TextSlice,
     type VerticalAlign,
     verticalAlignOf,
@@ -52,7 +53,7 @@ const ImageSliceComponent = ({ slice }: { slice: ImageSlice }): ReactElement => 
 
 const TextSliceComponent = ({ slice }: { slice: TextSlice }): ReactElement => (
     <div className="w-100 h-100 overflow-auto p-4 d-flex flex-column">
-        <div style={TEXT_MARGINS[verticalAlignOf(slice)]}>
+        <div style={{ ...TEXT_MARGINS[verticalAlignOf(slice)], textAlign: textAlignOf(slice) }}>
             <Markdown remarkPlugins={REMARK_PLUGINS}>{slice.text}</Markdown>
         </div>
     </div>

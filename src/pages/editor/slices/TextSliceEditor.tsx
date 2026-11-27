@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useRef, useState } from 'react';
+import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from 'react';
 // The builder + single features keep KaTeX, CodeMirror etc. out of the bundle (the full Crepe adds ~4 MB)
 import { CrepeBuilder } from '@milkdown/crepe/builder';
 import { blockEdit } from '@milkdown/crepe/feature/block-edit';
@@ -18,7 +18,7 @@ import '@milkdown/crepe/theme/common/placeholder.css';
 import '@milkdown/crepe/theme/common/toolbar.css';
 import '@milkdown/crepe/theme/common/top-bar.css';
 import '@milkdown/crepe/theme/frame.css';
-import type { TextSlice } from '../../../model/slides/Slice.ts';
+import type { TextAlign, TextSlice } from '../../../model/slides/Slice.ts';
 
 /**
  * Top bar buttons whose output the slideshow can't render: strikethrough and task lists need GitHub Flavored Markdown.
@@ -30,6 +30,10 @@ const UNSUPPORTED_TOP_BAR_ITEMS: Record<string, readonly string[]> = {
 
 type Props = {
     slice: TextSlice
+    /**
+     * Alignment of the text, shown in the editor like in the slideshow
+     */
+    textAlign: TextAlign
     onUpdate: (slice: TextSlice) => void
 };
 
@@ -38,7 +42,7 @@ type Props = {
  * Changes are applied with the Update button.
  * The editor is created once per mount; the parent remounts it when the stored text changes.
  */
-export const TextSliceEditor = ({ slice, onUpdate }: Props): ReactElement => {
+export const TextSliceEditor = ({ slice, textAlign, onUpdate }: Props): ReactElement => {
     const rootRef = useRef<HTMLDivElement>(null);
     const crepeRef = useRef<CrepeBuilder | null>(null);
     const [initialText] = useState(slice.text);
@@ -81,7 +85,7 @@ export const TextSliceEditor = ({ slice, onUpdate }: Props): ReactElement => {
 
     return (
         <div className="d-flex flex-column gap-2 h-100">
-            <div ref={rootRef} className="slice-editor-text flex-grow-1 overflow-auto border rounded" style={{ minHeight: 0 }} />
+            <div ref={rootRef} className="slice-editor-text flex-grow-1 overflow-auto border rounded" style={{ 'minHeight': 0, '--slice-text-align': textAlign } as CSSProperties} />
             <button type="button" className="btn btn-sm btn-primary align-self-end" disabled={!dirty} onClick={onClickUpdate}>
                 Update
             </button>

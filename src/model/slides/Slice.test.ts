@@ -1,5 +1,15 @@
 import { describe, test, expect } from 'vitest';
-import { defaultVerticalAlign, scaleSliceWidths, SLICE_CONVERTER, type Slice, VERTICAL_ALIGNS, verticalAlignOf } from './Slice';
+import {
+    defaultVerticalAlign,
+    scaleSliceWidths,
+    SLICE_CONVERTER,
+    type Slice,
+    TEXT_ALIGNS,
+    textAlignOf,
+    type TextSlice,
+    VERTICAL_ALIGNS,
+    verticalAlignOf,
+} from './Slice';
 import { PLACEHOLDER_IMAGE } from './Image';
 
 const IMAGE_SLICE: Slice = { sliceType: 'image', width: 40, image: PLACEHOLDER_IMAGE };
@@ -128,6 +138,40 @@ describe('vertical alignment', () => {
         const slice = SLICE_CONVERTER.fromJson({ ...TEXT_SLICE, verticalAlign });
         expect(slice).toEqual(TEXT_SLICE);
         expect(slice).not.toHaveProperty('verticalAlign');
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Text alignment
+// ---------------------------------------------------------------------------
+
+describe('text alignment', () => {
+    const textSlice: TextSlice = { sliceType: 'text', width: 40, text: '# Title' };
+
+    test('textAlignOf defaults to left', () => {
+        expect(textAlignOf(textSlice)).toBe('left');
+        expect(textAlignOf({ ...textSlice, textAlign: 'right' })).toBe('right');
+    });
+
+    test('leaves out textAlign when it is not set', () => {
+        expect(SLICE_CONVERTER.toJson(textSlice)).not.toHaveProperty('textAlign');
+    });
+
+    test.each(TEXT_ALIGNS)('round-trips textAlign %s', (textAlign) => {
+        const slice: Slice = { ...textSlice, textAlign };
+        const json = JSON.parse(JSON.stringify(SLICE_CONVERTER.toJson(slice)));
+        expect(json.textAlign).toBe(textAlign);
+        expect(SLICE_CONVERTER.fromJson(json)).toEqual(slice);
+    });
+
+    test.each(['middle', 'LEFT', 5, null])('fromJson drops the invalid textAlign %s', (textAlign) => {
+        const slice = SLICE_CONVERTER.fromJson({ ...textSlice, textAlign });
+        expect(slice).toEqual(textSlice);
+        expect(slice).not.toHaveProperty('textAlign');
+    });
+
+    test('other slice types ignore textAlign', () => {
+        expect(SLICE_CONVERTER.fromJson({ ...QR_SLICE, textAlign: 'center' })).toEqual(QR_SLICE);
     });
 });
 

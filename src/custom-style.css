@@ -70,6 +70,8 @@
 
 .slice-editor-text .milkdown .ProseMirror {
     padding: 1rem 1rem 1rem 3rem;
+    /* Set by the text editor, so the text is aligned like in the slideshow */
+    text-align: var(--slice-text-align, left);
 }
 
 :is(.dropdown, .dropstart, .dropend, .dropup) .dropdown-toggle.no-caret::before,
