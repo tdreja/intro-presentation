@@ -5,8 +5,8 @@ import { useCountdown } from '../../communication/context/Countdown.context.ts';
 import { downloadPresentation } from '../../download/PresentationDownload.ts';
 import type { AppId } from '../../model/identifier/AppId.ts';
 import { findSlide, indexOfSlide } from '../../model/slides/SlideShow.ts';
-import type { Slide } from '../../model/slides/Slide.ts';
-import { addSlide, createSlide, moveSlide, removeSlide, replaceSlide } from '../../model/slides/SlideEditing.ts';
+import { createSlideId, type Slide } from '../../model/slides/Slide.ts';
+import { addSlide, createSlide, duplicateSlide, moveSlide, removeSlide, replaceSlide } from '../../model/slides/SlideEditing.ts';
 import { SlideOverview } from './SlideOverview.component.tsx';
 import { CountdownSettings } from './CountdownSettings.component.tsx';
 import { SliceRow } from './SliceRow.component.tsx';
@@ -31,6 +31,14 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
         const slide = createSlide();
         setSlideShow(addSlide(slideShow, slide));
         setSelectedSlideId(slide.slideId);
+    };
+    const onDuplicateSlide = (slideId: AppId) => {
+        const copyId = createSlideId();
+        const updated = duplicateSlide(slideShow, slideId, copyId);
+        if (updated !== slideShow) {
+            setSlideShow(updated);
+            setSelectedSlideId(copyId);
+        }
     };
     const onRemoveSlide = (slideId: AppId) => {
         const updated = removeSlide(slideShow, slideId);
@@ -78,6 +86,7 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                             darkMode={slideShow.darkMode}
                             onSelect={setSelectedSlideId}
                             onAdd={onAddSlide}
+                            onDuplicate={onDuplicateSlide}
                             onRemove={onRemoveSlide}
                             onMove={onMoveSlide}
                         />

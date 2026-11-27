@@ -19,14 +19,15 @@ type Props = {
     darkMode?: boolean | null
     onSelect: (slideId: AppId) => void
     onAdd: () => void
+    onDuplicate: (slideId: AppId) => void
     onRemove: (slideId: AppId) => void
     onMove: (slideId: AppId, direction: -1 | 1) => void
 };
 
 /**
- * Vertical list of all slides as thumbnails, with controls to add, remove and reorder them.
+ * Vertical list of all slides as thumbnails, with controls to add, duplicate, remove and reorder them.
  */
-export const SlideOverview = ({ slides, selectedSlideId, darkMode, onSelect, onAdd, onRemove, onMove }: Props): ReactElement => (
+export const SlideOverview = ({ slides, selectedSlideId, darkMode, onSelect, onAdd, onDuplicate, onRemove, onMove }: Props): ReactElement => (
     <div className="d-flex flex-column gap-3 p-3">
         {slides.map((slide, index) => {
             const selected = slide.slideId === selectedSlideId;
@@ -82,6 +83,15 @@ export const SlideOverview = ({ slides, selectedSlideId, darkMode, onSelect, onA
                             title="Move down"
                         >
                             &#8595;
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary py-0"
+                            onClick={() => onDuplicate(slide.slideId)}
+                            aria-label="Duplicate slide"
+                            title="Duplicate slide"
+                        >
+                            &#128203;
                         </button>
                         <button
                             type="button"

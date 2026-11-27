@@ -10,6 +10,7 @@ import {
     addSlide,
     createSlice,
     createSlide,
+    duplicateSlide,
     equalizeWidths,
     MIN_SLICE_WIDTH,
     moveSlice,
@@ -150,6 +151,26 @@ describe('slide operations', () => {
         expect(ids(show)).toEqual([...ids(SHOW), slide.slideId]);
         expect(show.id > SHOW.id).toBe(true);
         expect(show.id).toMatch(/^show-/);
+    });
+
+    test('duplicateSlide inserts a copy right after the original', () => {
+        const copyId = 'slide-2026-01-01-00-00-00-009' as AppId;
+        const show = duplicateSlide(SHOW, SLIDE_B.slideId, copyId);
+        expect(ids(show)).toEqual([SLIDE_A.slideId, SLIDE_B.slideId, copyId, SLIDE_C.slideId]);
+        expect(show.slides[2].slices).toEqual(SLIDE_B.slices);
+        expect(show.slides[2].slices).not.toBe(SLIDE_B.slices);
+        expect(show.id > SHOW.id).toBe(true);
+    });
+
+    test('duplicateSlide gives the copy a new ID by default', () => {
+        const show = duplicateSlide(SHOW, SLIDE_C.slideId);
+        expect(show.slides).toHaveLength(4);
+        expect(new Set(ids(show)).size).toBe(4);
+    });
+
+    test('duplicateSlide ignores unknown slides and taken IDs', () => {
+        expect(duplicateSlide(SHOW, 'slide-2026-01-01-00-00-00-999' as AppId)).toBe(SHOW);
+        expect(duplicateSlide(SHOW, SLIDE_A.slideId, SLIDE_C.slideId)).toBe(SHOW);
     });
 
     test('removeSlide removes the slide', () => {
