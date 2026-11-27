@@ -1,4 +1,5 @@
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, useId, useState } from 'react';
+import Form from 'react-bootstrap/Form';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useCountdown } from '../../communication/context/Countdown.context.ts';
@@ -6,7 +7,7 @@ import { downloadPresentation } from '../../download/PresentationDownload.ts';
 import type { AppId } from '../../model/identifier/AppId.ts';
 import { findSlide, indexOfSlide } from '../../model/slides/SlideShow.ts';
 import { createSlideId, type Slide } from '../../model/slides/Slide.ts';
-import { addSlide, createSlide, duplicateSlide, moveSlide, removeSlide, replaceSlide } from '../../model/slides/SlideEditing.ts';
+import { addSlide, createSlide, duplicateSlide, moveSlide, removeSlide, replaceSlide, setDarkMode } from '../../model/slides/SlideEditing.ts';
 import { SlideOverview } from './SlideOverview.component.tsx';
 import { CountdownSettings } from './CountdownSettings.component.tsx';
 import { SliceRow } from './SliceRow.component.tsx';
@@ -22,6 +23,7 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
     const [slideShow, setSlideShow] = useSlideShow();
     const [currentSlide] = useCurrentSlide();
     const [countdown] = useCountdown();
+    const darkModeId = useId();
     const [selectedSlideId, setSelectedSlideId] = useState<AppId | null>(
         () => currentSlide?.slideId ?? slideShow.slides[0]?.slideId ?? null,
     );
@@ -62,7 +64,15 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                 style={{ height: 'var(--navbar-height)' }}
             >
                 <span className="navbar-brand mb-0 h1 fs-5">Slideshow editor</span>
-                <div className="d-flex gap-2">
+                <div className="d-flex align-items-center gap-2">
+                    <Form.Check
+                        type="switch"
+                        id={darkModeId}
+                        className="mb-0 me-2"
+                        label="Dark mode"
+                        checked={slideShow.darkMode === true}
+                        onChange={event => setSlideShow(setDarkMode(slideShow, event.target.checked))}
+                    />
                     <button
                         type="button"
                         className="btn btn-sm btn-outline-primary"

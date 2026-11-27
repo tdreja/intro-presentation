@@ -18,6 +18,7 @@ import {
     removeSlice,
     removeSlide,
     replaceSlide,
+    setDarkMode,
     setSliceWidth,
     updateSlice,
 } from './SlideEditing';
@@ -193,6 +194,20 @@ describe('slide operations', () => {
         const show = replaceSlide(SHOW, changed);
         expect(show.slides[0]).toBe(changed);
         expect(show.id > SHOW.id).toBe(true);
+    });
+
+    test('setDarkMode switches the theme and bumps the ID', () => {
+        const dark = setDarkMode(SHOW, true);
+        expect(dark.darkMode).toBe(true);
+        expect(dark.slides).toBe(SHOW.slides);
+        expect(dark.id > SHOW.id).toBe(true);
+        expect(setDarkMode(dark, false).darkMode).toBe(false);
+    });
+
+    test('setDarkMode keeps the slideshow when nothing changes', () => {
+        expect(setDarkMode(SHOW, false)).toBe(SHOW);
+        const dark = { ...SHOW, darkMode: true };
+        expect(setDarkMode(dark, true)).toBe(dark);
     });
 
     test('never moves the ID backwards', () => {

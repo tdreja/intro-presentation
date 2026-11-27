@@ -147,6 +147,16 @@ export function touchSlideShow(slideShow: SlideShow, slides: Slide[]): SlideShow
 }
 
 /**
+ * Switches the slideshow (and the editor) between the dark and the light theme.
+ */
+export function setDarkMode(slideShow: SlideShow, darkMode: boolean): SlideShow {
+    if ((slideShow.darkMode === true) === darkMode) {
+        return slideShow;
+    }
+    return touchSlideShow({ ...slideShow, darkMode }, slideShow.slides);
+}
+
+/**
  * Appends a slide at the end of the slideshow.
  */
 export function addSlide(slideShow: SlideShow, slide: Slide): SlideShow {
