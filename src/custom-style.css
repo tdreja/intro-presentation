@@ -34,6 +34,40 @@
     to   { transform: scaleX(1); }
 }
 
+/* Slide change: the old slide leaves to the left while the new one comes in from the right */
+.slide-enter,
+.slide-leave {
+    animation-duration: 0.6s;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: forwards;
+}
+
+.slide-enter {
+    animation-name: slide-enter;
+}
+
+.slide-leave {
+    animation-name: slide-leave;
+}
+
+@keyframes slide-enter {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+}
+
+@keyframes slide-leave {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* Practically instant, but still ends with animationend, which removes the old slide */
+    .slide-enter,
+    .slide-leave {
+        animation-duration: 1ms;
+    }
+}
+
 .editor-toggle {
     opacity: 0.25;
     transition: opacity 0.2s ease-in-out;

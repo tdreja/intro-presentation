@@ -3,7 +3,7 @@ import { useCurrentSlide } from '../../communication/context/CurrentSlide.contex
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import { useCountdown } from '../../communication/context/Countdown.context.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
-import { SlideComponent } from './Slide.component.tsx';
+import { SlideTransition } from './SlideTransition.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
 
 type Props = {
@@ -32,7 +32,7 @@ export const SlideShowPage = ({ onOpenEditor }: Props): ReactElement => {
                 </div>
             );
         }
-        return <SlideComponent slide={currentSlide} darkMode={slideshow.darkMode} />;
+        return <SlideTransition slide={currentSlide} darkMode={slideshow.darkMode} />;
     };
 
     return (
