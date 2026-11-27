@@ -7,6 +7,7 @@ import { linkTooltip } from '@milkdown/crepe/feature/link-tooltip';
 import { listItem } from '@milkdown/crepe/feature/list-item';
 import { placeholder } from '@milkdown/crepe/feature/placeholder';
 import { toolbar } from '@milkdown/crepe/feature/toolbar';
+import { topBar } from '@milkdown/crepe/feature/top-bar';
 import '@milkdown/crepe/theme/common/prosemirror.css';
 import '@milkdown/crepe/theme/common/reset.css';
 import '@milkdown/crepe/theme/common/block-edit.css';
@@ -15,8 +16,17 @@ import '@milkdown/crepe/theme/common/link-tooltip.css';
 import '@milkdown/crepe/theme/common/list-item.css';
 import '@milkdown/crepe/theme/common/placeholder.css';
 import '@milkdown/crepe/theme/common/toolbar.css';
+import '@milkdown/crepe/theme/common/top-bar.css';
 import '@milkdown/crepe/theme/frame.css';
 import type { TextSlice } from '../../../model/slides/Slice.ts';
+
+/**
+ * Top bar buttons whose output the slideshow can't render: strikethrough and task lists need GitHub Flavored Markdown.
+ */
+const UNSUPPORTED_TOP_BAR_ITEMS: Record<string, readonly string[]> = {
+    formatting: ['strikethrough'],
+    list: ['task-list'],
+};
 
 type Props = {
     slice: TextSlice
@@ -24,7 +34,8 @@ type Props = {
 };
 
 /**
- * WYSIWYG Markdown editor (Milkdown Crepe, without tables / math / code highlighting, which the slideshow doesn't render). Changes are applied with the Update button.
+ * WYSIWYG Markdown editor (Milkdown Crepe, without tables / math / code highlighting, which the slideshow doesn't render) with a formatting bar on top.
+ * Changes are applied with the Update button.
  * The editor is created once per mount; the parent remounts it when the stored text changes.
  */
 export const TextSliceEditor = ({ slice, onUpdate }: Props): ReactElement => {
@@ -40,6 +51,14 @@ export const TextSliceEditor = ({ slice, onUpdate }: Props): ReactElement => {
             .addFeature(linkTooltip)
             .addFeature(placeholder)
             .addFeature(toolbar)
+            .addFeature(topBar, {
+                buildTopBar: (builder) => {
+                    for (const [groupKey, itemKeys] of Object.entries(UNSUPPORTED_TOP_BAR_ITEMS)) {
+                        const { group } = builder.getGroup(groupKey);
+                        group.items = group.items.filter(item => !itemKeys.includes(item.key));
+                    }
+                },
+            })
             .addFeature(blockEdit);
         crepe.on((listener) => {
             listener.markdownUpdated((_ctx, markdown) => setDirty(markdown !== initialText));

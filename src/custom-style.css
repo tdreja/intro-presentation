@@ -58,7 +58,8 @@
     --crepe-color-surface-low: var(--bs-secondary-bg);
     --crepe-color-on-surface: var(--bs-body-color);
     --crepe-color-on-surface-variant: var(--bs-secondary-color);
-    --crepe-color-outline: var(--bs-border-color);
+    /* Crepe draws idle toolbar icons in this color (and fades it for dividers), so it needs text contrast, not border contrast */
+    --crepe-color-outline: var(--bs-secondary-color);
     --crepe-color-hover: var(--bs-secondary-bg);
     --crepe-color-selected: var(--bs-tertiary-bg);
     --crepe-color-inline-area: var(--bs-tertiary-bg);
