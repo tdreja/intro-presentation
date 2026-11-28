@@ -2,146 +2,125 @@ import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
-import type { Slice } from './Slice';
+import type { Area } from './Area';
 import type { Slide } from './Slide';
 import type { SlideShow } from './SlideShow';
 import {
-    addSlice,
+    addArea,
     addSlide,
-    createSlice,
+    clampBounds,
+    createArea,
     createSlide,
     duplicateSlide,
-    equalizeWidths,
-    MIN_SLICE_WIDTH,
-    moveSlice,
+    MIN_AREA_SIZE,
+    moveArea,
     moveSlide,
-    removeSlice,
+    removeArea,
     removeSlide,
     replaceSlide,
+    setAreaBounds,
     setDarkMode,
-    setSliceWidth,
-    updateSlice,
+    updateArea,
 } from './SlideEditing';
 
-const TEXT: Slice = { sliceType: 'text', width: 50, text: '# A' };
-const IMAGE: Slice = { sliceType: 'image', width: 30, image: PLACEHOLDER_IMAGE };
-const QR: Slice = { sliceType: 'qr-code', width: 20, data: 'https://example.com' };
+const TEXT: Area = { areaType: 'text', left: 0, top: 0, width: 960, height: 1080, text: '# A' };
+const IMAGE: Area = { areaType: 'image', left: 960, top: 0, width: 960, height: 540, image: PLACEHOLDER_IMAGE };
+const QR: Area = { areaType: 'qr-code', left: 960, top: 540, width: 960, height: 540, data: 'https://example.com' };
 
-const SLIDE_A: Slide = { slideId: 'slide-2026-01-01-00-00-00-001' as AppId, slices: [TEXT, IMAGE, QR] };
-const SLIDE_B: Slide = { slideId: 'slide-2026-01-01-00-00-00-002' as AppId, slices: [{ ...TEXT, width: 100 }] };
-const SLIDE_C: Slide = { slideId: 'slide-2026-01-01-00-00-00-003' as AppId, slices: [{ ...QR, width: 100 }] };
+const SIZE = { width: 1920, height: 1080 };
+const SLIDE_A: Slide = { slideId: 'slide-2026-01-01-00-00-00-001_v2' as AppId, ...SIZE, areas: [TEXT, IMAGE, QR] };
+const SLIDE_B: Slide = { slideId: 'slide-2026-01-01-00-00-00-002_v2' as AppId, ...SIZE, areas: [TEXT] };
+const SLIDE_C: Slide = { slideId: 'slide-2026-01-01-00-00-00-003_v2' as AppId, ...SIZE, areas: [QR] };
 
 const SHOW: SlideShow = {
-    id: 'show-2020-01-01-00-00-00-000' as AppId,
+    id: 'show-2020-01-01-00-00-00-000_v2' as AppId,
     slides: [SLIDE_A, SLIDE_B, SLIDE_C],
     timePerSlide: Temporal.Duration.from({ seconds: 10 }),
 };
 
-const total = (slide: Slide) => slide.slices.reduce((sum, slice) => sum + slice.width, 0);
 const ids = (show: SlideShow) => show.slides.map(slide => slide.slideId);
+const types = (slide: Slide) => slide.areas.map(area => area.areaType);
 
-describe('createSlice / createSlide', () => {
-    test.each(['text', 'image', 'qr-code'] as const)('creates a full-width %s slice', (type) => {
-        const slice = createSlice(type);
-        expect(slice.sliceType).toBe(type);
-        expect(slice.width).toBe(100);
+describe('createArea / createSlide', () => {
+    test.each(['text', 'image', 'qr-code'] as const)('creates a centered %s area with half the slide size', (type) => {
+        const area = createArea(type, 1000, 600);
+        expect(area.areaType).toBe(type);
+        expect(area).toMatchObject({ left: 250, top: 150, width: 500, height: 300 });
     });
 
-    test('creates a slide with one text slice', () => {
+    test('defaults to the default slide size', () => {
+        expect(createArea('text')).toMatchObject({ left: 320, top: 180, width: 640, height: 360 });
+    });
+
+    test('creates a 1280x720 slide with one text area', () => {
         const slide = createSlide();
-        expect(slide.slideId).toMatch(/^slide-/);
-        expect(slide.slices).toHaveLength(1);
-        expect(slide.slices[0].sliceType).toBe('text');
+        expect(slide.slideId).toMatch(/^slide-.*_v2$/);
+        expect(slide).toMatchObject({ width: 1280, height: 720 });
+        expect(types(slide)).toEqual(['text']);
     });
 });
 
-describe('equalizeWidths', () => {
-    test('gives all slices the same width', () => {
-        expect(equalizeWidths([TEXT, IMAGE]).map(s => s.width)).toEqual([50, 50]);
+describe('clampBounds', () => {
+    test('keeps bounds that fit', () => {
+        const bounds = { left: 10, top: 20, width: 300, height: 200 };
+        expect(clampBounds(bounds, 1920, 1080)).toEqual(bounds);
     });
 
-    test('keeps an empty list', () => {
-        expect(equalizeWidths([])).toEqual([]);
-    });
-});
-
-describe('setSliceWidth', () => {
-    const twoSlices: Slide = { ...SLIDE_A, slices: [{ ...TEXT, width: 50 }, { ...IMAGE, width: 50 }] };
-
-    test('51 on one slice makes the other 49', () => {
-        expect(setSliceWidth(twoSlices, 0, 51).slices.map(s => s.width)).toEqual([51, 49]);
+    test('moves bounds back onto the slide', () => {
+        expect(clampBounds({ left: -50, top: 1000, width: 300, height: 200 }, 1920, 1080))
+            .toEqual({ left: 0, top: 880, width: 300, height: 200 });
+        expect(clampBounds({ left: 1800, top: -1, width: 300, height: 200 }, 1920, 1080))
+            .toEqual({ left: 1620, top: 0, width: 300, height: 200 });
     });
 
-    test('splits the reduction proportionally among several slices', () => {
-        // Others are 30 and 20 (ratio 3:2), remaining 40 → 24 and 16
-        const widths = setSliceWidth(SLIDE_A, 0, 60).slices.map(s => s.width);
-        expect(widths[0]).toBe(60);
-        expect(widths[1]).toBeCloseTo(24);
-        expect(widths[2]).toBeCloseTo(16);
+    test('enforces the minimum size', () => {
+        expect(clampBounds({ left: 0, top: 0, width: 1, height: -5 }, 1920, 1080))
+            .toEqual({ left: 0, top: 0, width: MIN_AREA_SIZE, height: MIN_AREA_SIZE });
     });
 
-    test('splits an increase of the others proportionally as well', () => {
-        const widths = setSliceWidth(SLIDE_A, 0, 25).slices.map(s => s.width);
-        expect(widths[1]).toBeCloseTo(45);
-        expect(widths[2]).toBeCloseTo(30);
-    });
-
-    test('clamps to the minimum width', () => {
-        expect(setSliceWidth(twoSlices, 0, 1).slices.map(s => s.width)).toEqual([MIN_SLICE_WIDTH, 100 - MIN_SLICE_WIDTH]);
-        expect(setSliceWidth(SLIDE_A, 0, 100).slices[0].width).toBe(100 - 2 * MIN_SLICE_WIDTH);
-    });
-
-    test('pins small slices to the minimum and gives the rest to the others', () => {
-        const slide: Slide = { ...SLIDE_A, slices: [{ ...TEXT, width: 40 }, { ...IMAGE, width: 54 }, { ...QR, width: 6 }] };
-        const widths = setSliceWidth(slide, 0, 80).slices.map(s => s.width);
-        expect(widths[0]).toBe(80);
-        expect(widths[2]).toBe(MIN_SLICE_WIDTH);
-        expect(widths[1]).toBeCloseTo(15);
-    });
-
-    test.each([7, 33.3, 50, 72, 90])('always adds up to 100 (width %s)', (width) => {
-        expect(total(setSliceWidth(SLIDE_A, 1, width))).toBeCloseTo(100);
-    });
-
-    test('keeps a single slice at 100', () => {
-        expect(setSliceWidth(SLIDE_B, 0, 40).slices[0].width).toBe(100);
-    });
-
-    test('ignores an invalid index', () => {
-        expect(setSliceWidth(SLIDE_A, 5, 40)).toBe(SLIDE_A);
+    test('never gets larger than the slide', () => {
+        expect(clampBounds({ left: 100, top: 100, width: 5000, height: 5000 }, 1920, 1080))
+            .toEqual({ left: 0, top: 0, width: 1920, height: 1080 });
     });
 });
 
-describe('slice operations', () => {
-    test('addSlice appends and equalizes', () => {
-        const slide = addSlice(SLIDE_B, 'qr-code');
-        expect(slide.slices.map(s => s.sliceType)).toEqual(['text', 'qr-code']);
-        expect(slide.slices.map(s => s.width)).toEqual([50, 50]);
+describe('area operations', () => {
+    test('setAreaBounds moves and resizes one area, clamped to the slide', () => {
+        const slide = setAreaBounds(SLIDE_A, 1, { left: 1800, top: 10, width: 400, height: 300 });
+        expect(slide.areas[1]).toEqual({ ...IMAGE, left: 1520, top: 10, width: 400, height: 300 });
+        expect(slide.areas[0]).toBe(TEXT);
+        expect(slide.areas[2]).toBe(QR);
     });
 
-    test('removeSlice rescales the rest to 100', () => {
-        const slide = removeSlice(SLIDE_A, 0);
-        expect(slide.slices.map(s => s.sliceType)).toEqual(['image', 'qr-code']);
-        expect(total(slide)).toBeCloseTo(100);
+    test('setAreaBounds ignores invalid indexes', () => {
+        expect(setAreaBounds(SLIDE_A, 3, TEXT)).toBe(SLIDE_A);
+        expect(setAreaBounds(SLIDE_A, -1, TEXT)).toBe(SLIDE_A);
     });
 
-    test('removeSlice keeps the last slice', () => {
-        expect(removeSlice(SLIDE_B, 0)).toBe(SLIDE_B);
+    test('addArea adds a centered area on top', () => {
+        const slide = addArea(SLIDE_B, 'qr-code');
+        expect(types(slide)).toEqual(['text', 'qr-code']);
+        expect(slide.areas[1]).toMatchObject({ left: 480, top: 270, width: 960, height: 540 });
     });
 
-    test('moveSlice swaps neighbours', () => {
-        expect(moveSlice(SLIDE_A, 0, 1).slices).toEqual([IMAGE, TEXT, QR]);
-        expect(moveSlice(SLIDE_A, 2, -1).slices).toEqual([TEXT, QR, IMAGE]);
+    test('removeArea removes the area, also the last one', () => {
+        expect(types(removeArea(SLIDE_A, 1))).toEqual(['text', 'qr-code']);
+        expect(removeArea(SLIDE_B, 0).areas).toEqual([]);
+        expect(removeArea(SLIDE_A, 5)).toBe(SLIDE_A);
     });
 
-    test('moveSlice ignores moves past the edges', () => {
-        expect(moveSlice(SLIDE_A, 0, -1)).toBe(SLIDE_A);
-        expect(moveSlice(SLIDE_A, 2, 1)).toBe(SLIDE_A);
+    test('moveArea changes the paint order', () => {
+        expect(types(moveArea(SLIDE_A, 0, 1))).toEqual(['image', 'text', 'qr-code']);
+        expect(types(moveArea(SLIDE_A, 2, -1))).toEqual(['text', 'qr-code', 'image']);
+        expect(moveArea(SLIDE_A, 0, -1)).toBe(SLIDE_A);
+        expect(moveArea(SLIDE_A, 2, 1)).toBe(SLIDE_A);
     });
 
-    test('updateSlice replaces one slice', () => {
-        const updated: Slice = { ...TEXT, text: '# B' };
-        expect(updateSlice(SLIDE_A, 0, updated).slices).toEqual([updated, IMAGE, QR]);
+    test('updateArea replaces the area at the index', () => {
+        const changed: Area = { ...TEXT, text: '# B' };
+        const slide = updateArea(SLIDE_A, 0, changed);
+        expect(slide.areas[0]).toBe(changed);
+        expect(updateArea(SLIDE_A, 7, changed)).toBe(SLIDE_A);
     });
 });
 
@@ -155,11 +134,11 @@ describe('slide operations', () => {
     });
 
     test('duplicateSlide inserts a copy right after the original', () => {
-        const copyId = 'slide-2026-01-01-00-00-00-009' as AppId;
+        const copyId = 'slide-2026-01-01-00-00-00-009_v2' as AppId;
         const show = duplicateSlide(SHOW, SLIDE_B.slideId, copyId);
         expect(ids(show)).toEqual([SLIDE_A.slideId, SLIDE_B.slideId, copyId, SLIDE_C.slideId]);
-        expect(show.slides[2].slices).toEqual(SLIDE_B.slices);
-        expect(show.slides[2].slices).not.toBe(SLIDE_B.slices);
+        expect(show.slides[2].areas).toEqual(SLIDE_B.areas);
+        expect(show.slides[2].areas).not.toBe(SLIDE_B.areas);
         expect(show.id > SHOW.id).toBe(true);
     });
 
@@ -170,7 +149,7 @@ describe('slide operations', () => {
     });
 
     test('duplicateSlide ignores unknown slides and taken IDs', () => {
-        expect(duplicateSlide(SHOW, 'slide-2026-01-01-00-00-00-999' as AppId)).toBe(SHOW);
+        expect(duplicateSlide(SHOW, 'slide-2026-01-01-00-00-00-999_v2' as AppId)).toBe(SHOW);
         expect(duplicateSlide(SHOW, SLIDE_A.slideId, SLIDE_C.slideId)).toBe(SHOW);
     });
 
@@ -190,7 +169,7 @@ describe('slide operations', () => {
     });
 
     test('replaceSlide swaps the slide with the same ID', () => {
-        const changed = removeSlice(SLIDE_A, 0);
+        const changed = removeArea(SLIDE_A, 0);
         const show = replaceSlide(SHOW, changed);
         expect(show.slides[0]).toBe(changed);
         expect(show.id > SHOW.id).toBe(true);
@@ -211,7 +190,7 @@ describe('slide operations', () => {
     });
 
     test('never moves the ID backwards', () => {
-        const future = { ...SHOW, id: 'show-2999-01-01-00-00-00-000' as AppId };
+        const future = { ...SHOW, id: 'show-2999-01-01-00-00-00-000_v2' as AppId };
         expect(addSlide(future, createSlide()).id).toBe(future.id);
     });
 });

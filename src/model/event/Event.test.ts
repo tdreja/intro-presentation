@@ -14,9 +14,9 @@ import type { AppId } from '../identifier/AppId';
 import type { SlideShow } from '../slides/SlideShow';
 import type { Countdown } from '../slides/Countdown';
 
-const VALID_ID = 'evt-2026-08-19-10-00-00-000' as AppId;
-const SOURCE_ID = 'src-2026-08-19-10-00-00-000' as AppId;
-const SLIDE_ID = 'slide-2026-08-19-10-00-00-000' as AppId;
+const VALID_ID = 'evt-2026-08-19-10-00-00-000_v2' as AppId;
+const SOURCE_ID = 'src-2026-08-19-10-00-00-000_v2' as AppId;
+const SLIDE_ID = 'slide-2026-08-19-10-00-00-000_v2' as AppId;
 
 function makeGoToSlide(overrides: Partial<AppEvent<AppId | null>> = {}): AppEvent<AppId | null> {
     return { id: VALID_ID, type: 'go-to-slide', payload: SLIDE_ID, source: SOURCE_ID, ...overrides };
@@ -67,11 +67,11 @@ describe('EVENT_CONVERTER — fromJson', () => {
     });
 
     test('parses a valid replace-slideshow event with an object payload', () => {
-        const payload = { id: 'ss-2026-01-01-00-00-00-000', slides: [], timePerSlide: 'PT10S' };
+        const payload = { id: 'ss-2026-01-01-00-00-00-000_v2', slides: [], timePerSlide: 'PT10S' };
         const result = EVENT_CONVERTER.fromJson({ id: VALID_ID, source: SOURCE_ID, type: 'replace-slideshow', payload });
         expect(result).not.toBeNull();
         expect(result?.type).toBe('replace-slideshow');
-        expect((result?.payload as SlideShow).id).toBe('ss-2026-01-01-00-00-00-000');
+        expect((result?.payload as SlideShow).id).toBe('ss-2026-01-01-00-00-00-000_v2');
     });
 
     test('returns null when replace-slideshow payload is not a valid SlideShow', () => {
@@ -86,7 +86,7 @@ describe('EVENT_CONVERTER — fromJson', () => {
             source: SOURCE_ID,
             type: 'update-countdown',
             payload: {
-                countdownId: 'countdown-2026-09-01-09-00-00-000',
+                countdownId: 'countdown-2026-09-01-09-00-00-000_v2',
                 countdownTime: '2026-09-01T09:00:00',
                 showSmallCountdownFor: 'PT5M',
                 showLargeCountdownFor: 'PT1M',
@@ -161,7 +161,7 @@ describe('EVENT_CONVERTER — toJson', () => {
         const result = EVENT_CONVERTER.toJson(event);
         expect(result?.type).toBe('update-countdown');
         expect(result?.payload).toEqual({
-            countdownId: 'countdown-2026-09-01-09-00-00-000',
+            countdownId: 'countdown-2026-09-01-09-00-00-000_v2',
             countdownTime: '2026-09-01T09:00:00',
             showSmallCountdownFor: 'PT5M',
             showLargeCountdownFor: 'PT1M',
@@ -176,7 +176,7 @@ describe('EVENT_CONVERTER — toJson', () => {
     });
 
     test('round-trip: toJson then fromJson for update-countdown with minimal (ID-only) countdown', () => {
-        const minimal: Countdown = { countdownId: 'countdown-2026-09-01-09-00-00-000' };
+        const minimal: Countdown = { countdownId: 'countdown-2026-09-01-09-00-00-000_v2' };
         const event: AppEvent<unknown> = { id: VALID_ID, source: SOURCE_ID, type: 'update-countdown', payload: minimal };
         const json = EVENT_CONVERTER.toJson(event);
         const restored = EVENT_CONVERTER.fromJson(json);
@@ -190,13 +190,13 @@ describe('EVENT_CONVERTER — toJson', () => {
 // ---------------------------------------------------------------------------
 
 const MINIMAL_SLIDESHOW: SlideShow = {
-    id: 'ss-2026-01-01-00-00-00-000' as AppId,
+    id: 'ss-2026-01-01-00-00-00-000_v2' as AppId,
     slides: [],
     timePerSlide: Temporal.Duration.from({ seconds: 10 }),
 };
 
 const MINIMAL_COUNTDOWN: Countdown = {
-    countdownId: 'countdown-2026-09-01-09-00-00-000',
+    countdownId: 'countdown-2026-09-01-09-00-00-000_v2',
     countdownTime: Temporal.PlainDateTime.from('2026-09-01T09:00:00'),
     showSmallCountdownFor: Temporal.Duration.from({ minutes: 5 }),
     showLargeCountdownFor: Temporal.Duration.from({ minutes: 1 }),

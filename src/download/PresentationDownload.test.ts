@@ -13,22 +13,22 @@ import {
 } from './PresentationDownload';
 
 const SLIDE_SHOW: SlideShow = {
-    id: 'show-2026-11-04-12-00-00-000' as AppId,
+    id: 'show-2026-11-04-12-00-00-000_v2' as AppId,
     timePerSlide: Temporal.Duration.from({ seconds: 10 }),
     darkMode: true,
     slides: [
         {
-            slideId: 'slide-2026-11-04-12-00-00-001' as AppId,
-            slices: [
-                { sliceType: 'text', width: 60, text: '# Hi\n\n</script><script>alert(1)</script> <!-- x -->', verticalAlign: 'bottom' },
-                { sliceType: 'image', width: 40, image: PLACEHOLDER_IMAGE },
+            slideId: 'slide-2026-11-04-12-00-00-001_v2' as AppId,
+            width: 1920, height: 1080, areas: [
+                { areaType: 'text', left: 0, top: 0, width: 60, height: 100, text: '# Hi\n\n</script><script>alert(1)</script> <!-- x -->', verticalAlign: 'bottom' },
+                { areaType: 'image', left: 0, top: 0, width: 40, height: 100, image: PLACEHOLDER_IMAGE },
             ],
         },
     ],
 };
 
 const COUNTDOWN: Countdown = {
-    countdownId: 'countdown-2026-11-04-12-00-00-000' as AppId,
+    countdownId: 'countdown-2026-11-04-12-00-00-000_v2' as AppId,
     countdownTime: Temporal.PlainDateTime.from('2099-01-01T10:00:00'),
     showSmallCountdownFor: Temporal.Duration.from({ minutes: 5 }),
     showLargeCountdownFor: Temporal.Duration.from({ minutes: 1 }),

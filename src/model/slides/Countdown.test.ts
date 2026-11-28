@@ -19,8 +19,8 @@ import type { AppId } from '../identifier/AppId';
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const OLDER_ID = 'cd-2026-01-01-00-00-00-000' as AppId;
-const NEWER_ID = 'cd-2026-06-01-00-00-00-000' as AppId;
+const OLDER_ID = 'cd-2026-01-01-00-00-00-000_v2' as AppId;
+const NEWER_ID = 'cd-2026-06-01-00-00-00-000_v2' as AppId;
 
 const PAST_TIME = Temporal.PlainDateTime.from('2020-01-01T00:00:00');
 const FUTURE_TIME = Temporal.PlainDateTime.from('2099-01-01T00:00:00');

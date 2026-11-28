@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
 import { APP_ID_CONVERTER, asAppId, newAppId } from './AppId';
 
-const VALID_ID = 'app-2026-08-17-10-30-00-000';
+const VALID_ID = 'app-2026-08-17-10-30-00-000_v2';
 const PINNED_DATE = Temporal.PlainDateTime.from('2026-08-17T10:30:45');
 
 // ---------------------------------------------------------------------------
@@ -40,11 +40,19 @@ describe('asAppId', () => {
 
     test('returns null when prefix starts with a digit', () => {
         // The regex requires [a-zA-Z]+ so a leading digit fails
-        expect(asAppId('1bad-2024-01-01-00-00-00-000')).toBeNull();
+        expect(asAppId('1bad-2024-01-01-00-00-00-000_v2')).toBeNull();
     });
 
     test('returns null when a segment is missing', () => {
         expect(asAppId('app-2026-08-17-10-30')).toBeNull();
+    });
+
+    test('returns null for an id of the previous format without the _v2 suffix', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-2026-08-17-10-30-00-000')).toBeNull();
+    });
+
+    test('returns null for an id with a different version suffix', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-2026-08-17-10-30-00-000_v3')).toBeNull();
     });
 
     test('returns null when there are extra segments', () => {
@@ -55,17 +63,21 @@ describe('asAppId', () => {
         expect(asAppId('app-2026-08-17-10-30-00')).toBeNull();
     });
 
+    test('returns null for an id without the _v2 suffix', () => {
+        expect(asAppId('app-2026-08-17-10-30-00-000')).toBeNull();
+    });
+
     test('returns the string typed as AppId for a valid id', () => {
         expect(asAppId(VALID_ID)).toBe(VALID_ID);
     });
 
     test('accepts a multi-word alpha prefix', () => {
-        const id = 'myPrefix-2024-01-01-00-00-00-000';
+        const id = 'myPrefix-2024-01-01-00-00-00-000_v2';
         expect(asAppId(id)).toBe(id);
     });
 
     test('accepts uppercase prefix letters', () => {
-        const id = 'APP-2024-12-31-23-59-59-999';
+        const id = 'APP-2024-12-31-23-59-59-999_v2';
         expect(asAppId(id)).toBe(id);
     });
 });
@@ -76,40 +88,40 @@ describe('asAppId', () => {
 
 describe('newAppId', () => {
     test('uses "app" as default prefix when called with a date', () => {
-        expect(newAppId(undefined, PINNED_DATE)).toBe('app-2026-08-17-10-30-45-000');
+        expect(newAppId(undefined, PINNED_DATE)).toBe('app-2026-08-17-10-30-45-000_v2');
     });
 
     test('uses "app" as default prefix when prefix is null', () => {
-        expect(newAppId(null, PINNED_DATE)).toBe('app-2026-08-17-10-30-45-000');
+        expect(newAppId(null, PINNED_DATE)).toBe('app-2026-08-17-10-30-45-000_v2');
     });
 
     test('uses a custom prefix', () => {
-        expect(newAppId('user', PINNED_DATE)).toBe('user-2026-08-17-10-30-45-000');
+        expect(newAppId('user', PINNED_DATE)).toBe('user-2026-08-17-10-30-45-000_v2');
     });
 
     test('result always matches the AppId pattern', () => {
-        const pattern = /^[a-zA-Z]+-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
+        const pattern = /^[a-zA-Z]+-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}_v2$/;
         expect(newAppId('myApp', PINNED_DATE)).toMatch(pattern);
     });
 
     test('pads single-digit month, day, hour, minute, second with leading zero', () => {
         // 2024-01-01 00:00:01 — all fields are single-digit values
         const singleDigitDate = Temporal.PlainDateTime.from('2024-01-01T00:00:01');
-        expect(newAppId(undefined, singleDigitDate)).toBe('app-2024-01-01-00-00-01-000');
+        expect(newAppId(undefined, singleDigitDate)).toBe('app-2024-01-01-00-00-01-000_v2');
     });
 
     test('uses the provided date instead of system time', () => {
         const fixedDate = Temporal.PlainDateTime.from('2020-03-15T08:05:02');
-        expect(newAppId('app', fixedDate)).toBe('app-2020-03-15-08-05-02-000');
+        expect(newAppId('app', fixedDate)).toBe('app-2020-03-15-08-05-02-000_v2');
     });
 
     test('falls back to system time when date is null', () => {
-        const pattern = /^app-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
+        const pattern = /^app-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}_v2$/;
         expect(newAppId('app', null)).toMatch(pattern);
     });
 
     test('falls back to system time when date is undefined', () => {
-        const pattern = /^app-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
+        const pattern = /^app-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}_v2$/;
         expect(newAppId('app', undefined)).toMatch(pattern);
     });
 });
@@ -124,7 +136,7 @@ describe('APP_ID_CONVERTER.fromJson', () => {
     });
 
     test('accepts uppercase prefix letters', () => {
-        const id = 'APP-2024-12-31-23-59-59-999';
+        const id = 'APP-2024-12-31-23-59-59-999_v2';
         expect(APP_ID_CONVERTER.fromJson(id)).toBe(id);
     });
 
@@ -157,7 +169,15 @@ describe('APP_ID_CONVERTER.fromJson', () => {
     });
 
     test('returns null when prefix starts with a digit', () => {
-        expect(APP_ID_CONVERTER.fromJson('1bad-2024-01-01-00-00-00-000')).toBeNull();
+        expect(APP_ID_CONVERTER.fromJson('1bad-2024-01-01-00-00-00-000_v2')).toBeNull();
+    });
+
+    test('returns null for an id of the previous format without the _v2 suffix', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-2026-08-17-10-30-00-000')).toBeNull();
+    });
+
+    test('returns null for an id with a different version suffix', () => {
+        expect(APP_ID_CONVERTER.fromJson('app-2026-08-17-10-30-00-000_v3')).toBeNull();
     });
 
     test('returns null when there are extra segments', () => {

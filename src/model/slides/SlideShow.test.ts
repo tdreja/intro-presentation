@@ -5,14 +5,14 @@ import type { AppId } from '../identifier/AppId';
 import type { Slide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
 
-const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000' as AppId;
-const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000_v2' as AppId;
+const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000_v2' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
 const VALID_TIME_PER_SLIDE = Temporal.Duration.from({ seconds: 10 });
 
 const FULL_IMAGE_SLIDE: Slide = {
     slideId: VALID_SLIDE_ID,
-    slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }],
+    width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: VALID_IMAGE }],
 };
 
 const MINIMAL_SLIDESHOW: SlideShow = {
@@ -50,7 +50,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — null / invalid guards', () => {
     });
 
     test('returns null when slides contains an invalid slide', () => {
-        const badSlide = { slices: [] }; // missing slideId and slices
+        const badSlide = { width: 1920, height: 1080, areas: [] }; // missing slideId
         const json = { id: VALID_SHOW_ID, slides: [badSlide], timePerSlide: 'PT10S' } as never;
         expect(SLIDE_SHOW_CONVERTER.fromJson(json)).toBeNull();
     });
@@ -65,7 +65,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
         id: VALID_SHOW_ID,
         slides: [{
             slideId: VALID_SLIDE_ID,
-            slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }],
+            width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: VALID_IMAGE }],
         }],
         timePerSlide: 'PT10S',
     };
@@ -82,7 +82,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — valid inputs', () => {
     test('slides array is populated correctly', () => {
         const result = SLIDE_SHOW_CONVERTER.fromJson(validJson)!;
         expect(result.slides).toHaveLength(1);
-        expect(result.slides[0].slices[0].sliceType).toBe('image');
+        expect(result.slides[0].areas[0].areaType).toBe('image');
         expect(result.slides[0].slideId).toBe(VALID_SLIDE_ID);
     });
 
@@ -137,7 +137,7 @@ describe('SLIDE_SHOW_CONVERTER round-trip', () => {
         expect(result.id).toBe(MINIMAL_SLIDESHOW.id);
         expect(result.slides).toHaveLength(MINIMAL_SLIDESHOW.slides.length);
         expect(result.slides[0].slideId).toBe(MINIMAL_SLIDESHOW.slides[0].slideId);
-        expect(result.slides[0].slices).toEqual(MINIMAL_SLIDESHOW.slides[0].slices);
+        expect(result.slides[0].areas).toEqual(MINIMAL_SLIDESHOW.slides[0].areas);
     });
 
     test('SlideShow with empty slides array round-trips correctly', () => {
@@ -155,7 +155,7 @@ describe('SLIDE_SHOW_CONVERTER round-trip', () => {
 // ---------------------------------------------------------------------------
 
 describe('findSlide', () => {
-    const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
+    const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000_v2' as AppId;
 
     test('returns null when both arguments are undefined', () => {
         expect(findSlide()).toBeNull();
@@ -191,12 +191,12 @@ describe('findSlide', () => {
 // Shared fixtures for multi-slide tests
 // ---------------------------------------------------------------------------
 
-const SLIDE_2_ID = 'slide-2026-08-18-10-00-00-001' as AppId;
-const SLIDE_3_ID = 'slide-2026-08-18-10-00-00-002' as AppId;
-const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
+const SLIDE_2_ID = 'slide-2026-08-18-10-00-00-001_v2' as AppId;
+const SLIDE_3_ID = 'slide-2026-08-18-10-00-00-002_v2' as AppId;
+const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000_v2' as AppId;
 
-const SLIDE_2: Slide = { slideId: SLIDE_2_ID, slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }] };
-const SLIDE_3: Slide = { slideId: SLIDE_3_ID, slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }] };
+const SLIDE_2: Slide = { slideId: SLIDE_2_ID, width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: VALID_IMAGE }] };
+const SLIDE_3: Slide = { slideId: SLIDE_3_ID, width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: VALID_IMAGE }] };
 
 const TWO_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2], timePerSlide: VALID_TIME_PER_SLIDE };
 const THREE_SLIDE_SHOW: SlideShow = { id: VALID_SHOW_ID, slides: [FULL_IMAGE_SLIDE, SLIDE_2, SLIDE_3], timePerSlide: VALID_TIME_PER_SLIDE };
@@ -288,7 +288,7 @@ describe('SLIDE_SHOW_CONVERTER.fromJson — timePerSlide', () => {
         id: VALID_SHOW_ID,
         slides: [{
             slideId: VALID_SLIDE_ID,
-            slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }],
+            width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: VALID_IMAGE }],
         }],
     };
 
@@ -341,7 +341,7 @@ const BASE_VALID_JSON = {
     id: VALID_SHOW_ID,
     slides: [{
         slideId: VALID_SLIDE_ID,
-        slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }],
+        width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: VALID_IMAGE }],
     }],
     timePerSlide: 'PT10S',
 };
@@ -418,8 +418,8 @@ describe('SLIDE_SHOW_CONVERTER round-trip — darkMode', () => {
 // pickNewest
 // ---------------------------------------------------------------------------
 
-const OLDER_SHOW_ID = 'show-2026-01-01-00-00-00-000' as AppId;
-const NEWER_SHOW_ID = 'show-2026-12-31-23-59-59-999' as AppId;
+const OLDER_SHOW_ID = 'show-2026-01-01-00-00-00-000_v2' as AppId;
+const NEWER_SHOW_ID = 'show-2026-12-31-23-59-59-999_v2' as AppId;
 
 const OLDER_SLIDESHOW: SlideShow = { id: OLDER_SHOW_ID, slides: [FULL_IMAGE_SLIDE], timePerSlide: VALID_TIME_PER_SLIDE };
 const NEWER_SLIDESHOW: SlideShow = { id: NEWER_SHOW_ID, slides: [FULL_IMAGE_SLIDE], timePerSlide: VALID_TIME_PER_SLIDE };
@@ -468,7 +468,7 @@ describe('pickNewest', () => {
 // ---------------------------------------------------------------------------
 
 describe('findSlideOrFirst', () => {
-    const SECOND_SLIDE: Slide = { ...FULL_IMAGE_SLIDE, slideId: 'slide-2026-08-18-10-00-00-001' as AppId };
+    const SECOND_SLIDE: Slide = { ...FULL_IMAGE_SLIDE, slideId: 'slide-2026-08-18-10-00-00-001_v2' as AppId };
     const TWO_SLIDES: SlideShow = { ...MINIMAL_SLIDESHOW, slides: [FULL_IMAGE_SLIDE, SECOND_SLIDE] };
 
     test('returns the slide with the given ID', () => {
@@ -476,7 +476,7 @@ describe('findSlideOrFirst', () => {
     });
 
     test('returns the first slide for an unknown ID', () => {
-        expect(findSlideOrFirst(TWO_SLIDES, 'slide-2020-01-01-00-00-00-000' as AppId)).toBe(FULL_IMAGE_SLIDE);
+        expect(findSlideOrFirst(TWO_SLIDES, 'slide-2020-01-01-00-00-00-000_v2' as AppId)).toBe(FULL_IMAGE_SLIDE);
     });
 
     test('returns the first slide without an ID', () => {

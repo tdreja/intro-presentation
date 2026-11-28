@@ -9,13 +9,13 @@ import type { AppId } from '../../model/identifier/AppId';
 afterEach(cleanup);
 
 const SLIDE_A: Slide = {
-    slideId: 'slide-2026-01-01-00-00-00-001' as AppId,
-    slices: [],
+    slideId: 'slide-2026-01-01-00-00-00-001_v2' as AppId,
+    width: 1920, height: 1080, areas: [],
 };
 
 const SLIDE_B: Slide = {
-    slideId: 'slide-2026-01-01-00-00-00-002' as AppId,
-    slices: [],
+    slideId: 'slide-2026-01-01-00-00-00-002_v2' as AppId,
+    width: 1920, height: 1080, areas: [],
 };
 
 const SLIDES = [SLIDE_A, SLIDE_B];

@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from 'react';
 import type { Slide } from '../../model/slides/Slide.ts';
-import { SlideComponent } from './Slide.component.tsx';
+import { SlideCanvas } from './Slide.component.tsx';
 
 type Props = {
     slide: Slide
@@ -40,7 +40,7 @@ export const SlideTransition = ({ slide, darkMode }: Props): ReactElement => {
                             }
                         }}
                     >
-                        <SlideComponent slide={layer} darkMode={darkMode} />
+                        <SlideCanvas slide={layer} darkMode={darkMode} />
                     </div>
                 );
             })}

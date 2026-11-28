@@ -4,15 +4,19 @@ import { createSlideId, SLIDE_CONVERTER, type Slide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
 
-const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000_v2' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
+
+const TEXT_AREA = { areaType: 'text', left: 0, top: 0, width: 960, height: 1080, text: 'Hello **World**' } as const;
 
 const MIXED_SLIDE: Slide = {
     slideId: VALID_SLIDE_ID,
-    slices: [
-        { sliceType: 'text', width: 50, text: 'Hello **World**' },
-        { sliceType: 'image', width: 30, image: VALID_IMAGE },
-        { sliceType: 'qr-code', width: 20, data: 'https://example.com' },
+    width: 1920,
+    height: 1080,
+    areas: [
+        TEXT_AREA,
+        { areaType: 'image', left: 960, top: 0, width: 960, height: 540, image: VALID_IMAGE },
+        { areaType: 'qr-code', left: 960, top: 540, width: 960, height: 540, data: 'https://example.com' },
     ],
 };
 
@@ -22,12 +26,12 @@ const MIXED_SLIDE: Slide = {
 
 describe('createSlideId', () => {
     test('returns a string matching the slide-YYYY-MM-DD-HH-mm-ss-mmm pattern', () => {
-        expect(createSlideId()).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/);
+        expect(createSlideId()).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}_v2$/);
     });
 
     test('uses the supplied PlainDateTime when provided', () => {
         const date = Temporal.PlainDateTime.from('2026-03-15T12:34:56.789');
-        expect(createSlideId(date)).toBe('slide-2026-03-15-12-34-56-789');
+        expect(createSlideId(date)).toBe('slide-2026-03-15-12-34-56-789_v2');
     });
 });
 
@@ -41,24 +45,39 @@ describe('SLIDE_CONVERTER.fromJson — invalid input', () => {
     });
 
     test('returns null when slideId is missing', () => {
-        expect(SLIDE_CONVERTER.fromJson({ slices: MIXED_SLIDE.slices })).toBeNull();
+        const json: Record<string, unknown> = { ...MIXED_SLIDE };
+        delete json.slideId;
+        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null when slideId has an invalid format', () => {
-        expect(SLIDE_CONVERTER.fromJson({ slideId: 'not-a-valid-id', slices: MIXED_SLIDE.slices })).toBeNull();
+        expect(SLIDE_CONVERTER.fromJson({ ...MIXED_SLIDE, slideId: 'not-a-valid-id' })).toBeNull();
     });
 
-    test('returns null when slices is missing', () => {
-        expect(SLIDE_CONVERTER.fromJson({ slideId: VALID_SLIDE_ID })).toBeNull();
+    test('returns null when slideId has no _v2 suffix', () => {
+        expect(SLIDE_CONVERTER.fromJson({ ...MIXED_SLIDE, slideId: 'slide-2026-08-18-10-00-00-000' })).toBeNull();
     });
 
-    test('returns null when slices is empty', () => {
-        expect(SLIDE_CONVERTER.fromJson({ slideId: VALID_SLIDE_ID, slices: [] })).toBeNull();
+    test.each(['width', 'height'])('returns null when %s is missing or not positive', (field) => {
+        for (const value of [undefined, null, '1920', 0, -1, Number.NaN]) {
+            expect(SLIDE_CONVERTER.fromJson({ ...MIXED_SLIDE, [field]: value })).toBeNull();
+        }
     });
 
-    test('returns null when one slice is invalid', () => {
-        const slices = [...MIXED_SLIDE.slices, { sliceType: 'video', width: 10 }];
-        expect(SLIDE_CONVERTER.fromJson({ slideId: VALID_SLIDE_ID, slices })).toBeNull();
+    test('returns null when areas is missing', () => {
+        const json: Record<string, unknown> = { ...MIXED_SLIDE };
+        delete json.areas;
+        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
+    });
+
+    test('returns null when one area is invalid', () => {
+        const areas = [...MIXED_SLIDE.areas, { areaType: 'video', left: 0, top: 0, width: 10, height: 10 }];
+        expect(SLIDE_CONVERTER.fromJson({ ...MIXED_SLIDE, areas })).toBeNull();
+    });
+
+    test('returns null for a slide of the slice format', () => {
+        const json = { slideId: VALID_SLIDE_ID, slices: [{ sliceType: 'text', width: 100, text: 'a' }] };
+        expect(SLIDE_CONVERTER.fromJson(json)).toBeNull();
     });
 
     test('returns null for a slide in the old format', () => {
@@ -68,42 +87,21 @@ describe('SLIDE_CONVERTER.fromJson — invalid input', () => {
 });
 
 describe('SLIDE_CONVERTER.fromJson — valid input', () => {
-    test('reads slideId and all slices in order', () => {
+    test('reads slideId, size and all areas in order', () => {
         expect(SLIDE_CONVERTER.fromJson(MIXED_SLIDE)).toEqual(MIXED_SLIDE);
     });
 
-    test('keeps widths that already add up to 100', () => {
-        const result = SLIDE_CONVERTER.fromJson(MIXED_SLIDE)!;
-        expect(result.slices.map(s => s.width)).toEqual([50, 30, 20]);
+    test('keeps areas as they are, even when they overlap', () => {
+        const json = { ...MIXED_SLIDE, areas: [TEXT_AREA, { ...TEXT_AREA, text: 'b' }] };
+        expect(SLIDE_CONVERTER.fromJson(json)!.areas).toEqual(json.areas);
     });
 
-    test('scales widths that add up to less than 100', () => {
-        const json = {
-            slideId: VALID_SLIDE_ID,
-            slices: [
-                { sliceType: 'text', width: 30, text: 'a' },
-                { sliceType: 'text', width: 30, text: 'b' },
-            ],
-        };
-        const result = SLIDE_CONVERTER.fromJson(json)!;
-        expect(result.slices.map(s => s.width)).toEqual([50, 50]);
+    test('accepts a slide without areas', () => {
+        expect(SLIDE_CONVERTER.fromJson({ ...MIXED_SLIDE, areas: [] })!.areas).toEqual([]);
     });
 
-    test('scales widths that add up to more than 100', () => {
-        const json = {
-            slideId: VALID_SLIDE_ID,
-            slices: [
-                { sliceType: 'text', width: 150, text: 'a' },
-                { sliceType: 'text', width: 50, text: 'b' },
-            ],
-        };
-        const result = SLIDE_CONVERTER.fromJson(json)!;
-        expect(result.slices.map(s => s.width)).toEqual([75, 25]);
-    });
-
-    test('a single slice always fills the slide', () => {
-        const json = { slideId: VALID_SLIDE_ID, slices: [{ sliceType: 'image', width: 40, image: VALID_IMAGE }] };
-        expect(SLIDE_CONVERTER.fromJson(json)!.slices[0].width).toBe(100);
+    test('accepts other slide sizes', () => {
+        expect(SLIDE_CONVERTER.fromJson({ ...MIXED_SLIDE, width: 1024, height: 768 })).toMatchObject({ width: 1024, height: 768 });
     });
 });
 
@@ -117,14 +115,12 @@ describe('SLIDE_CONVERTER.toJson', () => {
         expect(SLIDE_CONVERTER.toJson(undefined)).toBeNull();
     });
 
-    test('serializes slideId and slices', () => {
+    test('serializes slideId, size and areas', () => {
         expect(SLIDE_CONVERTER.toJson(MIXED_SLIDE)).toEqual({
             slideId: VALID_SLIDE_ID,
-            slices: [
-                { sliceType: 'text', width: 50, text: 'Hello **World**' },
-                { sliceType: 'image', width: 30, image: VALID_IMAGE },
-                { sliceType: 'qr-code', width: 20, data: 'https://example.com' },
-            ],
+            width: 1920,
+            height: 1080,
+            areas: MIXED_SLIDE.areas,
         });
     });
 

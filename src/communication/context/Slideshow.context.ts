@@ -2,12 +2,14 @@ import { createContext, useContext } from 'react';
 import { Temporal } from '@js-temporal/polyfill';
 import type { SlideShow } from '../../model/slides/SlideShow.ts';
 import { FALLBACK_APP_ID } from '../../model/identifier/AppId.ts';
-import type { Slide } from '../../model/slides/Slide.ts';
+import { DEFAULT_SLIDE_HEIGHT, DEFAULT_SLIDE_WIDTH, type Slide } from '../../model/slides/Slide.ts';
 import { PLACEHOLDER_IMAGE } from '../../model/slides/Image.ts';
 
 export const PLACEHOLDER_SLIDE: Slide = {
     slideId: FALLBACK_APP_ID,
-    slices: [{ sliceType: 'image', width: 100, image: PLACEHOLDER_IMAGE }],
+    width: DEFAULT_SLIDE_WIDTH,
+    height: DEFAULT_SLIDE_HEIGHT,
+    areas: [{ areaType: 'image', left: 0, top: 0, width: DEFAULT_SLIDE_WIDTH, height: DEFAULT_SLIDE_HEIGHT, image: PLACEHOLDER_IMAGE }],
 };
 
 export const FALLBACK_SLIDESHOW: SlideShow = {

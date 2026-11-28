@@ -12,11 +12,17 @@ import type { DirectJsonConverter } from '../json/json.ts';
  *     <li>Fifth number: Minute of the ID</li>
  *     <li>Sixth number: Second of the ID</li>
  *     <li>Seventh number: Millisecond of the ID</li>
+ *     <li>Suffix {@link APP_ID_SUFFIX}: version of the data format</li>
  * </ul>
  */
-export type AppId = `${string}-${number}-${number}-${number}-${number}-${number}-${number}-${number}`;
+export type AppId = `${string}-${number}-${number}-${number}-${number}-${number}-${number}-${number}_v2`;
 
-const APP_ID_REGEX = /^[a-zA-Z]+-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/;
+/**
+ * Suffix of every ID. IDs without it come from the previous data format (vertical slices) and are ignored on import.
+ */
+export const APP_ID_SUFFIX = '_v2';
+
+const APP_ID_REGEX = /^[a-zA-Z]+-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}_v2$/;
 
 /**
  * Imports/Exports AppId to JSON
@@ -59,7 +65,7 @@ export function newAppId(prefix?: string | null, date?: Temporal.PlainDateTime |
     const minute = String(now.minute).padStart(2, '0');
     const second = String(now.second).padStart(2, '0');
     const millisecond = String(now.millisecond).padStart(3, '0');
-    return `${pre}-${year}-${month}-${day}-${hour}-${minute}-${second}-${millisecond}` as AppId;
+    return `${pre}-${year}-${month}-${day}-${hour}-${minute}-${second}-${millisecond}${APP_ID_SUFFIX}` as AppId;
 }
 
 export const FALLBACK_DATE_TIME = Temporal.PlainDateTime.from('2025-01-01T00:00:00.000');
