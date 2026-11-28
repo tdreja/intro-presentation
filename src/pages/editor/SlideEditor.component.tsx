@@ -6,6 +6,7 @@ import { AreaBox, AreaContent, SlideCanvas } from '../slideshow/Slide.component.
 import { AreaToolbar } from './AreaToolbar.component.tsx';
 import { TextAreaEditor } from './areas/TextAreaEditor.tsx';
 import { AreaPopover } from './areas/AreaPopover.tsx';
+import { useI18n } from '../../i18n/I18N.ts';
 
 /**
  * Identifies the content of an area (not its bounds), so editors with local drafts are reset when the content changes.
@@ -134,6 +135,7 @@ type EditableAreaProps = {
  */
 const EditableArea = (props: EditableAreaProps): ReactElement => {
     const { area, scale, selected, onSelect } = props;
+    const labels = useI18n().areaEditing;
     // Target of the popover with the controls of the area
     const [frame, setFrame] = useState<HTMLDivElement | null>(null);
     // Element in the popover that takes the formatting bar of a text area, while the popover is shown
@@ -166,10 +168,10 @@ const EditableArea = (props: EditableAreaProps): ReactElement => {
                         textToolbarRef={setTextToolbar}
                         onUpdate={props.onUpdate}
                     />
-                    <DragHandle kind="move" className="area-handle--move" title="Drag to move" label="Move area" {...handleProps}>
+                    <DragHandle kind="move" className="area-handle--move" title={labels.tooltipMove} label={labels.ariaMove} {...handleProps}>
                         &#10021;
                     </DragHandle>
-                    <DragHandle kind="resize" className="area-handle--resize" title="Drag to resize" label="Resize area" {...handleProps} />
+                    <DragHandle kind="resize" className="area-handle--resize" title={labels.tooltipResize} label={labels.ariaResize} {...handleProps} />
                 </>
             )}
         >
@@ -197,6 +199,7 @@ type Props = {
  * The selected slide, scaled to fit, with its areas to select, move and resize. The toolbar on top edits the selected area.
  */
 export const SlideEditor = ({ slide, darkMode, onChange }: Props): ReactElement => {
+    const labels = useI18n();
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     // Bounds while an area is being moved or resized; only committed (and broadcast) when the pointer is released
     const [draft, setDraft] = useState<Slide | null>(null);
@@ -211,7 +214,7 @@ export const SlideEditor = ({ slide, darkMode, onChange }: Props): ReactElement 
         }
     };
     const onAdd = (type: AreaType) => {
-        const updated = addArea(slide, type);
+        const updated = addArea(slide, type, labels.defaults.newText);
         onChange(updated);
         setSelectedIndex(updated.areas.length - 1);
     };

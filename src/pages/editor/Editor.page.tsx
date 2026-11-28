@@ -11,6 +11,7 @@ import { addSlide, createSlide, duplicateSlide, moveSlide, removeSlide, replaceS
 import { SlideOverview } from './SlideOverview.component.tsx';
 import { CountdownSettings } from './CountdownSettings.component.tsx';
 import { SlideEditor } from './SlideEditor.component.tsx';
+import { useI18n } from '../../i18n/I18N.ts';
 
 type Props = {
     onClose: () => void
@@ -24,13 +25,15 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
     const [currentSlide] = useCurrentSlide();
     const [countdown] = useCountdown();
     const darkModeId = useId();
+    const allLabels = useI18n();
+    const labels = allLabels.editor;
     const [selectedSlideId, setSelectedSlideId] = useState<AppId | null>(
         () => currentSlide?.slideId ?? slideShow.slides[0]?.slideId ?? null,
     );
     const selectedSlide = findSlide(slideShow, selectedSlideId) ?? slideShow.slides[0] ?? null;
 
     const onAddSlide = () => {
-        const slide = createSlide();
+        const slide = createSlide(allLabels.defaults.newText);
         setSlideShow(addSlide(slideShow, slide));
         setSelectedSlideId(slide.slideId);
     };
@@ -63,13 +66,13 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                 className="navbar bg-body-secondary border-bottom flex-shrink-0 px-3"
                 style={{ height: 'var(--navbar-height)' }}
             >
-                <span className="navbar-brand mb-0 h1 fs-5">Slideshow editor</span>
+                <span className="navbar-brand mb-0 h1 fs-5">{labels.title}</span>
                 <div className="d-flex align-items-center gap-2">
                     <Form.Check
                         type="switch"
                         id={darkModeId}
                         className="mb-0 me-2"
-                        label="Dark mode"
+                        label={labels.labelDarkMode}
                         checked={slideShow.darkMode === true}
                         onChange={event => setSlideShow(setDarkMode(slideShow, event.target.checked))}
                     />
@@ -77,12 +80,16 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                         type="button"
                         className="btn btn-sm btn-outline-primary"
                         onClick={() => downloadPresentation(slideShow, countdown)}
-                        title="Download this page with the current slideshow and countdown"
+                        title={labels.tooltipDownload}
                     >
-                        &#10515; Download
+                        &#10515;
+                        {' '}
+                        {labels.actionDownload}
                     </button>
                     <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onClose}>
-                        &#9654; Back to slideshow
+                        &#9654;
+                        {' '}
+                        {labels.actionBackToSlideshow}
                     </button>
                 </div>
             </nav>
@@ -114,7 +121,7 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                         )
                         : (
                             <div className="d-flex justify-content-center align-items-center h-100 text-muted fs-4">
-                                No slide selected
+                                {labels.noSlideSelected}
                             </div>
                         )}
                 </main>

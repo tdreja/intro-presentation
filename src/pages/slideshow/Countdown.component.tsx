@@ -1,6 +1,7 @@
 import { type ReactElement, useEffect, useState } from 'react';
 import { Temporal } from '@js-temporal/polyfill';
 import type { Countdown } from '../../model/slides/Countdown.ts';
+import { useI18n } from '../../i18n/I18N.ts';
 
 type CountdownSize = 'large' | 'small' | 'none';
 
@@ -69,6 +70,7 @@ function formatCountdown(countdown: Countdown, now: Temporal.PlainDateTime): str
  * Bottom right of the slideshow: the countdown while it runs (small, or large shortly before the end), the current time otherwise.
  */
 export const CountdownComponent = ({ countdown }: Props): ReactElement => {
+    const labels = useI18n().slideShow;
     const [now, setNow] = useState<Temporal.PlainDateTime>(() => Temporal.Now.plainDateTimeISO());
 
     useEffect(() => {
@@ -85,7 +87,7 @@ export const CountdownComponent = ({ countdown }: Props): ReactElement => {
     return (
         <span
             className={`position-absolute end-0 bottom-0 pe-3 pb-2 font-monospace ${fontClass}`}
-            aria-label={size === 'none' ? 'Current time' : 'Countdown'}
+            aria-label={size === 'none' ? labels.ariaCurrentTime : labels.ariaCountdown}
         >
             {text}
         </span>

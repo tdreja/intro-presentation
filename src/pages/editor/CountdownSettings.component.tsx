@@ -11,8 +11,7 @@ import {
     smallCountdownMinutesOf,
     toDateTimeInputValue,
 } from '../../model/slides/Countdown.ts';
-
-const minutesLabel = (minutes: number) => `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'}`;
+import { useI18n } from '../../i18n/I18N.ts';
 
 /**
  * Switches the countdown on and off, picks its target time and how long before it the small countdown shows.
@@ -20,6 +19,7 @@ const minutesLabel = (minutes: number) => `${minutes} ${minutes === 1 ? 'Minute'
  */
 export const CountdownSettings = (): ReactElement => {
     const id = useId();
+    const labels = useI18n().countdownSettings;
     const [countdown, setCountdown] = useCountdown();
     const enabled = !!countdown.countdownTime;
     // Remembered while the countdown is off, so switching it back on restores the last pick
@@ -60,7 +60,7 @@ export const CountdownSettings = (): ReactElement => {
             <Form.Check
                 type="checkbox"
                 id={`${id}-enabled`}
-                label="Countdown"
+                label={labels.labelCountdown}
                 className="fw-semibold mb-0"
                 checked={enabled}
                 onChange={event => onToggle(event.target.checked)}
@@ -70,20 +70,20 @@ export const CountdownSettings = (): ReactElement => {
                     <Form.Control
                         type="datetime-local"
                         size="sm"
-                        aria-label="Countdown target time"
+                        aria-label={labels.ariaTargetTime}
                         value={editValue ?? toDateTimeInputValue(shownTime)}
                         onChange={event => onTimeChange(event.target.value)}
                     />
-                    {inPast && <div className="small text-warning-emphasis">This time is in the past.</div>}
+                    {inPast && <div className="small text-warning-emphasis">{labels.warningInPast}</div>}
                     <Form.Group controlId={`${id}-small`} className="d-flex align-items-center gap-2">
-                        <Form.Label className="small mb-0 text-nowrap">Show for</Form.Label>
+                        <Form.Label className="small mb-0 text-nowrap">{labels.labelShowFor}</Form.Label>
                         <Form.Select
                             size="sm"
                             value={smallCountdownMinutesOf(countdown)}
                             onChange={event => onSmallChange(event.target.value)}
                         >
                             {SMALL_COUNTDOWN_MINUTES.map(minutes => (
-                                <option key={minutes} value={minutes}>{minutesLabel(minutes)}</option>
+                                <option key={minutes} value={minutes}>{labels.minutes(minutes)}</option>
                             ))}
                         </Form.Select>
                     </Form.Group>

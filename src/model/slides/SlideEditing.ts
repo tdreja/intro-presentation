@@ -11,29 +11,40 @@ import type { SlideShow } from './SlideShow.ts';
 export const MIN_AREA_SIZE = 40;
 
 /**
- * Creates a new area of the given type with default content, centered on the slide with half its size.
+ * Starting text of a new text area, used when the caller passes no translated text.
  */
-export function createArea(type: AreaType, slideWidth: number = DEFAULT_SLIDE_WIDTH, slideHeight: number = DEFAULT_SLIDE_HEIGHT): Area {
+export const DEFAULT_NEW_TEXT = '# New text';
+
+/**
+ * Creates a new area of the given type with default content, centered on the slide with half its size.
+ * A text area starts with the given text, e.g. translated to the language of the user.
+ */
+export function createArea(
+    type: AreaType,
+    slideWidth: number = DEFAULT_SLIDE_WIDTH,
+    slideHeight: number = DEFAULT_SLIDE_HEIGHT,
+    newText: string = DEFAULT_NEW_TEXT,
+): Area {
     const bounds = { left: slideWidth / 4, top: slideHeight / 4, width: slideWidth / 2, height: slideHeight / 2 };
     switch (type) {
         case 'image':
             return { areaType: 'image', ...bounds, image: PLACEHOLDER_IMAGE };
         case 'text':
-            return { areaType: 'text', ...bounds, text: '# New text' };
+            return { areaType: 'text', ...bounds, text: newText };
         case 'qr-code':
             return { areaType: 'qr-code', ...bounds, data: 'https://example.com' };
     }
 }
 
 /**
- * Creates a new slide of the default size with a single text area.
+ * Creates a new slide of the default size with a single text area, starting with the given text.
  */
-export function createSlide(): Slide {
+export function createSlide(newText: string = DEFAULT_NEW_TEXT): Slide {
     return {
         slideId: createSlideId(),
         width: DEFAULT_SLIDE_WIDTH,
         height: DEFAULT_SLIDE_HEIGHT,
-        areas: [createArea('text')],
+        areas: [createArea('text', DEFAULT_SLIDE_WIDTH, DEFAULT_SLIDE_HEIGHT, newText)],
     };
 }
 
@@ -82,10 +93,10 @@ export function setAreaBounds(slide: Slide, index: number, bounds: Bounds): Slid
 }
 
 /**
- * Adds a new area of the given type on top of the other areas.
+ * Adds a new area of the given type on top of the other areas. A text area starts with the given text.
  */
-export function addArea(slide: Slide, type: AreaType): Slide {
-    return { ...slide, areas: [...slide.areas, createArea(type, slide.width, slide.height)] };
+export function addArea(slide: Slide, type: AreaType, newText: string = DEFAULT_NEW_TEXT): Slide {
+    return { ...slide, areas: [...slide.areas, createArea(type, slide.width, slide.height, newText)] };
 }
 
 /**

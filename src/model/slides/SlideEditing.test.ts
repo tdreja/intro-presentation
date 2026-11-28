@@ -10,6 +10,7 @@ import {
     addSlide,
     clampBounds,
     createArea,
+    DEFAULT_NEW_TEXT,
     createSlide,
     duplicateSlide,
     MIN_AREA_SIZE,
@@ -58,6 +59,12 @@ describe('createArea / createSlide', () => {
         expect(slide).toMatchObject({ width: 1280, height: 720 });
         expect(types(slide)).toEqual(['text']);
     });
+
+    test('a new text area starts with the default text, or the given one', () => {
+        expect(createArea('text')).toMatchObject({ text: DEFAULT_NEW_TEXT });
+        expect(createArea('text', 1000, 600, '# Neuer Text')).toMatchObject({ text: '# Neuer Text' });
+        expect(createSlide('# Neuer Text').areas[0]).toMatchObject({ text: '# Neuer Text' });
+    });
 });
 
 describe('clampBounds', () => {
@@ -101,6 +108,10 @@ describe('area operations', () => {
         const slide = addArea(SLIDE_B, 'qr-code');
         expect(types(slide)).toEqual(['text', 'qr-code']);
         expect(slide.areas[1]).toMatchObject({ left: 480, top: 270, width: 960, height: 540 });
+    });
+
+    test('addArea starts a text area with the given text', () => {
+        expect(addArea(SLIDE_B, 'text', '# Neuer Text').areas[1]).toMatchObject({ text: '# Neuer Text' });
     });
 
     test('removeArea removes the area, also the last one', () => {
