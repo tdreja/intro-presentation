@@ -13,9 +13,9 @@ import {
     countdownToStorage,
     currentSlideIdFromStorage,
     currentSlideIdToStorage,
-    slideShowFromStorage,
-    slideShowToStorage,
 } from './communication/LocalStorage.ts';
+import { loadSlideShow, requestPersistentStorage, writeSlideShow } from './communication/SlideShowDatabase.ts';
+import { Spinner } from 'react-bootstrap';
 import { FALLBACK_SLIDESHOW, SlideShowContext, type SlideShowState } from './communication/context/Slideshow.context.ts';
 import { CurrentSlideContext, type CurrentSlideState } from './communication/context/CurrentSlide.context.ts';
 import { CountdownContext, type CountdownState } from './communication/context/Countdown.context.ts';
@@ -38,37 +38,34 @@ export const App = (): ReactElement => {
         return new AppEventBus(channel);
     });
 
-    // Pick the newest of the stored data and the data embedded in the HTML, e.g. a downloaded presentation
+    // Pick the newest of the stored data and the data embedded in the HTML, e.g. a downloaded presentation.
+    // The stored slideshow comes from IndexedDB (async, see below); until then the HTML one is used.
     const [startup] = useState(() => {
-        const storedSlideShow = slideShowFromStorage();
         const htmlSlideShow = SLIDE_SHOW_CONVERTER.fromJson(window.startupSlideShow);
-        const slideShow = pickNewest(storedSlideShow, htmlSlideShow) ?? FALLBACK_SLIDESHOW;
         const storedCountdown = countdownFromStorage();
         const htmlCountdown = COUNTDOWN_CONVERTER.fromJson(window.startupCountdown);
         const countdown = pickNewestAllowedCountdown(htmlCountdown, storedCountdown) ?? FALLBACK_COUNTDOWN;
         return {
-            slideShow,
+            htmlSlideShow,
             countdown,
-            // Skip rewriting what is already stored (the slideshow can be several MB)
-            slideShowStored: slideShow === storedSlideShow,
             countdownStored: countdown === storedCountdown,
             // The HTML brought something newer than this browser knew: it replaces the stored data
-            slideShowFromHtml: !!htmlSlideShow && slideShow === htmlSlideShow
-              && (!storedSlideShow || htmlSlideShow.id > storedSlideShow.id),
             countdownFromHtml: !!htmlCountdown && countdown === htmlCountdown
               && (!storedCountdown || htmlCountdown.countdownId > storedCountdown.countdownId),
         };
     });
 
     // Prepare the local state for this app!
-    const [localSlideShow, setLocalSlideShow] = useState<SlideShow>(startup.slideShow);
+    const [localSlideShow, setLocalSlideShow] = useState<SlideShow>(startup.htmlSlideShow ?? FALLBACK_SLIDESHOW);
+    // Whether the stored slideshow was loaded from IndexedDB; nothing is shown or edited before
+    const [slideShowLoaded, setSlideShowLoaded] = useState(false);
     const [localCurrentSlide, setLocalCurrentSlide] = useState<AppId | null>(() => currentSlideIdFromStorage());
     const [localCountdown, setLocalCountdown] = useState<Countdown>(startup.countdown);
 
     // Add setters with attachment to the eventbus
     const setSlideShow = useCallback((slide: SlideShow) => {
         setLocalSlideShow(slide);
-        slideShowToStorage(slide);
+        void writeSlideShow(slide);
         eventBus.dispatchEvent(replaceSlideshowEvent(source, slide));
     }, [eventBus, source, setLocalSlideShow]);
     const setCurrentSlide = useCallback((slideId: AppId | null) => {
@@ -86,17 +83,20 @@ export const App = (): ReactElement => {
     // Re-encode raster images as WEBP (max 2000px wide) in the background, then keep the smaller copy.
     // Not broadcast: every tab loading the same slideshow does this itself.
     useEffect(() => {
+        if (!slideShowLoaded) {
+            return;
+        }
         let cancelled = false;
         compressSlideShowImages(localSlideShow).then((compressed) => {
             if (!cancelled && compressed !== localSlideShow) {
                 setLocalSlideShow(compressed);
-                slideShowToStorage(compressed);
+                void writeSlideShow(compressed);
             }
         });
         return () => {
             cancelled = true;
         };
-    }, [localSlideShow]);
+    }, [localSlideShow, slideShowLoaded]);
 
     useEffect(() => {
         document.documentElement.lang = labels.language;
@@ -111,14 +111,32 @@ export const App = (): ReactElement => {
     // Keep what was picked on startup, so other tabs and later visits see it too (older data is never overwritten).
     // Open tabs are only told when the HTML brought something newer, e.g. a downloaded presentation.
     useEffect(() => {
-        if (!startup.slideShowStored) {
-            slideShowToStorage(startup.slideShow);
-        }
+        let cancelled = false;
+        requestPersistentStorage();
+        loadSlideShow().then((stored) => {
+            if (cancelled) {
+                return;
+            }
+            const html = startup.htmlSlideShow;
+            const slideShow = pickNewest(stored, html) ?? FALLBACK_SLIDESHOW;
+            // A newer slideshow may have arrived from another tab while loading
+            setLocalSlideShow(current => pickNewest(slideShow, current) ?? slideShow);
+            if (slideShow !== stored) {
+                // Skip rewriting what is already stored (the slideshow can be several MB)
+                void writeSlideShow(slideShow);
+            }
+            if (html && slideShow === html && (!stored || html.id > stored.id)) {
+                eventBus.dispatchEvent(replaceSlideshowEvent(source, html));
+            }
+            setSlideShowLoaded(true);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [startup, eventBus, source]);
+    useEffect(() => {
         if (!startup.countdownStored) {
             countdownToStorage(startup.countdown);
-        }
-        if (startup.slideShowFromHtml) {
-            eventBus.dispatchEvent(replaceSlideshowEvent(source, startup.slideShow));
         }
         if (startup.countdownFromHtml) {
             eventBus.dispatchEvent(updateCountdownEvent(source, startup.countdown));
@@ -156,6 +174,14 @@ export const App = (): ReactElement => {
         [localSlideShow, localCurrentSlide, setCurrentSlide]);
     const countdownState: CountdownState = useMemo(() => [localCountdown, setCountdown],
         [localCountdown, setCountdown]);
+
+    if (!slideShowLoaded) {
+        return (
+            <div className="d-flex vh-100 align-items-center justify-content-center">
+                <Spinner animation="border" role="status" />
+            </div>
+        );
+    }
 
     return (
         <I18N.Provider value={labels}>

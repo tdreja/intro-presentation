@@ -1,6 +1,5 @@
 import type { JsonConverter } from '../model/json/json.ts';
 import { APP_ID_CONVERTER, type AppId } from '../model/identifier/AppId.ts';
-import { SLIDE_SHOW_CONVERTER, type SlideShow } from '../model/slides/SlideShow.ts';
 import { COUNTDOWN_CONVERTER, type Countdown } from '../model/slides/Countdown.ts';
 
 export function fromStorage<DATA, JSON>(converter: JsonConverter<DATA, JSON>, key: string): DATA | null {
@@ -26,16 +25,13 @@ export function toStorage<DATA, JSON>(
     if (existing && isNewerThan(existing, data)) {
         return;
     }
-    localStorage.setItem(key, JSON.stringify(converter.toJson(data)));
-}
-
-export function slideShowToStorage(slideShow: SlideShow) {
-    // Same id overwrites, so a re-encoded (smaller) copy of the same slideshow replaces the original
-    return toStorage(SLIDE_SHOW_CONVERTER, 'slide-show', slideShow, (newer, older) => newer.id > older.id);
-}
-
-export function slideShowFromStorage(): SlideShow | null {
-    return fromStorage(SLIDE_SHOW_CONVERTER, 'slide-show');
+    try {
+        localStorage.setItem(key, JSON.stringify(converter.toJson(data)));
+    }
+    catch (error) {
+        // e.g. QuotaExceededError: never let a full storage break the UI
+        console.error(`Could not write '${key}' to localStorage`, error);
+    }
 }
 
 export function currentSlideIdToStorage(currentSlideId: AppId | null) {
