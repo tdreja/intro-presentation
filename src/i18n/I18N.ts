@@ -63,6 +63,11 @@ export interface EditorLabels {
     labelDarkMode: string
     actionDownload: string
     tooltipDownload: string
+    actionDownloadJson: string
+    tooltipDownloadJson: string
+    actionImportJson: string
+    tooltipImportJson: string
+    errorImportJson: string
     actionBackToSlideshow: string
     noSlideSelected: string
 }

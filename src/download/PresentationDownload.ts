@@ -84,16 +84,76 @@ export function downloadFileName(pathname: string): string {
 }
 
 /**
+ * Name of the downloaded JSON file: the name of the current page with a .json extension.
+ */
+export function jsonFileName(pathname: string): string {
+    return downloadFileName(pathname).replace(/\.html?$/i, '.json');
+}
+
+/**
+ * The slideshow and countdown as a JSON file, which {@link parsePresentationJson} reads back.
+ */
+export function presentationJson(slideShow: SlideShow, countdown: Countdown): string {
+    return JSON.stringify({
+        slideShow: SLIDE_SHOW_CONVERTER.toJson(slideShow),
+        countdown: COUNTDOWN_CONVERTER.toJson(countdown),
+    }, null, 2);
+}
+
+/**
+ * Reads a file written by {@link presentationJson}; a bare slideshow is accepted as well.
+ * Null if the text is no valid JSON or holds no valid slideshow. The countdown is optional.
+ */
+export function parsePresentationJson(text: string): { slideShow: SlideShow, countdown: Countdown | null } | null {
+    let json: unknown;
+    try {
+        json = JSON.parse(text);
+    }
+    catch {
+        return null;
+    }
+    if (!json || typeof json !== 'object') {
+        return null;
+    }
+    const wrapped = 'slideShow' in json;
+    const parsed = json as { slideShow?: unknown, countdown?: unknown };
+    const slideShow = SLIDE_SHOW_CONVERTER.fromJson(wrapped ? parsed.slideShow : json);
+    if (!slideShow) {
+        return null;
+    }
+    const countdown = wrapped ? COUNTDOWN_CONVERTER.fromJson(parsed.countdown) : null;
+    return { slideShow, countdown };
+}
+
+/**
+ * Downloads the slideshow and countdown as a JSON file.
+ */
+export function downloadPresentationJson(slideShow: SlideShow, countdown: Countdown, fileName?: string): void {
+    saveFile(
+        presentationJson(slideShow, countdown),
+        'application/json;charset=utf-8',
+        fileName ?? jsonFileName(window.location.pathname),
+    );
+}
+
+/**
  * Downloads the page with the given slideshow and countdown baked in. There is no server to download from,
  * so the HTML is rebuilt from the page snapshot and saved through a temporary link.
  */
 export function downloadPresentation(slideShow: SlideShow, countdown: Countdown, fileName?: string): void {
     const snapshot = pageSnapshot ?? (document.documentElement.cloneNode(true) as HTMLElement);
     const html = buildPresentationHtml(snapshot, slideShow, countdown);
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+    saveFile(html, 'text/html;charset=utf-8', fileName ?? downloadFileName(window.location.pathname));
+}
+
+/**
+ * Saves the content as a file through a temporary link.
+ */
+function saveFile(content: string, type: string, fileName: string): void {
+    const url = URL.createObjectURL(new Blob([content], { type }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = fileName ?? downloadFileName(window.location.pathname);
+    link.download = fileName;
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
