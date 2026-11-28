@@ -222,6 +222,11 @@
     --bs-popover-max-width: calc(100vw - 32px);
 }
 
+/* Moved over its area (no space on either side): the arrow would point away from it */
+.area-popover[data-inside] .popover-arrow {
+    display: none;
+}
+
 .area-popover--text .milkdown-top-bar {
     border-radius: var(--bs-popover-inner-border-radius);
 }
