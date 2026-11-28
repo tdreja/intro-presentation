@@ -1,13 +1,22 @@
-import { type ReactElement, useId, useState } from 'react';
+import { type ChangeEvent, type ReactElement, useId, useRef, useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import { useSlideShow } from '../../communication/context/Slideshow.context.ts';
 import { useCurrentSlide } from '../../communication/context/CurrentSlide.context.ts';
 import { useCountdown } from '../../communication/context/Countdown.context.ts';
-import { downloadPresentation } from '../../download/PresentationDownload.ts';
-import type { AppId } from '../../model/identifier/AppId.ts';
+import { downloadPresentation, downloadPresentationJson, parsePresentationJson } from '../../download/PresentationDownload.ts';
+import { type AppId, newAppId } from '../../model/identifier/AppId.ts';
 import { findSlide, indexOfSlide } from '../../model/slides/SlideShow.ts';
 import { createSlideId, type Slide } from '../../model/slides/Slide.ts';
-import { addSlide, createSlide, duplicateSlide, moveSlide, removeSlide, replaceSlide, setDarkMode } from '../../model/slides/SlideEditing.ts';
+import {
+    addSlide,
+    createSlide,
+    duplicateSlide,
+    moveSlide,
+    removeSlide,
+    replaceSlide,
+    setDarkMode,
+    touchSlideShow,
+} from '../../model/slides/SlideEditing.ts';
 import { SlideOverview } from './SlideOverview.component.tsx';
 import { CountdownSettings } from './CountdownSettings.component.tsx';
 import { SlideEditor } from './SlideEditor.component.tsx';
@@ -23,8 +32,9 @@ type Props = {
 export const EditorPage = ({ onClose }: Props): ReactElement => {
     const [slideShow, setSlideShow] = useSlideShow();
     const [currentSlide] = useCurrentSlide();
-    const [countdown] = useCountdown();
+    const [countdown, setCountdown] = useCountdown();
     const darkModeId = useId();
+    const importInputRef = useRef<HTMLInputElement>(null);
     const allLabels = useI18n();
     const labels = allLabels.editor;
     const [selectedSlideId, setSelectedSlideId] = useState<AppId | null>(
@@ -59,6 +69,28 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
     };
     const onMoveSlide = (slideId: AppId, direction: -1 | 1) => setSlideShow(moveSlide(slideShow, slideId, direction));
     const onChangeSlide = (slide: Slide) => setSlideShow(replaceSlide(slideShow, slide));
+    const onImportJson = (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        // Allow picking the same file again
+        event.target.value = '';
+        if (!file) {
+            return;
+        }
+        file.text().then((text) => {
+            const imported = parsePresentationJson(text);
+            if (!imported) {
+                window.alert(labels.errorImportJson);
+                return;
+            }
+            // Fresh IDs, so the import wins over the current data in all tabs, even if the file is older
+            const importedSlideShow = touchSlideShow(imported.slideShow, imported.slideShow.slides);
+            setSlideShow(importedSlideShow);
+            setSelectedSlideId(importedSlideShow.slides[0]?.slideId ?? null);
+            if (imported.countdown) {
+                setCountdown({ ...imported.countdown, countdownId: newAppId('countdown') });
+            }
+        }).catch(() => window.alert(labels.errorImportJson));
+    };
 
     return (
         <div className="d-flex flex-column" style={{ height: '100vh' }}>
@@ -86,6 +118,37 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                         {' '}
                         {labels.actionDownload}
                     </button>
+                    <div className="btn-group">
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary py-0 px-2"
+                            style={{ fontSize: '0.75rem' }}
+                            onClick={() => downloadPresentationJson(slideShow, countdown)}
+                            title={labels.tooltipDownloadJson}
+                        >
+                            &#10515;
+                            {' '}
+                            {labels.actionDownloadJson}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary py-0 px-2"
+                            style={{ fontSize: '0.75rem' }}
+                            onClick={() => importInputRef.current?.click()}
+                            title={labels.tooltipImportJson}
+                        >
+                            &#10514;
+                            {' '}
+                            {labels.actionImportJson}
+                        </button>
+                    </div>
+                    <input
+                        ref={importInputRef}
+                        type="file"
+                        accept=".json,application/json"
+                        className="d-none"
+                        onChange={onImportJson}
+                    />
                     <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onClose}>
                         &#9654;
                         {' '}

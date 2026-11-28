@@ -8,6 +8,9 @@ import { COUNTDOWN_CONVERTER, type Countdown } from '../model/slides/Countdown';
 import {
     buildPresentationHtml,
     downloadFileName,
+    jsonFileName,
+    parsePresentationJson,
+    presentationJson,
     STARTUP_SCRIPT_ID,
     startupScriptContent,
 } from './PresentationDownload';
@@ -130,5 +133,38 @@ describe('downloadFileName', () => {
         ['/download.php', 'presentation.html'],
     ])('%s → %s', (pathname, expected) => {
         expect(downloadFileName(pathname)).toBe(expected);
+    });
+});
+
+describe('jsonFileName', () => {
+    test.each([
+        ['/presentations/intro.html', 'intro.json'],
+        ['/C:/Users/me/My%20Talk.htm', 'My Talk.json'],
+        ['/', 'presentation.json'],
+    ])('%s → %s', (pathname, expected) => {
+        expect(jsonFileName(pathname)).toBe(expected);
+    });
+});
+
+describe('presentationJson / parsePresentationJson', () => {
+    test('round trip keeps slideshow and countdown', () => {
+        const result = parsePresentationJson(presentationJson(SLIDE_SHOW, COUNTDOWN));
+        expect(SLIDE_SHOW_CONVERTER.toJson(result?.slideShow)).toEqual(SLIDE_SHOW_CONVERTER.toJson(SLIDE_SHOW));
+        expect(COUNTDOWN_CONVERTER.toJson(result?.countdown)).toEqual(COUNTDOWN_CONVERTER.toJson(COUNTDOWN));
+    });
+
+    test('accepts a bare slideshow without countdown', () => {
+        const result = parsePresentationJson(JSON.stringify(SLIDE_SHOW_CONVERTER.toJson(SLIDE_SHOW)));
+        expect(result?.slideShow.id).toBe(SLIDE_SHOW.id);
+        expect(result?.countdown).toBeNull();
+    });
+
+    test.each([
+        ['not json', '{'],
+        ['null', 'null'],
+        ['a number', '42'],
+        ['an invalid slideshow', JSON.stringify({ slideShow: { id: 'x' } })],
+    ])('rejects %s', (_name, text) => {
+        expect(parsePresentationJson(text)).toBeNull();
     });
 });
