@@ -1,4 +1,4 @@
-import { type ReactElement, useId } from 'react';
+import { type ReactElement, type Ref, useId } from 'react';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
 import {
@@ -22,6 +22,10 @@ type Props = {
     area: Area | null
     canMoveBack: boolean
     canMoveForward: boolean
+    /**
+     * Takes the formatting buttons of the selected text area (see TextAreaEditor)
+     */
+    textToolbarRef: Ref<HTMLDivElement>
     onUpdate: (area: Area) => void
     onMove: (direction: -1 | 1) => void
     onRemove: () => void
@@ -30,10 +34,11 @@ type Props = {
 
 /**
  * Toolbar above the slide with the controls of the selected area and buttons to add areas.
- * Content-specific controls (formatting, image upload, QR code URL) float next to the area, see AreaPopover.
+ * Below it, at a fixed position, the formatting buttons of the selected text area, so their menus always have space.
+ * The controls of image and QR code areas float next to the area, see AreaPopover.
  */
 export const AreaToolbar = (props: Props): ReactElement => {
-    const { area, canMoveBack, canMoveForward, onUpdate, onMove, onRemove, onAdd } = props;
+    const { area, canMoveBack, canMoveForward, textToolbarRef, onUpdate, onMove, onRemove, onAdd } = props;
     const alignName = useId();
     const textAlignName = useId();
     const allLabels = useI18n();
@@ -130,6 +135,8 @@ export const AreaToolbar = (props: Props): ReactElement => {
                     ))}
                 </div>
             </div>
+            {/* Always takes its height, so the slide doesn't jump when a text area is selected */}
+            <div ref={textToolbarRef} className="area-editor-text-toolbar" />
         </div>
     );
 };

@@ -80,9 +80,12 @@ export const TextAreaEditor = ({ area, active, toolbarHost, onUpdate }: Props): 
         let alive = true;
         // Crepe puts its top bar first into the editor, not necessarily before create() resolves, and creates a new one
         // whenever ProseMirror rebuilds its plugin views. Every new one is picked up here and moved to the toolbar.
+        // Only bars of this editor count: an editor of an earlier mount (StrictMode) may still write into the same root,
+        // and its bar disappears once it is destroyed.
         const root = rootRef.current;
+        let editorRoot: HTMLElement | null = null;
         const findTopBar = () => {
-            const bars = root?.querySelectorAll<HTMLElement>('.milkdown-top-bar');
+            const bars = editorRoot?.querySelectorAll<HTMLElement>(':scope > .milkdown-top-bar');
             if (bars && bars.length > 0) {
                 setTopBarElement(bars[bars.length - 1]);
             }
@@ -94,6 +97,8 @@ export const TextAreaEditor = ({ area, active, toolbarHost, onUpdate }: Props): 
         const created = crepe.create().then(() => {
             if (alive) {
                 crepeRef.current = crepe;
+                // The top bar is inserted into the parent of the ProseMirror view
+                editorRoot = crepe.editor.ctx.get<{ dom: HTMLElement }, 'editorView'>('editorView').dom.parentElement;
                 findTopBar();
             }
         });

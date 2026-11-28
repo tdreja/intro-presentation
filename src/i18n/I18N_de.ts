@@ -56,6 +56,10 @@ export const i18n_de: Labels = {
         ariaPickImage: 'Neues Bild auswählen',
         errorReadImage: 'Das Bild konnte nicht gelesen werden',
         ariaQrCodeUrl: 'URL des QR-Codes',
+        actionFullWidth: 'Volle Breite',
+        tooltipFullWidth: 'Bereich über die ganze Breite der Folie ziehen',
+        actionFullHeight: 'Volle Höhe',
+        tooltipFullHeight: 'Bereich über die ganze Höhe der Folie ziehen',
     },
     areaTypes: {
         'text': 'Text',

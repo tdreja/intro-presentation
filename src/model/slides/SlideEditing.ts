@@ -93,6 +93,20 @@ export function setAreaBounds(slide: Slide, index: number, bounds: Bounds): Slid
 }
 
 /**
+ * Stretches one area across the whole width or height of the slide, keeping its other dimension.
+ */
+export function fillSlide(slide: Slide, index: number, direction: 'width' | 'height'): Slide {
+    const area = slide.areas[index];
+    if (!area) {
+        return slide;
+    }
+    const bounds = direction === 'width'
+        ? { left: 0, top: area.top, width: slide.width, height: area.height }
+        : { left: area.left, top: 0, width: area.width, height: slide.height };
+    return setAreaBounds(slide, index, bounds);
+}
+
+/**
  * Adds a new area of the given type on top of the other areas. A text area starts with the given text.
  */
 export function addArea(slide: Slide, type: AreaType, newText: string = DEFAULT_NEW_TEXT): Slide {

@@ -121,6 +121,10 @@ export interface AreaEditingLabels {
     ariaPickImage: string
     errorReadImage: string
     ariaQrCodeUrl: string
+    actionFullWidth: string
+    tooltipFullWidth: string
+    actionFullHeight: string
+    tooltipFullHeight: string
 }
 
 /**
