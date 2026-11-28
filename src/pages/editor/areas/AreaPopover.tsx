@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, type Ref, useLayoutEffect, useMemo, useRef } from 'react';
+import { type ReactElement, type ReactNode, useLayoutEffect, useMemo, useRef } from 'react';
 import Overlay from 'react-bootstrap/Overlay';
 import Popover from 'react-bootstrap/Popover';
 import type { PopperRef } from 'react-bootstrap/types';
@@ -17,15 +17,15 @@ type Props = {
      * Area the popover has to stay in, the editor canvas below the toolbar; it flips to the other side of the area otherwise
      */
     boundary: HTMLElement | null
-    /**
-     * Receives the element that takes the formatting bar of a text area (see TextAreaEditor), null while hidden
-     */
-    textToolbarRef: Ref<HTMLDivElement>
     onUpdate: (area: Area) => void
+    /**
+     * Stretches the area across the whole width or height of the slide
+     */
+    onFill: (direction: 'width' | 'height') => void
 };
 
 /**
- * Repositions the popover whenever its content changes size, e.g. when the formatting bar is moved in after the popover opened.
+ * Repositions the popover whenever its content changes size, e.g. when an error message appears.
  */
 const FollowSize = ({ popper, children }: { popper: PopperRef | undefined, children: ReactNode }): ReactElement => {
     const ref = useRef<HTMLDivElement>(null);
@@ -82,16 +82,15 @@ const markInside = {
 const BOUNDARY_PADDING = 8;
 
 /**
- * Floating controls of the selected area, next to it on the slide:
- * - Text: the formatting bar, above the area (below when there is no space above)
- * - Image: upload of a new image, below the area (above when there is no space below)
- * - QR code: its URL, below the area (above when there is no space below)
+ * Floating controls of the selected image or QR code area, below it on the slide (above when there is no space below):
+ * - Image: upload of a new image, stretching to the full width / height of the slide
+ * - QR code: its URL
  *
  * When there is no space on either side, e.g. for an area filling the slide, the popover is moved into the canvas
  * and covers the area, only as far as needed to be fully visible.
+ * Text areas have no popover: their formatting bar sits in the toolbar above the slide, where its menus always fit.
  */
-export const AreaPopover = ({ area, target, show, boundary, textToolbarRef, onUpdate }: Props): ReactElement | null => {
-    const isText = area.areaType === 'text';
+export const AreaPopover = ({ area, target, show, boundary, onUpdate, onFill }: Props): ReactElement | null => {
     const popperConfig = useMemo(() => (boundary
         ? {
             modifiers: [
@@ -104,17 +103,16 @@ export const AreaPopover = ({ area, target, show, boundary, textToolbarRef, onUp
         : {}), [boundary]);
     // Only mounted while shown: re-shown before its fade-out finished (e.g. after a short drag), the Overlay keeps its
     // Popper instance, never gets a new first update and so stays invisible
-    if (!show || !target) {
+    if (!show || !target || area.areaType === 'text') {
         return null;
     }
     return (
-        <Overlay target={target} show placement={isText ? 'top' : 'bottom'} flip popperConfig={popperConfig}>
+        <Overlay target={target} show placement="bottom" flip popperConfig={popperConfig}>
             {({ popper, ...injected }) => (
-                <Popover {...injected} className={`area-popover ${isText ? 'area-popover--text' : ''}`}>
-                    <Popover.Body className={isText ? 'p-0' : 'p-2'}>
+                <Popover {...injected} className="area-popover">
+                    <Popover.Body className="p-2">
                         <FollowSize popper={popper}>
-                            {area.areaType === 'text' && <div ref={textToolbarRef} />}
-                            {area.areaType === 'image' && <ImageAreaControls area={area} onUpdate={onUpdate} />}
+                            {area.areaType === 'image' && <ImageAreaControls area={area} onUpdate={onUpdate} onFill={onFill} />}
                             {area.areaType === 'qr-code' && <QrCodeAreaControls area={area} onUpdate={onUpdate} />}
                         </FollowSize>
                     </Popover.Body>

@@ -13,6 +13,7 @@ import {
     DEFAULT_NEW_TEXT,
     createSlide,
     duplicateSlide,
+    fillSlide,
     MIN_AREA_SIZE,
     moveArea,
     moveSlide,
@@ -97,6 +98,15 @@ describe('area operations', () => {
         expect(slide.areas[1]).toEqual({ ...IMAGE, left: 1520, top: 10, width: 400, height: 300 });
         expect(slide.areas[0]).toBe(TEXT);
         expect(slide.areas[2]).toBe(QR);
+    });
+
+    test('fillSlide stretches one area across the width or height of the slide', () => {
+        const wide = fillSlide(SLIDE_A, 1, 'width');
+        expect(wide.areas[1]).toEqual({ ...IMAGE, left: 0, width: SLIDE_A.width });
+        expect(wide.areas[0]).toBe(TEXT);
+        const tall = fillSlide(SLIDE_A, 1, 'height');
+        expect(tall.areas[1]).toEqual({ ...IMAGE, top: 0, height: SLIDE_A.height });
+        expect(fillSlide(SLIDE_A, 3, 'width')).toBe(SLIDE_A);
     });
 
     test('setAreaBounds ignores invalid indexes', () => {

@@ -56,6 +56,10 @@ export const i18n_en: Labels = {
         ariaPickImage: 'Pick a new image',
         errorReadImage: 'Could not read the image',
         ariaQrCodeUrl: 'QR code URL',
+        actionFullWidth: 'Full width',
+        tooltipFullWidth: 'Stretch the area across the whole width of the slide',
+        actionFullHeight: 'Full height',
+        tooltipFullHeight: 'Stretch the area across the whole height of the slide',
     },
     areaTypes: {
         'text': 'Text',
