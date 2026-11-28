@@ -4,6 +4,13 @@ import type { Countdown } from '../../model/slides/Countdown.ts';
 
 type CountdownSize = 'large' | 'small' | 'none';
 
+/**
+ * Current time of day, e.g. 14:05, shown while no countdown runs.
+ */
+function formatClock(now: Temporal.PlainDateTime): string {
+    return now.toPlainTime().toString({ smallestUnit: 'minute' });
+}
+
 type Props = {
     countdown: Countdown
 };
@@ -58,7 +65,10 @@ function formatCountdown(countdown: Countdown, now: Temporal.PlainDateTime): str
     return `${ss}.${cs}`;
 }
 
-export const CountdownComponent = ({ countdown }: Props): ReactElement | null => {
+/**
+ * Bottom right of the slideshow: the countdown while it runs (small, or large shortly before the end), the current time otherwise.
+ */
+export const CountdownComponent = ({ countdown }: Props): ReactElement => {
     const [now, setNow] = useState<Temporal.PlainDateTime>(() => Temporal.Now.plainDateTimeISO());
 
     useEffect(() => {
@@ -69,16 +79,13 @@ export const CountdownComponent = ({ countdown }: Props): ReactElement | null =>
     }, []);
 
     const size = determineSize(countdown, now);
-    if (size === 'none') {
-        return null;
-    }
-
-    const text = formatCountdown(countdown, now);
+    const text = size === 'none' ? formatClock(now) : formatCountdown(countdown, now);
     const fontClass = size === 'large' ? 'fs-3 fw-bold' : 'fs-6';
 
     return (
         <span
             className={`position-absolute end-0 bottom-0 pe-3 pb-2 font-monospace ${fontClass}`}
+            aria-label={size === 'none' ? 'Current time' : 'Countdown'}
         >
             {text}
         </span>
