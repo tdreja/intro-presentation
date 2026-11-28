@@ -9,20 +9,27 @@ type Props = {
 };
 
 /**
- * Input for the content of a QR code, applied on Enter or when leaving the input.
- * The parent remounts it when the stored content changes.
+ * Input for the content of a QR code, applied while typing. An empty input is not applied;
+ * leaving it empty restores the stored content.
  */
 export const QrCodeAreaControls = ({ area, onUpdate }: Props): ReactElement => {
     const labels = useI18n().areaEditing;
     const [draft, setDraft] = useState<string>(area.data);
+    const [stored, setStored] = useState<string>(area.data);
 
-    const commit = () => {
-        const trimmed = draft.trim();
+    // Takes over content changed elsewhere, e.g. in another tab
+    if (area.data !== stored) {
+        setStored(area.data);
+        if (area.data !== draft.trim()) {
+            setDraft(area.data);
+        }
+    }
+
+    const change = (value: string) => {
+        setDraft(value);
+        const trimmed = value.trim();
         if (trimmed.length > 0 && trimmed !== area.data) {
             onUpdate({ ...area, data: trimmed });
-        }
-        else {
-            setDraft(area.data);
         }
     };
 
@@ -34,12 +41,12 @@ export const QrCodeAreaControls = ({ area, onUpdate }: Props): ReactElement => {
             value={draft}
             placeholder="https://example.com"
             aria-label={labels.ariaQrCodeUrl}
-            onChange={event => setDraft(event.target.value)}
-            onBlur={commit}
+            onChange={event => change(event.target.value)}
+            onBlur={() => setDraft(area.data)}
             onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    commit();
+                    setDraft(area.data);
                 }
             }}
         />

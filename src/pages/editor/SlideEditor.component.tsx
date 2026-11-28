@@ -18,7 +18,8 @@ function contentKey(area: Area): string {
         case 'text':
             return `text:${area.text}`;
         case 'qr-code':
-            return `qr:${area.data}`;
+            // Not the content: the QR code is updated while typing, a remount would drop the focus of its input
+            return 'qr';
     }
 }
 
