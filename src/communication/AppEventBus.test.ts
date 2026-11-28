@@ -18,7 +18,7 @@ const SLIDE_ID = 'slide-2026-01-01-10-00-00-000_v2' as AppId;
 
 const SLIDE: Slide = {
     slideId: SLIDE_ID,
-    slices: [{ sliceType: 'image', width: 100, image: PLACEHOLDER_IMAGE }],
+    width: 1920, height: 1080, areas: [{ areaType: 'image', left: 0, top: 0, width: 100, height: 100, image: PLACEHOLDER_IMAGE }],
 };
 
 const SLIDESHOW: SlideShow = {

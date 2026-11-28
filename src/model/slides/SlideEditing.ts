@@ -1,45 +1,40 @@
 import type { AppId } from '../identifier/AppId.ts';
 import { newAppId } from '../identifier/AppId.ts';
 import { PLACEHOLDER_IMAGE } from './Image.ts';
-import { createSlideId, type Slide } from './Slide.ts';
-import { scaleSliceWidths, type Slice, type SliceType } from './Slice.ts';
+import { createSlideId, DEFAULT_SLIDE_HEIGHT, DEFAULT_SLIDE_WIDTH, type Slide } from './Slide.ts';
+import type { Area, AreaType, Bounds } from './Area.ts';
 import type { SlideShow } from './SlideShow.ts';
 
 /**
- * Smallest width (in percent) a slice can be resized to in the editor.
+ * Smallest width and height (in slide units) an area can be resized to in the editor.
  */
-export const MIN_SLICE_WIDTH = 5;
+export const MIN_AREA_SIZE = 40;
 
 /**
- * Creates a new slice of the given type with default content and full width.
+ * Creates a new area of the given type with default content, centered on the slide with half its size.
  */
-export function createSlice(type: SliceType): Slice {
+export function createArea(type: AreaType, slideWidth: number = DEFAULT_SLIDE_WIDTH, slideHeight: number = DEFAULT_SLIDE_HEIGHT): Area {
+    const bounds = { left: slideWidth / 4, top: slideHeight / 4, width: slideWidth / 2, height: slideHeight / 2 };
     switch (type) {
         case 'image':
-            return { sliceType: 'image', width: 100, image: PLACEHOLDER_IMAGE };
+            return { areaType: 'image', ...bounds, image: PLACEHOLDER_IMAGE };
         case 'text':
-            return { sliceType: 'text', width: 100, text: '# New text' };
+            return { areaType: 'text', ...bounds, text: '# New text' };
         case 'qr-code':
-            return { sliceType: 'qr-code', width: 100, data: 'https://example.com' };
+            return { areaType: 'qr-code', ...bounds, data: 'https://example.com' };
     }
 }
 
 /**
- * Creates a new slide with a single text slice.
+ * Creates a new slide of the default size with a single text area.
  */
 export function createSlide(): Slide {
-    return { slideId: createSlideId(), slices: [createSlice('text')] };
-}
-
-/**
- * Gives all slices the same width, adding up to 100.
- */
-export function equalizeWidths(slices: Slice[]): Slice[] {
-    if (slices.length === 0) {
-        return slices;
-    }
-    const width = 100 / slices.length;
-    return slices.map(slice => ({ ...slice, width }));
+    return {
+        slideId: createSlideId(),
+        width: DEFAULT_SLIDE_WIDTH,
+        height: DEFAULT_SLIDE_HEIGHT,
+        areas: [createArea('text')],
+    };
 }
 
 function swap<T>(items: T[], index: number, direction: -1 | 1): T[] {
@@ -52,82 +47,73 @@ function swap<T>(items: T[], index: number, direction: -1 | 1): T[] {
     return result;
 }
 
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}
+
 // ---------------------------------------------------------------------------
 // Slide level
 // ---------------------------------------------------------------------------
 
 /**
- * Sets the width of one slice. The other slices share the remaining width proportionally
- * to their current widths, so all slices still add up to 100. No slice gets smaller than {@link MIN_SLICE_WIDTH}.
+ * Keeps bounds inside a slide of the given size: at least {@link MIN_AREA_SIZE} large (unless the slide is smaller),
+ * at most as large as the slide, and moved back onto the slide if they stick out.
  */
-export function setSliceWidth(slide: Slide, index: number, width: number): Slide {
-    const count = slide.slices.length;
-    if (index < 0 || index >= count) {
+export function clampBounds(bounds: Bounds, slideWidth: number, slideHeight: number): Bounds {
+    const width = clamp(bounds.width, Math.min(MIN_AREA_SIZE, slideWidth), slideWidth);
+    const height = clamp(bounds.height, Math.min(MIN_AREA_SIZE, slideHeight), slideHeight);
+    return {
+        left: clamp(bounds.left, 0, slideWidth - width),
+        top: clamp(bounds.top, 0, slideHeight - height),
+        width,
+        height,
+    };
+}
+
+/**
+ * Moves and/or resizes one area, keeping it on the slide, see {@link clampBounds}.
+ */
+export function setAreaBounds(slide: Slide, index: number, bounds: Bounds): Slide {
+    if (index < 0 || index >= slide.areas.length) {
         return slide;
     }
-    if (count === 1) {
-        return { ...slide, slices: [{ ...slide.slices[0], width: 100 }] };
-    }
-    const target = Math.min(Math.max(width, MIN_SLICE_WIDTH), 100 - MIN_SLICE_WIDTH * (count - 1));
-    const widths = slide.slices.map(slice => slice.width);
-    const others = widths.map((_, i) => i).filter(i => i !== index);
-    const pinned = new Set<number>();
-    const result = [...widths];
-    result[index] = target;
-
-    // Distribute proportionally; slices dropping below the minimum get pinned there and the rest is redistributed.
-    for (;;) {
-        const free = others.filter(i => !pinned.has(i));
-        const budget = 100 - target - MIN_SLICE_WIDTH * pinned.size;
-        const freeTotal = free.reduce((sum, i) => sum + widths[i], 0);
-        free.forEach((i) => {
-            result[i] = freeTotal > 0 ? budget * widths[i] / freeTotal : budget / free.length;
-        });
-        const tooSmall = free.filter(i => result[i] < MIN_SLICE_WIDTH);
-        if (tooSmall.length === 0) {
-            break;
-        }
-        tooSmall.forEach((i) => {
-            pinned.add(i);
-            result[i] = MIN_SLICE_WIDTH;
-        });
-    }
-    return { ...slide, slices: slide.slices.map((slice, i) => ({ ...slice, width: result[i] })) };
+    const clamped = clampBounds(bounds, slide.width, slide.height);
+    return { ...slide, areas: slide.areas.map((area, i) => (i === index ? { ...area, ...clamped } : area)) };
 }
 
 /**
- * Appends a new slice of the given type; all slices get equal widths afterwards.
+ * Adds a new area of the given type on top of the other areas.
  */
-export function addSlice(slide: Slide, type: SliceType): Slide {
-    return { ...slide, slices: equalizeWidths([...slide.slices, createSlice(type)]) };
+export function addArea(slide: Slide, type: AreaType): Slide {
+    return { ...slide, areas: [...slide.areas, createArea(type, slide.width, slide.height)] };
 }
 
 /**
- * Removes a slice and scales the remaining ones up to 100. The last slice of a slide can't be removed.
+ * Removes an area.
  */
-export function removeSlice(slide: Slide, index: number): Slide {
-    if (slide.slices.length <= 1 || index < 0 || index >= slide.slices.length) {
+export function removeArea(slide: Slide, index: number): Slide {
+    if (index < 0 || index >= slide.areas.length) {
         return slide;
     }
-    return { ...slide, slices: scaleSliceWidths(slide.slices.filter((_, i) => i !== index)) };
+    return { ...slide, areas: slide.areas.filter((_, i) => i !== index) };
 }
 
 /**
- * Moves a slice one position to the left (-1) or right (1).
+ * Moves an area one step back (-1, below the area before it) or forward (1, on top of the area after it).
  */
-export function moveSlice(slide: Slide, index: number, direction: -1 | 1): Slide {
-    const slices = swap(slide.slices, index, direction);
-    return slices === slide.slices ? slide : { ...slide, slices };
+export function moveArea(slide: Slide, index: number, direction: -1 | 1): Slide {
+    const areas = swap(slide.areas, index, direction);
+    return areas === slide.areas ? slide : { ...slide, areas };
 }
 
 /**
- * Replaces the slice at the given index.
+ * Replaces the area at the given index.
  */
-export function updateSlice(slide: Slide, index: number, slice: Slice): Slide {
-    if (index < 0 || index >= slide.slices.length) {
+export function updateArea(slide: Slide, index: number, area: Area): Slide {
+    if (index < 0 || index >= slide.areas.length) {
         return slide;
     }
-    return { ...slide, slices: slide.slices.map((existing, i) => (i === index ? slice : existing)) };
+    return { ...slide, areas: slide.areas.map((existing, i) => (i === index ? area : existing)) };
 }
 
 // ---------------------------------------------------------------------------
@@ -171,8 +157,8 @@ export function duplicateSlide(slideShow: SlideShow, slideId: AppId, copyId: App
     if (index < 0 || slideShow.slides.some(slide => slide.slideId === copyId)) {
         return slideShow;
     }
-    // Slices are never mutated, so the copy can share them
-    const copy: Slide = { ...slideShow.slides[index], slideId: copyId, slices: [...slideShow.slides[index].slices] };
+    // Areas are never mutated, so the copy can share them
+    const copy: Slide = { ...slideShow.slides[index], slideId: copyId, areas: [...slideShow.slides[index].areas] };
     return touchSlideShow(slideShow, [...slideShow.slides.slice(0, index + 1), copy, ...slideShow.slides.slice(index + 1)]);
 }
 

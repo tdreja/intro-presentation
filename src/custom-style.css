@@ -124,11 +124,11 @@
 }
 
 .slide-thumbnail {
-    aspect-ratio: 16 / 9;
     pointer-events: none;
 }
 
-.slice-editor-text .milkdown {
+.area-editor-text .milkdown,
+.milkdown.area-editor-top-bar {
     /* Follow the Bootstrap theme (light/dark) instead of Crepe's own colors */
     --crepe-color-background: var(--bs-body-bg);
     --crepe-color-on-background: var(--bs-body-color);
@@ -143,13 +143,86 @@
     --crepe-color-inline-area: var(--bs-tertiary-bg);
     --crepe-font-title: var(--bs-body-font-family);
     --crepe-font-default: var(--bs-body-font-family);
+}
+
+.area-editor-text .milkdown {
+    /* Transparent like the text in the slideshow, so areas below stay visible */
+    --crepe-color-background: transparent;
+    background: transparent;
     min-height: 100%;
 }
 
-.slice-editor-text .milkdown .ProseMirror {
-    padding: 1rem 1rem 1rem 3rem;
+.area-editor-text .milkdown .ProseMirror {
+    /* Same padding as the text area in the slideshow (p-4) */
+    padding: 1.5rem;
     /* Set by the text editor, so the text is aligned like in the slideshow */
-    text-align: var(--slice-text-align, left);
+    text-align: var(--area-text-align, left);
+}
+
+/* Reserves the height of Crepe's top bar, so the slide doesn't jump when a text area is selected */
+.area-editor-text-toolbar {
+    min-height: 45px;
+}
+
+.milkdown.area-editor-top-bar .milkdown-top-bar {
+    position: static;
+    border-bottom: 0;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+/* Frame of an area in the editor, drawn above its content */
+.area-frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px dashed var(--bs-secondary-color);
+    pointer-events: none;
+}
+
+.area-frame--selected::after {
+    border: 2px dashed var(--bs-primary);
+}
+
+.area-handle {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--bs-primary);
+    background: var(--bs-body-bg);
+    color: var(--bs-primary);
+    touch-action: none;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+}
+
+.area-frame:hover > .area-handle,
+.area-frame--selected > .area-handle,
+.area-handle:focus-visible {
+    opacity: 1;
+}
+
+.area-handle--move {
+    top: -12px;
+    left: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    cursor: move;
+}
+
+.area-handle--resize {
+    right: -6px;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--bs-primary);
+    cursor: nwse-resize;
 }
 
 :is(.dropdown, .dropstart, .dropend, .dropup) .dropdown-toggle.no-caret::before,

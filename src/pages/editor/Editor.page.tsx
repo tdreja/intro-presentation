@@ -10,14 +10,14 @@ import { createSlideId, type Slide } from '../../model/slides/Slide.ts';
 import { addSlide, createSlide, duplicateSlide, moveSlide, removeSlide, replaceSlide, setDarkMode } from '../../model/slides/SlideEditing.ts';
 import { SlideOverview } from './SlideOverview.component.tsx';
 import { CountdownSettings } from './CountdownSettings.component.tsx';
-import { SliceRow } from './SliceRow.component.tsx';
+import { SlideEditor } from './SlideEditor.component.tsx';
 
 type Props = {
     onClose: () => void
 };
 
 /**
- * Editor mode: slide overview on the left, slices of the selected slide on the right.
+ * Editor mode: slide overview on the left, the selected slide with its areas on the right.
  */
 export const EditorPage = ({ onClose }: Props): ReactElement => {
     const [slideShow, setSlideShow] = useSlideShow();
@@ -105,7 +105,7 @@ export const EditorPage = ({ onClose }: Props): ReactElement => {
                 <main className="flex-grow-1 overflow-hidden">
                     {selectedSlide
                         ? (
-                            <SliceRow
+                            <SlideEditor
                                 key={selectedSlide.slideId}
                                 slide={selectedSlide}
                                 darkMode={slideShow.darkMode}

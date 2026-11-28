@@ -26,16 +26,16 @@ function makeSlideShow(): SlideShow {
         slides: [
             {
                 slideId: 'slide-2026-01-01-00-00-00-001_v2' as AppId,
-                slices: [
-                    { sliceType: 'image', width: 50, image: PNG },
-                    { sliceType: 'text', width: 50, text: 'Hi' },
+                width: 1920, height: 1080, areas: [
+                    { areaType: 'image', left: 0, top: 0, width: 50, height: 100, image: PNG },
+                    { areaType: 'text', left: 0, top: 0, width: 50, height: 100, text: 'Hi' },
                 ],
             },
             {
                 slideId: 'slide-2026-01-01-00-00-00-002_v2' as AppId,
-                slices: [
-                    { sliceType: 'qr-code', width: 30, data: 'https://example.com' },
-                    { sliceType: 'image', width: 70, image: SVG },
+                width: 1920, height: 1080, areas: [
+                    { areaType: 'qr-code', left: 0, top: 0, width: 30, height: 100, data: 'https://example.com' },
+                    { areaType: 'image', left: 0, top: 0, width: 70, height: 100, image: SVG },
                 ],
             },
         ],
@@ -129,7 +129,7 @@ describe('encodeAsWebp', () => {
 // ---------------------------------------------------------------------------
 
 describe('compressSlideShowImages', () => {
-    test('passes every image slice to the encoder, and nothing else', async () => {
+    test('passes every image area to the encoder, and nothing else', async () => {
         const encode = vi.fn<ImageEncoder>(async image => image);
         await compressSlideShowImages(makeSlideShow(), encode);
         expect(encode.mock.calls.map(([image]) => image)).toEqual([PNG, SVG]);
@@ -146,8 +146,8 @@ describe('compressSlideShowImages', () => {
         const result = await compressSlideShowImages(show, async image => image === PNG ? WEBP : image);
 
         expect(result).not.toBe(show);
-        expect(result.slides[0].slices[0]).toEqual({ sliceType: 'image', width: 50, image: WEBP });
-        expect(result.slides[0].slices[1]).toBe(show.slides[0].slices[1]);
+        expect(result.slides[0].areas[0]).toEqual({ areaType: 'image', left: 0, top: 0, width: 50, height: 100, image: WEBP });
+        expect(result.slides[0].areas[1]).toBe(show.slides[0].areas[1]);
         // Unchanged slides keep their identity
         expect(result.slides[1]).toBe(show.slides[1]);
         expect(result.id).toBe(show.id);
@@ -157,7 +157,7 @@ describe('compressSlideShowImages', () => {
     test('does not modify the input slideshow', async () => {
         const show = makeSlideShow();
         await compressSlideShowImages(show, async () => WEBP);
-        expect(show.slides[0].slices[0]).toEqual({ sliceType: 'image', width: 50, image: PNG });
+        expect(show.slides[0].areas[0]).toEqual({ areaType: 'image', left: 0, top: 0, width: 50, height: 100, image: PNG });
     });
 
     test('handles a slideshow without slides', async () => {

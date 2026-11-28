@@ -1,15 +1,22 @@
 import { Temporal } from '@js-temporal/polyfill';
 import { APP_ID_CONVERTER, type AppId, newAppId } from '../identifier/AppId.ts';
 import type { JsonConverter, RawJson } from '../json/json.ts';
-import { ArrayConverter } from '../json/common.ts';
-import { type RawJsonSlice, scaleSliceWidths, type Slice, SLICE_CONVERTER } from './Slice.ts';
+import { ArrayConverter, NUMBER_CONVERTER } from '../json/common.ts';
+import { type Area, AREA_CONVERTER, type RawJsonArea } from './Area.ts';
+
+/**
+ * Size of new slides, in slide units. Slides are scaled to fit the screen, so this only sets the aspect ratio
+ * and how large text and other content is compared to the slide.
+ */
+export const DEFAULT_SLIDE_WIDTH = 1920;
+export const DEFAULT_SLIDE_HEIGHT = 1080;
 
 export function createSlideId(date?: Temporal.PlainDateTime | null): AppId {
     return newAppId('slide', date);
 }
 
 /**
- * A single slide in the presentation: a row of vertical slices, left to right.
+ * A single slide in the presentation: a canvas of fixed size with areas placed on it.
  */
 export interface Slide {
     /**
@@ -17,9 +24,17 @@ export interface Slide {
      */
     readonly slideId: AppId
     /**
-     * Vertical slices of the slide, from left to right. Their widths add up to 100.
+     * Width of the slide in slide units, the unit of all area positions and sizes
      */
-    readonly slices: Slice[]
+    readonly width: number
+    /**
+     * Height of the slide in slide units
+     */
+    readonly height: number
+    /**
+     * Areas of the slide, in paint order: later areas are drawn on top of earlier ones
+     */
+    readonly areas: Area[]
 }
 
 /**
@@ -27,10 +42,15 @@ export interface Slide {
  */
 export type RawJsonSlide = RawJson<Slide>;
 
-const SLICES_CONVERTER = new ArrayConverter<Slice, RawJsonSlice>(SLICE_CONVERTER);
+const AREAS_CONVERTER = new ArrayConverter<Area, RawJsonArea>(AREA_CONVERTER);
+
+function parseSize(json: unknown): number | null {
+    const size = NUMBER_CONVERTER.fromJson(json);
+    return size !== null && size > 0 ? size : null;
+}
 
 /**
- * Imports and exports slides to JSON. Slice widths that don't add up to 100 are scaled to fit.
+ * Imports and exports slides to JSON.
  */
 export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
     fromJson(json: unknown | null | undefined): Slide | null {
@@ -42,11 +62,16 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
         if (!slideId) {
             return null;
         }
-        const slices = SLICES_CONVERTER.fromJson(parsed.slices);
-        if (!slices || slices.length === 0) {
+        const width = parseSize(parsed.width);
+        const height = parseSize(parsed.height);
+        if (width === null || height === null) {
             return null;
         }
-        return { slideId, slices: scaleSliceWidths(slices) };
+        const areas = AREAS_CONVERTER.fromJson(parsed.areas);
+        if (!areas) {
+            return null;
+        }
+        return { slideId, width, height, areas };
     },
 
     toJson(data: Slide | null | undefined): RawJsonSlide | null {
@@ -55,7 +80,9 @@ export const SLIDE_CONVERTER: JsonConverter<Slide, RawJsonSlide> = {
         }
         return {
             slideId: APP_ID_CONVERTER.toJson(data.slideId),
-            slices: SLICES_CONVERTER.toJson(data.slices),
+            width: data.width,
+            height: data.height,
+            areas: AREAS_CONVERTER.toJson(data.areas),
         };
     },
 };

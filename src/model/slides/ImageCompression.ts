@@ -1,6 +1,6 @@
 import type { Base64Image } from './Image.ts';
 import type { Slide } from './Slide.ts';
-import type { Slice } from './Slice.ts';
+import type { Area } from './Area.ts';
 import type { SlideShow } from './SlideShow.ts';
 
 /**
@@ -91,21 +91,21 @@ export const encodeAsWebp: ImageEncoder = async (image) => {
     }
 };
 
-async function compressSlice(slice: Slice, encode: ImageEncoder): Promise<Slice> {
-    if (slice.sliceType !== 'image') {
-        return slice;
+async function compressArea(area: Area, encode: ImageEncoder): Promise<Area> {
+    if (area.areaType !== 'image') {
+        return area;
     }
-    const image = await encode(slice.image);
-    return image === slice.image ? slice : { ...slice, image };
+    const image = await encode(area.image);
+    return image === area.image ? area : { ...area, image };
 }
 
 async function compressSlide(slide: Slide, encode: ImageEncoder): Promise<Slide> {
-    const slices = await Promise.all(slide.slices.map(slice => compressSlice(slice, encode)));
-    return slices.every((slice, i) => slice === slide.slices[i]) ? slide : { ...slide, slices };
+    const areas = await Promise.all(slide.areas.map(area => compressArea(area, encode)));
+    return areas.every((area, i) => area === slide.areas[i]) ? slide : { ...slide, areas };
 }
 
 /**
- * Re-encodes all image slices of a slideshow.
+ * Re-encodes all image areas of a slideshow.
  * Returns the same object if no image changed, so callers can detect a no-op by identity.
  */
 export async function compressSlideShowImages(slideShow: SlideShow, encode: ImageEncoder = encodeAsWebp): Promise<SlideShow> {

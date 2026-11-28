@@ -4,11 +4,6 @@ import type { Slide } from '../../model/slides/Slide.ts';
 import { SlideComponent } from '../slideshow/Slide.component.tsx';
 
 /**
- * Slides are rendered at this size and scaled down, so thumbnails look like the real slide.
- */
-const RENDER_WIDTH = 1280;
-const RENDER_HEIGHT = 720;
-/**
  * Must match the width of the thumbnail box: --overview-width minus the padding of the list.
  */
 const THUMBNAIL_WIDTH = 224;
@@ -48,18 +43,9 @@ export const SlideOverview = ({ slides, selectedSlideId, darkMode, onSelect, onA
                             }
                         }}
                     >
-                        <div className="slide-thumbnail position-relative" style={{ width: THUMBNAIL_WIDTH }}>
-                            <div
-                                className="position-absolute top-0 start-0"
-                                style={{
-                                    width: RENDER_WIDTH,
-                                    height: RENDER_HEIGHT,
-                                    transform: `scale(${THUMBNAIL_WIDTH / RENDER_WIDTH})`,
-                                    transformOrigin: 'top left',
-                                }}
-                            >
-                                <SlideComponent slide={slide} darkMode={darkMode} />
-                            </div>
+                        <div className="slide-thumbnail">
+                            {/* Scaled like in the slideshow, so the thumbnail looks like the real slide */}
+                            <SlideComponent slide={slide} scale={THUMBNAIL_WIDTH / slide.width} darkMode={darkMode} />
                         </div>
                     </div>
                     <div className="d-flex align-items-center gap-1">
