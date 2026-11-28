@@ -156,6 +156,55 @@
     }
 }
 
+/* Background of the slideshow: a slight gradient with streaks flying across it, behind everything else */
+.slideshow-background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 15% 10%, color-mix(in srgb, var(--bs-primary) 12%, transparent), transparent 60%),
+        radial-gradient(ellipse at 85% 90%, color-mix(in srgb, var(--bs-info) 10%, transparent), transparent 60%),
+        linear-gradient(160deg, var(--bs-body-bg), color-mix(in srgb, var(--bs-body-bg) 92%, var(--bs-primary)));
+}
+
+/* Everything else of the slideshow is drawn above the background */
+.slideshow-background ~ * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Slightly tilted and larger than the screen, so the streaks fly diagonally and enter/leave outside of it */
+.slideshow-streaks {
+    position: absolute;
+    inset: -20%;
+    transform: rotate(-12deg);
+}
+
+.slideshow-streak {
+    position: absolute;
+    left: 0;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--bs-primary) 70%, var(--bs-body-color)));
+    animation-name: slideshow-streak;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform;
+}
+
+@keyframes slideshow-streak {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(140vw); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .slideshow-streaks {
+        display: none;
+    }
+}
+
 .editor-toggle {
     opacity: 0.25;
     transition: opacity 0.2s ease-in-out;

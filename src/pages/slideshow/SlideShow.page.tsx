@@ -5,6 +5,7 @@ import { useCountdown } from '../../communication/context/Countdown.context.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { SlideTransition } from './SlideTransition.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
+import { SlideShowBackground } from './SlideShowBackground.component.tsx';
 import { useI18n } from '../../i18n/I18N.ts';
 
 type Props = {
@@ -38,7 +39,8 @@ export const SlideShowPage = ({ onOpenEditor }: Props): ReactElement => {
     };
 
     return (
-        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }} className="position-relative">
+            <SlideShowBackground />
             <div className="flex-grow-1 overflow-hidden position-relative">
                 {renderSlide()}
                 <button
