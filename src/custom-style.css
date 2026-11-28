@@ -203,6 +203,15 @@
     text-align: var(--area-text-align, left);
 }
 
+/*
+ * Crepe puts its formatting bar into the editor and shows it. It belongs in the popover of the selected area,
+ * so it stays hidden while it is still in the area: before the area is selected, or after the editor was recreated.
+ * !important overrides the inline display Crepe sets on every update.
+ */
+.area-editor-text .milkdown-top-bar {
+    display: none !important;
+}
+
 /* Popovers next to the selected area; the formatting bar of a text area needs more than Bootstrap's 276px */
 .area-popover {
     --bs-popover-max-width: min(640px, calc(100vw - 32px));
