@@ -5,8 +5,8 @@ import type { AppId } from '../identifier/AppId';
 import type { Slide } from './Slide';
 import { PLACEHOLDER_IMAGE } from './Image';
 
-const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000' as AppId;
-const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const VALID_SHOW_ID = 'show-2026-08-18-10-00-00-000_v2' as AppId;
+const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000_v2' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
 const VALID_TIME_PER_SLIDE = Temporal.Duration.from({ seconds: 10 });
 
@@ -155,7 +155,7 @@ describe('SLIDE_SHOW_CONVERTER round-trip', () => {
 // ---------------------------------------------------------------------------
 
 describe('findSlide', () => {
-    const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
+    const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000_v2' as AppId;
 
     test('returns null when both arguments are undefined', () => {
         expect(findSlide()).toBeNull();
@@ -191,9 +191,9 @@ describe('findSlide', () => {
 // Shared fixtures for multi-slide tests
 // ---------------------------------------------------------------------------
 
-const SLIDE_2_ID = 'slide-2026-08-18-10-00-00-001' as AppId;
-const SLIDE_3_ID = 'slide-2026-08-18-10-00-00-002' as AppId;
-const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000' as AppId;
+const SLIDE_2_ID = 'slide-2026-08-18-10-00-00-001_v2' as AppId;
+const SLIDE_3_ID = 'slide-2026-08-18-10-00-00-002_v2' as AppId;
+const OTHER_SLIDE_ID = 'slide-2099-01-01-00-00-00-000_v2' as AppId;
 
 const SLIDE_2: Slide = { slideId: SLIDE_2_ID, slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }] };
 const SLIDE_3: Slide = { slideId: SLIDE_3_ID, slices: [{ sliceType: 'image', width: 100, image: VALID_IMAGE }] };
@@ -418,8 +418,8 @@ describe('SLIDE_SHOW_CONVERTER round-trip — darkMode', () => {
 // pickNewest
 // ---------------------------------------------------------------------------
 
-const OLDER_SHOW_ID = 'show-2026-01-01-00-00-00-000' as AppId;
-const NEWER_SHOW_ID = 'show-2026-12-31-23-59-59-999' as AppId;
+const OLDER_SHOW_ID = 'show-2026-01-01-00-00-00-000_v2' as AppId;
+const NEWER_SHOW_ID = 'show-2026-12-31-23-59-59-999_v2' as AppId;
 
 const OLDER_SLIDESHOW: SlideShow = { id: OLDER_SHOW_ID, slides: [FULL_IMAGE_SLIDE], timePerSlide: VALID_TIME_PER_SLIDE };
 const NEWER_SLIDESHOW: SlideShow = { id: NEWER_SHOW_ID, slides: [FULL_IMAGE_SLIDE], timePerSlide: VALID_TIME_PER_SLIDE };
@@ -468,7 +468,7 @@ describe('pickNewest', () => {
 // ---------------------------------------------------------------------------
 
 describe('findSlideOrFirst', () => {
-    const SECOND_SLIDE: Slide = { ...FULL_IMAGE_SLIDE, slideId: 'slide-2026-08-18-10-00-00-001' as AppId };
+    const SECOND_SLIDE: Slide = { ...FULL_IMAGE_SLIDE, slideId: 'slide-2026-08-18-10-00-00-001_v2' as AppId };
     const TWO_SLIDES: SlideShow = { ...MINIMAL_SLIDESHOW, slides: [FULL_IMAGE_SLIDE, SECOND_SLIDE] };
 
     test('returns the slide with the given ID', () => {
@@ -476,7 +476,7 @@ describe('findSlideOrFirst', () => {
     });
 
     test('returns the first slide for an unknown ID', () => {
-        expect(findSlideOrFirst(TWO_SLIDES, 'slide-2020-01-01-00-00-00-000' as AppId)).toBe(FULL_IMAGE_SLIDE);
+        expect(findSlideOrFirst(TWO_SLIDES, 'slide-2020-01-01-00-00-00-000_v2' as AppId)).toBe(FULL_IMAGE_SLIDE);
     });
 
     test('returns the first slide without an ID', () => {

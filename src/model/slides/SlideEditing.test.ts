@@ -27,12 +27,12 @@ const TEXT: Slice = { sliceType: 'text', width: 50, text: '# A' };
 const IMAGE: Slice = { sliceType: 'image', width: 30, image: PLACEHOLDER_IMAGE };
 const QR: Slice = { sliceType: 'qr-code', width: 20, data: 'https://example.com' };
 
-const SLIDE_A: Slide = { slideId: 'slide-2026-01-01-00-00-00-001' as AppId, slices: [TEXT, IMAGE, QR] };
-const SLIDE_B: Slide = { slideId: 'slide-2026-01-01-00-00-00-002' as AppId, slices: [{ ...TEXT, width: 100 }] };
-const SLIDE_C: Slide = { slideId: 'slide-2026-01-01-00-00-00-003' as AppId, slices: [{ ...QR, width: 100 }] };
+const SLIDE_A: Slide = { slideId: 'slide-2026-01-01-00-00-00-001_v2' as AppId, slices: [TEXT, IMAGE, QR] };
+const SLIDE_B: Slide = { slideId: 'slide-2026-01-01-00-00-00-002_v2' as AppId, slices: [{ ...TEXT, width: 100 }] };
+const SLIDE_C: Slide = { slideId: 'slide-2026-01-01-00-00-00-003_v2' as AppId, slices: [{ ...QR, width: 100 }] };
 
 const SHOW: SlideShow = {
-    id: 'show-2020-01-01-00-00-00-000' as AppId,
+    id: 'show-2020-01-01-00-00-00-000_v2' as AppId,
     slides: [SLIDE_A, SLIDE_B, SLIDE_C],
     timePerSlide: Temporal.Duration.from({ seconds: 10 }),
 };
@@ -155,7 +155,7 @@ describe('slide operations', () => {
     });
 
     test('duplicateSlide inserts a copy right after the original', () => {
-        const copyId = 'slide-2026-01-01-00-00-00-009' as AppId;
+        const copyId = 'slide-2026-01-01-00-00-00-009_v2' as AppId;
         const show = duplicateSlide(SHOW, SLIDE_B.slideId, copyId);
         expect(ids(show)).toEqual([SLIDE_A.slideId, SLIDE_B.slideId, copyId, SLIDE_C.slideId]);
         expect(show.slides[2].slices).toEqual(SLIDE_B.slices);
@@ -170,7 +170,7 @@ describe('slide operations', () => {
     });
 
     test('duplicateSlide ignores unknown slides and taken IDs', () => {
-        expect(duplicateSlide(SHOW, 'slide-2026-01-01-00-00-00-999' as AppId)).toBe(SHOW);
+        expect(duplicateSlide(SHOW, 'slide-2026-01-01-00-00-00-999_v2' as AppId)).toBe(SHOW);
         expect(duplicateSlide(SHOW, SLIDE_A.slideId, SLIDE_C.slideId)).toBe(SHOW);
     });
 
@@ -211,7 +211,7 @@ describe('slide operations', () => {
     });
 
     test('never moves the ID backwards', () => {
-        const future = { ...SHOW, id: 'show-2999-01-01-00-00-00-000' as AppId };
+        const future = { ...SHOW, id: 'show-2999-01-01-00-00-00-000_v2' as AppId };
         expect(addSlide(future, createSlide()).id).toBe(future.id);
     });
 });

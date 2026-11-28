@@ -42,20 +42,20 @@ beforeEach(() => {
 // Test data
 // ---------------------------------------------------------------------------
 
-const OLDER_SLIDE_ID = asAppId('slide-2026-01-01-00-00-00-000')!;
-const NEWER_SLIDE_ID = asAppId('slide-2026-06-15-12-30-00-000')!;
+const OLDER_SLIDE_ID = asAppId('slide-2026-01-01-00-00-00-000_v2')!;
+const NEWER_SLIDE_ID = asAppId('slide-2026-06-15-12-30-00-000_v2')!;
 
 const SMALL_FOR = Temporal.Duration.from({ minutes: 30 });
 const LARGE_FOR = Temporal.Duration.from({ minutes: 5 });
 
 const OLDER_COUNTDOWN: Countdown = {
-    countdownId: 'countdown-2026-01-01-00-00-00-000',
+    countdownId: 'countdown-2026-01-01-00-00-00-000_v2',
     countdownTime: Temporal.PlainDateTime.from('2026-01-01T00:00:00'),
     showSmallCountdownFor: SMALL_FOR,
     showLargeCountdownFor: LARGE_FOR,
 };
 const NEWER_COUNTDOWN: Countdown = {
-    countdownId: 'countdown-2026-06-15-12-30-00-000',
+    countdownId: 'countdown-2026-06-15-12-30-00-000_v2',
     countdownTime: Temporal.PlainDateTime.from('2026-06-15T12:30:00'),
     showSmallCountdownFor: SMALL_FOR,
     showLargeCountdownFor: LARGE_FOR,

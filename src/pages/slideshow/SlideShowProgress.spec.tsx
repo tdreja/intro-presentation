@@ -9,12 +9,12 @@ import type { AppId } from '../../model/identifier/AppId';
 afterEach(cleanup);
 
 const SLIDE_A: Slide = {
-    slideId: 'slide-2026-01-01-00-00-00-001' as AppId,
+    slideId: 'slide-2026-01-01-00-00-00-001_v2' as AppId,
     slices: [],
 };
 
 const SLIDE_B: Slide = {
-    slideId: 'slide-2026-01-01-00-00-00-002' as AppId,
+    slideId: 'slide-2026-01-01-00-00-00-002_v2' as AppId,
     slices: [],
 };
 

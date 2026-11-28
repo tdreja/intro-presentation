@@ -4,7 +4,7 @@ import { createSlideId, SLIDE_CONVERTER, type Slide } from './Slide';
 import type { AppId } from '../identifier/AppId';
 import { PLACEHOLDER_IMAGE } from './Image';
 
-const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000' as AppId;
+const VALID_SLIDE_ID = 'slide-2026-08-18-10-00-00-000_v2' as AppId;
 const VALID_IMAGE = PLACEHOLDER_IMAGE;
 
 const MIXED_SLIDE: Slide = {
@@ -22,12 +22,12 @@ const MIXED_SLIDE: Slide = {
 
 describe('createSlideId', () => {
     test('returns a string matching the slide-YYYY-MM-DD-HH-mm-ss-mmm pattern', () => {
-        expect(createSlideId()).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}$/);
+        expect(createSlideId()).toMatch(/^slide-\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2}-\d{3}_v2$/);
     });
 
     test('uses the supplied PlainDateTime when provided', () => {
         const date = Temporal.PlainDateTime.from('2026-03-15T12:34:56.789');
-        expect(createSlideId(date)).toBe('slide-2026-03-15-12-34-56-789');
+        expect(createSlideId(date)).toBe('slide-2026-03-15-12-34-56-789_v2');
     });
 });
 

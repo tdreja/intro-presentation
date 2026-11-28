@@ -21,18 +21,18 @@ const SVG = 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=' as Base64Image;
 
 function makeSlideShow(): SlideShow {
     return {
-        id: 'show-2026-01-01-00-00-00-000' as AppId,
+        id: 'show-2026-01-01-00-00-00-000_v2' as AppId,
         timePerSlide: Temporal.Duration.from({ seconds: 10 }),
         slides: [
             {
-                slideId: 'slide-2026-01-01-00-00-00-001' as AppId,
+                slideId: 'slide-2026-01-01-00-00-00-001_v2' as AppId,
                 slices: [
                     { sliceType: 'image', width: 50, image: PNG },
                     { sliceType: 'text', width: 50, text: 'Hi' },
                 ],
             },
             {
-                slideId: 'slide-2026-01-01-00-00-00-002' as AppId,
+                slideId: 'slide-2026-01-01-00-00-00-002_v2' as AppId,
                 slices: [
                     { sliceType: 'qr-code', width: 30, data: 'https://example.com' },
                     { sliceType: 'image', width: 70, image: SVG },

@@ -11,10 +11,10 @@ import type { SlideShow } from '../model/slides/SlideShow';
 // Fixtures
 // ---------------------------------------------------------------------------
 
-const EVT_ID = 'evt-2026-08-19-10-00-00-000' as AppId;
-const SOURCE_ID = 'src-2026-08-19-10-00-00-000' as AppId;
-const SHOW_ID = 'show-2026-01-01-10-00-00-000' as AppId;
-const SLIDE_ID = 'slide-2026-01-01-10-00-00-000' as AppId;
+const EVT_ID = 'evt-2026-08-19-10-00-00-000_v2' as AppId;
+const SOURCE_ID = 'src-2026-08-19-10-00-00-000_v2' as AppId;
+const SHOW_ID = 'show-2026-01-01-10-00-00-000_v2' as AppId;
+const SLIDE_ID = 'slide-2026-01-01-10-00-00-000_v2' as AppId;
 
 const SLIDE: Slide = {
     slideId: SLIDE_ID,
