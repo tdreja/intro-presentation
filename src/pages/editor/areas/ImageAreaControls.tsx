@@ -31,12 +31,12 @@ export const ImageAreaControls = ({ area, onUpdate }: Props): ReactElement => {
     };
 
     return (
-        <>
+        <div className="d-flex flex-column gap-1">
             <input ref={inputRef} type="file" accept="image/*" className="d-none" onChange={onFileChange} aria-label="Pick a new image" />
             <button type="button" className="btn btn-sm btn-outline-secondary text-nowrap" onClick={() => inputRef.current?.click()}>
-                Replace image&hellip;
+                &#11014; Upload new image&hellip;
             </button>
             {error && <span className="small text-danger text-nowrap">{error}</span>}
-        </>
+        </div>
     );
 };

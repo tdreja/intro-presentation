@@ -11,8 +11,6 @@ import {
     type VerticalAlign,
     verticalAlignOf,
 } from '../../model/slides/Area.ts';
-import { ImageAreaControls } from './areas/ImageAreaControls.tsx';
-import { QrCodeAreaControls } from './areas/QrCodeAreaControls.tsx';
 
 const AREA_TYPES: { type: AreaType, label: string }[] = [
     { type: 'text', label: 'Text' },
@@ -53,17 +51,6 @@ type Props = {
     onMove: (direction: -1 | 1) => void
     onRemove: () => void
     onAdd: (type: AreaType) => void
-};
-
-const AreaControls = ({ area, onUpdate }: { area: Area, onUpdate: (area: Area) => void }): ReactElement | null => {
-    switch (area.areaType) {
-        case 'image':
-            return <ImageAreaControls area={area} onUpdate={onUpdate} />;
-        case 'qr-code':
-            return <QrCodeAreaControls key={area.data} area={area} onUpdate={onUpdate} />;
-        case 'text':
-            return null;
-    }
 };
 
 /**
@@ -115,7 +102,6 @@ export const AreaToolbar = (props: Props): ReactElement => {
                                         ))}
                                     </ToggleButtonGroup>
                                 )}
-                                <AreaControls area={area} onUpdate={onUpdate} />
                                 <div className="btn-group btn-group-sm" role="group" aria-label="Order">
                                     <button
                                         type="button"

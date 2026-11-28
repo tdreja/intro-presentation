@@ -31,7 +31,7 @@ export const QrCodeAreaControls = ({ area, onUpdate }: Props): ReactElement => {
             style={{ width: 220 }}
             value={draft}
             placeholder="https://example.com"
-            aria-label="QR code content"
+            aria-label="QR code URL"
             onChange={event => setDraft(event.target.value)}
             onBlur={commit}
             onKeyDown={(event) => {

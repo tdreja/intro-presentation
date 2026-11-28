@@ -5,6 +5,7 @@ import { addArea, moveArea, removeArea, setAreaBounds, updateArea } from '../../
 import { AreaBox, AreaContent, SlideCanvas } from '../slideshow/Slide.component.tsx';
 import { AreaToolbar } from './AreaToolbar.component.tsx';
 import { TextAreaEditor } from './areas/TextAreaEditor.tsx';
+import { AreaPopover } from './areas/AreaPopover.tsx';
 
 /**
  * Identifies the content of an area (not its bounds), so editors with local drafts are reset when the content changes.
@@ -112,6 +113,10 @@ type EditableAreaProps = {
     area: Area
     scale: number
     selected: boolean
+    /**
+     * Whether an area is being moved or resized; the popover is hidden meanwhile, as it can't follow the area
+     */
+    dragging: boolean
     darkMode?: boolean | null
     textToolbar: HTMLElement | null
     onSelect: () => void
@@ -126,6 +131,8 @@ type EditableAreaProps = {
  */
 const EditableArea = (props: EditableAreaProps): ReactElement => {
     const { area, scale, selected, onSelect } = props;
+    // Target of the popover with the controls of image and QR code areas
+    const [frame, setFrame] = useState<HTMLDivElement | null>(null);
     const handleProps = {
         area,
         scale,
@@ -145,6 +152,8 @@ const EditableArea = (props: EditableAreaProps): ReactElement => {
             }}
             overlay={(
                 <>
+                    <div ref={setFrame} className="position-absolute top-0 start-0 w-100 h-100 pe-none" />
+                    <AreaPopover area={area} target={frame} show={selected && !props.dragging} onUpdate={props.onUpdate} />
                     <DragHandle kind="move" className="area-handle--move" title="Drag to move" label="Move area" {...handleProps}>
                         &#10021;
                     </DragHandle>
@@ -241,6 +250,7 @@ export const SlideEditor = ({ slide, darkMode, onChange }: Props): ReactElement 
                                     area={area}
                                     scale={scale}
                                     selected={index === selectedIndex}
+                                    dragging={draft !== null}
                                     darkMode={darkMode}
                                     textToolbar={textToolbar}
                                     onSelect={() => setSelectedIndex(index)}
