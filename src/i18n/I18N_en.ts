@@ -1,0 +1,78 @@
+import type { Labels } from './I18N.ts';
+
+export const i18n_en: Labels = {
+    language: 'en',
+    slideShow: {
+        noSlideSelected: 'No slide selected',
+        tooltipEditSlideshow: 'Edit slideshow',
+        ariaNextSlide: 'Next slide',
+        ariaCurrentTime: 'Current time',
+        ariaCountdown: 'Countdown',
+    },
+    editor: {
+        title: 'Slideshow editor',
+        labelDarkMode: 'Dark mode',
+        actionDownload: 'Download',
+        tooltipDownload: 'Download this page with the current slideshow and countdown',
+        actionBackToSlideshow: 'Back to slideshow',
+        noSlideSelected: 'No slide selected',
+    },
+    countdownSettings: {
+        labelCountdown: 'Countdown',
+        ariaTargetTime: 'Countdown target time',
+        warningInPast: 'This time is in the past.',
+        labelShowFor: 'Show for',
+        minutes: minutes => `${minutes} ${minutes === 1 ? 'Minute' : 'Minutes'}`,
+    },
+    slideOverview: {
+        ariaSelectSlide: slideNumber => `Select slide ${slideNumber}`,
+        tooltipMoveUp: 'Move up',
+        ariaMoveUp: 'Move slide up',
+        tooltipMoveDown: 'Move down',
+        ariaMoveDown: 'Move slide down',
+        tooltipDuplicate: 'Duplicate slide',
+        tooltipDelete: 'Delete slide',
+        actionNewSlide: 'New slide',
+    },
+    areaToolbar: {
+        ariaVerticalAlign: 'Vertical alignment',
+        ariaTextAlign: 'Horizontal text alignment',
+        ariaOrder: 'Order',
+        tooltipSendBackward: 'Send backward',
+        ariaSendBackward: 'Send area backward',
+        tooltipBringForward: 'Bring forward',
+        ariaBringForward: 'Bring area forward',
+        tooltipDeleteArea: 'Delete area',
+        hintSelectArea: 'Click an area on the slide to edit it',
+        ariaAddArea: 'Add area',
+        tooltipAddArea: areaType => `Add ${areaType} area`,
+    },
+    areaEditing: {
+        tooltipMove: 'Drag to move',
+        ariaMove: 'Move area',
+        tooltipResize: 'Drag to resize',
+        ariaResize: 'Resize area',
+        actionUploadImage: 'Upload new image…',
+        ariaPickImage: 'Pick a new image',
+        errorReadImage: 'Could not read the image',
+        ariaQrCodeUrl: 'QR code URL',
+    },
+    areaTypes: {
+        'text': 'Text',
+        'image': 'Image',
+        'qr-code': 'QR code',
+    },
+    verticalAligns: {
+        top: 'Top',
+        middle: 'Middle',
+        bottom: 'Bottom',
+    },
+    textAligns: {
+        left: 'Left',
+        center: 'Center',
+        right: 'Right',
+    },
+    defaults: {
+        newText: '# New text',
+    },
+};

@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import type { QrCodeArea } from '../../../model/slides/Area.ts';
+import { useI18n } from '../../../i18n/I18N.ts';
 
 type Props = {
     area: QrCodeArea
@@ -12,6 +13,7 @@ type Props = {
  * The parent remounts it when the stored content changes.
  */
 export const QrCodeAreaControls = ({ area, onUpdate }: Props): ReactElement => {
+    const labels = useI18n().areaEditing;
     const [draft, setDraft] = useState<string>(area.data);
 
     const commit = () => {
@@ -31,7 +33,7 @@ export const QrCodeAreaControls = ({ area, onUpdate }: Props): ReactElement => {
             style={{ width: 220 }}
             value={draft}
             placeholder="https://example.com"
-            aria-label="QR code URL"
+            aria-label={labels.ariaQrCodeUrl}
             onChange={event => setDraft(event.target.value)}
             onBlur={commit}
             onKeyDown={(event) => {

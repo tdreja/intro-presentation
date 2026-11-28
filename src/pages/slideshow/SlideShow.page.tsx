@@ -5,6 +5,7 @@ import { useCountdown } from '../../communication/context/Countdown.context.ts';
 import { findNextSlideId } from '../../model/slides/SlideShow.ts';
 import { SlideTransition } from './SlideTransition.component.tsx';
 import { SlideShowBottomNav } from './SlideShowBottomNav.tsx';
+import { useI18n } from '../../i18n/I18N.ts';
 
 type Props = {
     onOpenEditor: () => void
@@ -14,6 +15,7 @@ export const SlideShowPage = ({ onOpenEditor }: Props): ReactElement => {
     const [currentSlide, setCurrentSlideId] = useCurrentSlide();
     const [slideshow] = useSlideShow();
     const [countdown] = useCountdown();
+    const labels = useI18n().slideShow;
 
     useEffect(() => {
         const ms = slideshow.timePerSlide.total('milliseconds');
@@ -28,7 +30,7 @@ export const SlideShowPage = ({ onOpenEditor }: Props): ReactElement => {
         if (!currentSlide) {
             return (
                 <div className="d-flex justify-content-center align-items-center w-100 h-100 text-muted fs-4">
-                    No slide selected
+                    {labels.noSlideSelected}
                 </div>
             );
         }
@@ -43,8 +45,8 @@ export const SlideShowPage = ({ onOpenEditor }: Props): ReactElement => {
                     type="button"
                     className="btn btn-secondary editor-toggle position-absolute end-0 bottom-0 m-3"
                     onClick={onOpenEditor}
-                    aria-label="Edit slideshow"
-                    title="Edit slideshow"
+                    aria-label={labels.tooltipEditSlideshow}
+                    title={labels.tooltipEditSlideshow}
                 >
                     &#9998;
                 </button>

@@ -11,30 +11,9 @@ import {
     type VerticalAlign,
     verticalAlignOf,
 } from '../../model/slides/Area.ts';
+import { useI18n } from '../../i18n/I18N.ts';
 
-const AREA_TYPES: { type: AreaType, label: string }[] = [
-    { type: 'text', label: 'Text' },
-    { type: 'image', label: 'Image' },
-    { type: 'qr-code', label: 'QR code' },
-];
-
-const TYPE_LABELS: Record<AreaType, string> = {
-    'image': 'Image',
-    'text': 'Text',
-    'qr-code': 'QR code',
-};
-
-const ALIGN_LABELS: Record<VerticalAlign, string> = {
-    top: 'Top',
-    middle: 'Middle',
-    bottom: 'Bottom',
-};
-
-const TEXT_ALIGN_LABELS: Record<TextAlign, string> = {
-    left: 'Left',
-    center: 'Center',
-    right: 'Right',
-};
+const AREA_TYPES: readonly AreaType[] = ['text', 'image', 'qr-code'];
 
 type Props = {
     /**
@@ -57,6 +36,8 @@ export const AreaToolbar = (props: Props): ReactElement => {
     const { area, canMoveBack, canMoveForward, onUpdate, onMove, onRemove, onAdd } = props;
     const alignName = useId();
     const textAlignName = useId();
+    const allLabels = useI18n();
+    const labels = allLabels.areaToolbar;
     return (
         <div className="area-toolbar flex-shrink-0 border-bottom bg-body">
             <div className="d-flex align-items-center gap-3 px-3 py-2">
@@ -66,7 +47,7 @@ export const AreaToolbar = (props: Props): ReactElement => {
                         ? (
                             <>
                                 <span className="small fw-semibold text-body-secondary" style={{ minWidth: '4.5em' }}>
-                                    {TYPE_LABELS[area.areaType]}
+                                    {allLabels.areaTypes[area.areaType]}
                                 </span>
                                 <ToggleButtonGroup
                                     type="radio"
@@ -74,11 +55,11 @@ export const AreaToolbar = (props: Props): ReactElement => {
                                     size="sm"
                                     value={verticalAlignOf(area)}
                                     onChange={(verticalAlign: VerticalAlign) => onUpdate({ ...area, verticalAlign })}
-                                    aria-label="Vertical alignment"
+                                    aria-label={labels.ariaVerticalAlign}
                                 >
                                     {VERTICAL_ALIGNS.map(align => (
                                         <ToggleButton key={align} id={`${alignName}-${align}`} value={align} variant="outline-secondary">
-                                            {ALIGN_LABELS[align]}
+                                            {allLabels.verticalAligns[align]}
                                         </ToggleButton>
                                     ))}
                                 </ToggleButtonGroup>
@@ -89,23 +70,23 @@ export const AreaToolbar = (props: Props): ReactElement => {
                                         size="sm"
                                         value={textAlignOf(area)}
                                         onChange={(textAlign: TextAlign) => onUpdate({ ...area, textAlign })}
-                                        aria-label="Horizontal text alignment"
+                                        aria-label={labels.ariaTextAlign}
                                     >
                                         {TEXT_ALIGNS.map(align => (
                                             <ToggleButton key={align} id={`${textAlignName}-${align}`} value={align} variant="outline-secondary">
-                                                {TEXT_ALIGN_LABELS[align]}
+                                                {allLabels.textAligns[align]}
                                             </ToggleButton>
                                         ))}
                                     </ToggleButtonGroup>
                                 )}
-                                <div className="btn-group btn-group-sm" role="group" aria-label="Order">
+                                <div className="btn-group btn-group-sm" role="group" aria-label={labels.ariaOrder}>
                                     <button
                                         type="button"
                                         className="btn btn-outline-secondary"
                                         disabled={!canMoveBack}
                                         onClick={() => onMove(-1)}
-                                        title="Send backward"
-                                        aria-label="Send area backward"
+                                        title={labels.tooltipSendBackward}
+                                        aria-label={labels.ariaSendBackward}
                                     >
                                         &#8615;
                                     </button>
@@ -114,8 +95,8 @@ export const AreaToolbar = (props: Props): ReactElement => {
                                         className="btn btn-outline-secondary"
                                         disabled={!canMoveForward}
                                         onClick={() => onMove(1)}
-                                        title="Bring forward"
-                                        aria-label="Bring area forward"
+                                        title={labels.tooltipBringForward}
+                                        aria-label={labels.ariaBringForward}
                                     >
                                         &#8613;
                                     </button>
@@ -124,27 +105,27 @@ export const AreaToolbar = (props: Props): ReactElement => {
                                     type="button"
                                     className="btn btn-sm btn-outline-danger"
                                     onClick={onRemove}
-                                    title="Delete area"
-                                    aria-label="Delete area"
+                                    title={labels.tooltipDeleteArea}
+                                    aria-label={labels.tooltipDeleteArea}
                                 >
                                     &#128465;
                                 </button>
                             </>
                         )
-                        : <span className="small text-body-secondary text-nowrap">Click an area on the slide to edit it</span>}
+                        : <span className="small text-body-secondary text-nowrap">{labels.hintSelectArea}</span>}
                 </div>
-                <div className="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Add area">
-                    {AREA_TYPES.map(({ type, label }) => (
+                <div className="btn-group btn-group-sm flex-shrink-0" role="group" aria-label={labels.ariaAddArea}>
+                    {AREA_TYPES.map(type => (
                         <button
                             key={type}
                             type="button"
                             className="btn btn-outline-primary text-nowrap"
                             onClick={() => onAdd(type)}
-                            title={`Add ${label} area`}
+                            title={labels.tooltipAddArea(allLabels.areaTypes[type])}
                         >
                             +
                             {' '}
-                            {label}
+                            {allLabels.areaTypes[type]}
                         </button>
                     ))}
                 </div>

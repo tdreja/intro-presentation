@@ -23,9 +23,12 @@ import { type AppEvent, goToSlideEvent, replaceSlideshowEvent, updateCountdownEv
 import { SlideShowPage } from './pages/slideshow/SlideShow.page.tsx';
 import { EditorPage } from './pages/editor/Editor.page.tsx';
 import { compressSlideShowImages } from './model/slides/ImageCompression.ts';
+import { I18N, i18n, type Labels } from './i18n/I18N.ts';
 
 export const App = (): ReactElement => {
     const [source] = useState<AppId>(() => newAppId('app'));
+    // Picked once from the browser language
+    const [labels] = useState<Labels>(() => i18n());
     // Local to this tab: each tab decides itself whether it presents or edits
     const [mode, setMode] = useState<'slideshow' | 'editor'>('slideshow');
 
@@ -95,6 +98,10 @@ export const App = (): ReactElement => {
         };
     }, [localSlideShow]);
 
+    useEffect(() => {
+        document.documentElement.lang = labels.language;
+    }, [labels.language]);
+
     // Theme for both the slideshow and the editor
     useEffect(() => {
         document.documentElement.setAttribute('data-bs-theme', localSlideShow.darkMode === true ? 'dark' : 'light');
@@ -151,16 +158,18 @@ export const App = (): ReactElement => {
         [localCountdown, setCountdown]);
 
     return (
-        <AppEventContext.Provider value={eventBus}>
-            <SlideShowContext.Provider value={slideShowState}>
-                <CurrentSlideContext.Provider value={currentSlideState}>
-                    <CountdownContext.Provider value={countdownState}>
-                        {mode === 'editor'
-                            ? <EditorPage onClose={() => setMode('slideshow')} />
-                            : <SlideShowPage onOpenEditor={() => setMode('editor')} />}
-                    </CountdownContext.Provider>
-                </CurrentSlideContext.Provider>
-            </SlideShowContext.Provider>
-        </AppEventContext.Provider>
+        <I18N.Provider value={labels}>
+            <AppEventContext.Provider value={eventBus}>
+                <SlideShowContext.Provider value={slideShowState}>
+                    <CurrentSlideContext.Provider value={currentSlideState}>
+                        <CountdownContext.Provider value={countdownState}>
+                            {mode === 'editor'
+                                ? <EditorPage onClose={() => setMode('slideshow')} />
+                                : <SlideShowPage onOpenEditor={() => setMode('editor')} />}
+                        </CountdownContext.Provider>
+                    </CurrentSlideContext.Provider>
+                </SlideShowContext.Provider>
+            </AppEventContext.Provider>
+        </I18N.Provider>
     );
 };

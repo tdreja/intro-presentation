@@ -1,0 +1,78 @@
+import type { Labels } from './I18N.ts';
+
+export const i18n_de: Labels = {
+    language: 'de',
+    slideShow: {
+        noSlideSelected: 'Keine Folie ausgewählt',
+        tooltipEditSlideshow: 'Präsentation bearbeiten',
+        ariaNextSlide: 'Nächste Folie',
+        ariaCurrentTime: 'Aktuelle Uhrzeit',
+        ariaCountdown: 'Countdown',
+    },
+    editor: {
+        title: 'Präsentations-Editor',
+        labelDarkMode: 'Dunkelmodus',
+        actionDownload: 'Herunterladen',
+        tooltipDownload: 'Diese Seite mit der aktuellen Präsentation und dem Countdown herunterladen',
+        actionBackToSlideshow: 'Zurück zur Präsentation',
+        noSlideSelected: 'Keine Folie ausgewählt',
+    },
+    countdownSettings: {
+        labelCountdown: 'Countdown',
+        ariaTargetTime: 'Zielzeit des Countdowns',
+        warningInPast: 'Diese Zeit liegt in der Vergangenheit.',
+        labelShowFor: 'Anzeigen für',
+        minutes: minutes => `${minutes} ${minutes === 1 ? 'Minute' : 'Minuten'}`,
+    },
+    slideOverview: {
+        ariaSelectSlide: slideNumber => `Folie ${slideNumber} auswählen`,
+        tooltipMoveUp: 'Nach oben',
+        ariaMoveUp: 'Folie nach oben verschieben',
+        tooltipMoveDown: 'Nach unten',
+        ariaMoveDown: 'Folie nach unten verschieben',
+        tooltipDuplicate: 'Folie duplizieren',
+        tooltipDelete: 'Folie löschen',
+        actionNewSlide: 'Neue Folie',
+    },
+    areaToolbar: {
+        ariaVerticalAlign: 'Vertikale Ausrichtung',
+        ariaTextAlign: 'Horizontale Textausrichtung',
+        ariaOrder: 'Reihenfolge',
+        tooltipSendBackward: 'Nach hinten',
+        ariaSendBackward: 'Bereich nach hinten verschieben',
+        tooltipBringForward: 'Nach vorne',
+        ariaBringForward: 'Bereich nach vorne verschieben',
+        tooltipDeleteArea: 'Bereich löschen',
+        hintSelectArea: 'Klicke auf einen Bereich der Folie, um ihn zu bearbeiten',
+        ariaAddArea: 'Bereich hinzufügen',
+        tooltipAddArea: areaType => `Bereich „${areaType}“ hinzufügen`,
+    },
+    areaEditing: {
+        tooltipMove: 'Ziehen zum Verschieben',
+        ariaMove: 'Bereich verschieben',
+        tooltipResize: 'Ziehen zum Ändern der Größe',
+        ariaResize: 'Größe des Bereichs ändern',
+        actionUploadImage: 'Neues Bild hochladen…',
+        ariaPickImage: 'Neues Bild auswählen',
+        errorReadImage: 'Das Bild konnte nicht gelesen werden',
+        ariaQrCodeUrl: 'URL des QR-Codes',
+    },
+    areaTypes: {
+        'text': 'Text',
+        'image': 'Bild',
+        'qr-code': 'QR-Code',
+    },
+    verticalAligns: {
+        top: 'Oben',
+        middle: 'Mitte',
+        bottom: 'Unten',
+    },
+    textAligns: {
+        left: 'Links',
+        center: 'Zentriert',
+        right: 'Rechts',
+    },
+    defaults: {
+        newText: '# Neuer Text',
+    },
+};
