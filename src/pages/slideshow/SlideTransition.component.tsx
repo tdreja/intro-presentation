@@ -32,7 +32,7 @@ export const SlideTransition = ({ slide, darkMode }: Props): ReactElement => {
                     // Keyed by ID, so the current slide keeps its DOM node when it starts leaving
                     <div
                         key={layer.slideId}
-                        className={`position-absolute top-0 start-0 w-100 h-100 bg-body ${animation}`}
+                        className={`position-absolute top-0 start-0 w-100 h-100 ${animation}`}
                         onAnimationEnd={(event) => {
                             // Ignore animations bubbling up from inside the slide
                             if (layer === leaving && event.target === event.currentTarget) {
