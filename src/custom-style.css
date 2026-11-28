@@ -214,6 +214,16 @@
     border-top: 1px solid var(--bs-border-color);
 }
 
+/* Controls of the selected area: never shrink, the row scrolls instead */
+.area-toolbar-controls {
+    min-width: 0;
+    scrollbar-width: thin;
+}
+
+.area-toolbar-controls > * {
+    flex-shrink: 0;
+}
+
 /* Frame of an area in the editor, drawn above its content */
 .area-frame::after {
     content: '';

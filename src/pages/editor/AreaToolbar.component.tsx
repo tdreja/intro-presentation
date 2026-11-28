@@ -1,5 +1,4 @@
 import { type ReactElement, type Ref, useId } from 'react';
-import Dropdown from 'react-bootstrap/Dropdown';
 import ToggleButton from 'react-bootstrap/ToggleButton';
 import ToggleButtonGroup from 'react-bootstrap/ToggleButtonGroup';
 import {
@@ -77,90 +76,96 @@ export const AreaToolbar = (props: Props): ReactElement => {
     const textAlignName = useId();
     return (
         <div className="area-toolbar flex-shrink-0 border-bottom bg-body">
-            <div className="d-flex flex-wrap align-items-center gap-2 px-3 py-2">
-                {area
-                    ? (
-                        <>
-                            <span className="small fw-semibold text-body-secondary" style={{ minWidth: '4.5em' }}>
-                                {TYPE_LABELS[area.areaType]}
-                            </span>
-                            <ToggleButtonGroup
-                                type="radio"
-                                name={alignName}
-                                size="sm"
-                                value={verticalAlignOf(area)}
-                                onChange={(verticalAlign: VerticalAlign) => onUpdate({ ...area, verticalAlign })}
-                                aria-label="Vertical alignment"
-                            >
-                                {VERTICAL_ALIGNS.map(align => (
-                                    <ToggleButton key={align} id={`${alignName}-${align}`} value={align} variant="outline-secondary">
-                                        {ALIGN_LABELS[align]}
-                                    </ToggleButton>
-                                ))}
-                            </ToggleButtonGroup>
-                            {area.areaType === 'text' && (
+            <div className="d-flex align-items-center gap-3 px-3 py-2">
+                {/* Scrolls sideways instead of wrapping, so the slide below doesn't jump */}
+                <div className="area-toolbar-controls d-flex align-items-center gap-2 flex-grow-1 overflow-x-auto">
+                    {area
+                        ? (
+                            <>
+                                <span className="small fw-semibold text-body-secondary" style={{ minWidth: '4.5em' }}>
+                                    {TYPE_LABELS[area.areaType]}
+                                </span>
                                 <ToggleButtonGroup
                                     type="radio"
-                                    name={textAlignName}
+                                    name={alignName}
                                     size="sm"
-                                    value={textAlignOf(area)}
-                                    onChange={(textAlign: TextAlign) => onUpdate({ ...area, textAlign })}
-                                    aria-label="Horizontal text alignment"
+                                    value={verticalAlignOf(area)}
+                                    onChange={(verticalAlign: VerticalAlign) => onUpdate({ ...area, verticalAlign })}
+                                    aria-label="Vertical alignment"
                                 >
-                                    {TEXT_ALIGNS.map(align => (
-                                        <ToggleButton key={align} id={`${textAlignName}-${align}`} value={align} variant="outline-secondary">
-                                            {TEXT_ALIGN_LABELS[align]}
+                                    {VERTICAL_ALIGNS.map(align => (
+                                        <ToggleButton key={align} id={`${alignName}-${align}`} value={align} variant="outline-secondary">
+                                            {ALIGN_LABELS[align]}
                                         </ToggleButton>
                                     ))}
                                 </ToggleButtonGroup>
-                            )}
-                            <AreaControls area={area} onUpdate={onUpdate} />
-                            <div className="btn-group btn-group-sm" role="group" aria-label="Order">
+                                {area.areaType === 'text' && (
+                                    <ToggleButtonGroup
+                                        type="radio"
+                                        name={textAlignName}
+                                        size="sm"
+                                        value={textAlignOf(area)}
+                                        onChange={(textAlign: TextAlign) => onUpdate({ ...area, textAlign })}
+                                        aria-label="Horizontal text alignment"
+                                    >
+                                        {TEXT_ALIGNS.map(align => (
+                                            <ToggleButton key={align} id={`${textAlignName}-${align}`} value={align} variant="outline-secondary">
+                                                {TEXT_ALIGN_LABELS[align]}
+                                            </ToggleButton>
+                                        ))}
+                                    </ToggleButtonGroup>
+                                )}
+                                <AreaControls area={area} onUpdate={onUpdate} />
+                                <div className="btn-group btn-group-sm" role="group" aria-label="Order">
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        disabled={!canMoveBack}
+                                        onClick={() => onMove(-1)}
+                                        title="Send backward"
+                                        aria-label="Send area backward"
+                                    >
+                                        &#8615;
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        disabled={!canMoveForward}
+                                        onClick={() => onMove(1)}
+                                        title="Bring forward"
+                                        aria-label="Bring area forward"
+                                    >
+                                        &#8613;
+                                    </button>
+                                </div>
                                 <button
                                     type="button"
-                                    className="btn btn-outline-secondary"
-                                    disabled={!canMoveBack}
-                                    onClick={() => onMove(-1)}
-                                    title="Send backward"
-                                    aria-label="Send area backward"
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={onRemove}
+                                    title="Delete area"
+                                    aria-label="Delete area"
                                 >
-                                    &#8615;
+                                    &#128465;
                                 </button>
-                                <button
-                                    type="button"
-                                    className="btn btn-outline-secondary"
-                                    disabled={!canMoveForward}
-                                    onClick={() => onMove(1)}
-                                    title="Bring forward"
-                                    aria-label="Bring area forward"
-                                >
-                                    &#8613;
-                                </button>
-                            </div>
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={onRemove}
-                                title="Delete area"
-                                aria-label="Delete area"
-                            >
-                                &#128465;
-                            </button>
-                        </>
-                    )
-                    : <span className="small text-body-secondary">Click an area on the slide to edit it</span>}
-                <Dropdown className="ms-auto">
-                    <Dropdown.Toggle variant="outline-primary" size="sm" aria-label="Add area">
-                        + Area
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu align="end">
-                        {AREA_TYPES.map(({ type, label }) => (
-                            <Dropdown.Item key={type} onClick={() => onAdd(type)}>
-                                {label}
-                            </Dropdown.Item>
-                        ))}
-                    </Dropdown.Menu>
-                </Dropdown>
+                            </>
+                        )
+                        : <span className="small text-body-secondary text-nowrap">Click an area on the slide to edit it</span>}
+                </div>
+                <div className="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Add area">
+                    {AREA_TYPES.map(({ type, label }) => (
+                        <button
+                            key={type}
+                            type="button"
+                            className="btn btn-outline-primary text-nowrap"
+                            onClick={() => onAdd(type)}
+                            title={`Add ${label} area`}
+                        >
+                            +
+                            {' '}
+                            {label}
+                        </button>
+                    ))}
+                </div>
             </div>
             {/* Always takes its height, so the slide doesn't jump when a text area is selected */}
             <div ref={textToolbarRef} className="area-editor-text-toolbar" />
