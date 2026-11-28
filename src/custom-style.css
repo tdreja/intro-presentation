@@ -35,47 +35,91 @@
 }
 
 /*
+ * Content of an area. Its box is already scaled; --slide-scale (set by AreaBox) is forwarded to fonts and spacing:
+ * --slide-px is one pixel of the unscaled slide, so "N * --slide-px" is N pixels on a slide shown at full size.
+ */
+.slide-area {
+    --slide-px: calc(1px * var(--slide-scale, 1));
+    font-size: calc(16 * var(--slide-px));
+}
+
+/* Padding of text and QR code areas, in the slideshow and in the editor */
+.area-padding,
+.area-editor-text .milkdown .ProseMirror {
+    padding: calc(24 * var(--slide-px, 1px));
+}
+
+/*
  * Text of a slide, spaced like in the Markdown editor (Milkdown Crepe, see its common/reset.css)
  * instead of Bootstrap's bottom margins, so the slide looks like what was edited.
+ * The same scaled sizes are applied to the editor of a text area, overriding Crepe's fixed pixels.
  */
 .slide-text :is(h1, h2, h3, h4, h5, h6, p, ul, ol, li, blockquote, pre, hr) {
     margin: 0;
 }
 
-/* Fixed sizes like in the editor, instead of Bootstrap's headings that shrink with the window */
-.slide-text :is(h1, h2, h3, h4, h5, h6) {
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) :is(h1, h2, h3, h4, h5, h6) {
     font-weight: 400;
-    padding: 2px 0;
+    padding: calc(2 * var(--slide-px, 1px)) 0;
 }
 
-.slide-text h1 { font-size: 2.625em; line-height: 1.1905; margin-top: 32px; }
-.slide-text h2 { font-size: 2.25em; line-height: 1.2222; margin-top: 28px; }
-.slide-text h3 { font-size: 2em; line-height: 1.25; margin-top: 24px; }
-.slide-text h4 { font-size: 1.75em; line-height: 1.2857; margin-top: 20px; }
-.slide-text h5 { font-size: 1.5em; line-height: 1.3333; margin-top: 16px; }
-.slide-text h6 { font-size: 1.125em; font-weight: 700; line-height: 1.5556; margin-top: 16px; }
+/* Font sizes in em follow the scaled font size of .slide-area */
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) h1 { font-size: 2.625em; line-height: 1.1905; margin-top: calc(32 * var(--slide-px, 1px)); }
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) h2 { font-size: 2.25em; line-height: 1.2222; margin-top: calc(28 * var(--slide-px, 1px)); }
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) h3 { font-size: 2em; line-height: 1.25; margin-top: calc(24 * var(--slide-px, 1px)); }
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) h4 { font-size: 1.75em; line-height: 1.2857; margin-top: calc(20 * var(--slide-px, 1px)); }
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) h5 { font-size: 1.5em; line-height: 1.3333; margin-top: calc(16 * var(--slide-px, 1px)); }
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) h6 { font-size: 1.125em; font-weight: 700; line-height: 1.5556; margin-top: calc(16 * var(--slide-px, 1px)); }
 
-.slide-text p {
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) p {
     line-height: 1.5;
-    padding: 4px 0;
+    padding: calc(4 * var(--slide-px, 1px)) 0;
 }
 
 /* The editor wraps every list item in a paragraph; tight lists in the slideshow don't */
 .slide-text li:not(:has(> p)) {
     line-height: 1.5;
-    padding: 4px 0;
+    padding: calc(4 * var(--slide-px, 1px)) 0;
 }
 
-.slide-text blockquote {
-    margin: 4px 0;
+.slide-text :is(ul, ol) {
+    padding-left: calc(32 * var(--slide-px, 1px));
 }
 
-.slide-text pre {
-    padding: 10px;
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) blockquote {
+    margin: calc(4 * var(--slide-px, 1px)) 0;
+}
+
+.area-editor-text .milkdown .ProseMirror blockquote {
+    padding-left: calc(40 * var(--slide-px, 1px));
+}
+
+:is(.slide-text, .area-editor-text .milkdown .ProseMirror) pre {
+    padding: calc(10 * var(--slide-px, 1px));
 }
 
 .slide-text hr {
-    margin: 6px 0;
+    margin: calc(6 * var(--slide-px, 1px)) 0;
+}
+
+.area-editor-text .milkdown .ProseMirror hr {
+    padding: calc(6 * var(--slide-px, 1px)) 0;
+    height: calc(13 * var(--slide-px, 1px));
+}
+
+/* Bullets and numbers of lists in the editor */
+.area-editor-text .milkdown .milkdown-list-item-block li {
+    gap: calc(10 * var(--slide-px, 1px));
+}
+
+.area-editor-text .milkdown .milkdown-list-item-block li .label-wrapper,
+.area-editor-text .milkdown .milkdown-list-item-block li .label-wrapper .label {
+    height: calc(32 * var(--slide-px, 1px));
+    width: calc(24 * var(--slide-px, 1px));
+}
+
+.area-editor-text .milkdown .milkdown-list-item-block li .label-wrapper .label {
+    padding: calc(4 * var(--slide-px, 1px)) 0;
 }
 
 /* Slide change: the old slide leaves to the left while the new one comes in from the right */
@@ -146,6 +190,8 @@
 }
 
 .area-editor-text .milkdown {
+    /* Scaled like the text in the slideshow */
+    --crepe-base-font-size: calc(16 * var(--slide-px, 1px));
     /* Transparent like the text in the slideshow, so areas below stay visible */
     --crepe-color-background: transparent;
     background: transparent;
@@ -153,8 +199,6 @@
 }
 
 .area-editor-text .milkdown .ProseMirror {
-    /* Same padding as the text area in the slideshow (p-4) */
-    padding: 1.5rem;
     /* Set by the text editor, so the text is aligned like in the slideshow */
     text-align: var(--area-text-align, left);
 }

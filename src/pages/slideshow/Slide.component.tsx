@@ -1,4 +1,4 @@
-import { type PointerEventHandler, type ReactElement, type ReactNode, useRef } from 'react';
+import { type CSSProperties, type PointerEventHandler, type ReactElement, type ReactNode, useRef } from 'react';
 import Markdown from 'react-markdown';
 import { QRCodeSVG } from 'qrcode.react';
 import type { Slide } from '../../model/slides/Slide.ts';
@@ -54,7 +54,7 @@ const ImageAreaComponent = ({ area }: { area: ImageArea }): ReactElement => (
 );
 
 const TextAreaComponent = ({ area }: { area: TextArea }): ReactElement => (
-    <div className="w-100 h-100 overflow-auto p-4 d-flex flex-column">
+    <div className="w-100 h-100 overflow-auto area-padding d-flex flex-column">
         <div className="slide-text" style={{ ...TEXT_MARGINS[verticalAlignOf(area)], textAlign: textAlignOf(area) }}>
             <Markdown remarkPlugins={REMARK_PLUGINS}>{area.text}</Markdown>
         </div>
@@ -62,7 +62,7 @@ const TextAreaComponent = ({ area }: { area: TextArea }): ReactElement => (
 );
 
 const QrCodeAreaComponent = ({ area, darkMode }: { area: QrCodeArea, darkMode?: boolean | null }): ReactElement => (
-    <div className={`w-100 h-100 d-flex justify-content-center p-4 ${ALIGN_ITEMS[verticalAlignOf(area)]}`}>
+    <div className={`w-100 h-100 d-flex justify-content-center area-padding ${ALIGN_ITEMS[verticalAlignOf(area)]}`}>
         <QRCodeSVG
             value={area.data}
             bgColor="transparent"
@@ -90,7 +90,7 @@ type AreaBoxProps = {
     area: Area
     scale: number
     /**
-     * Content, laid out at the unscaled size of the area and scaled down (or up) as a whole
+     * Content, filling the scaled area. Sizes inside use the CSS variables --slide-scale and --slide-px (see custom-style.css).
      */
     children: ReactNode
     /**
@@ -102,8 +102,9 @@ type AreaBoxProps = {
 };
 
 /**
- * Places an area on a slide: its position and size are scaled, and so is its content,
- * so text and QR codes keep their proportions to the slide at any screen size.
+ * Places an area on a slide: its position and size are multiplied with the scale. The scale is forwarded to the content
+ * as the CSS variable --slide-scale, so fonts and spacing (see .slide-area in custom-style.css) keep their proportions
+ * to the slide at any screen size, without transforming the content.
  */
 export const AreaBox = ({ area, scale, children, overlay, className, onPointerDown }: AreaBoxProps): ReactElement => {
     const bounds = scaleBounds(area, scale);
@@ -113,17 +114,8 @@ export const AreaBox = ({ area, scale, children, overlay, className, onPointerDo
             style={{ left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height }}
             onPointerDown={onPointerDown}
         >
-            <div className="overflow-hidden w-100 h-100">
-                <div
-                    style={{
-                        width: area.width,
-                        height: area.height,
-                        transform: `scale(${scale})`,
-                        transformOrigin: 'top left',
-                    }}
-                >
-                    {children}
-                </div>
+            <div className="slide-area overflow-hidden w-100 h-100" style={{ '--slide-scale': scale } as CSSProperties}>
+                {children}
             </div>
             {overlay}
         </div>
