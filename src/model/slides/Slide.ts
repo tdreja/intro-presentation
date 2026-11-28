@@ -8,8 +8,8 @@ import { type Area, AREA_CONVERTER, type RawJsonArea } from './Area.ts';
  * Size of new slides, in slide units. Slides are scaled to fit the screen, so this only sets the aspect ratio
  * and how large text and other content is compared to the slide.
  */
-export const DEFAULT_SLIDE_WIDTH = 1920;
-export const DEFAULT_SLIDE_HEIGHT = 1080;
+export const DEFAULT_SLIDE_WIDTH = 1280;
+export const DEFAULT_SLIDE_HEIGHT = 720;
 
 export function createSlideId(date?: Temporal.PlainDateTime | null): AppId {
     return newAppId('slide', date);

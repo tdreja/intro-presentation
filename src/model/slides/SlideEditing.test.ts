@@ -49,13 +49,13 @@ describe('createArea / createSlide', () => {
     });
 
     test('defaults to the default slide size', () => {
-        expect(createArea('text')).toMatchObject({ left: 480, top: 270, width: 960, height: 540 });
+        expect(createArea('text')).toMatchObject({ left: 320, top: 180, width: 640, height: 360 });
     });
 
-    test('creates a 1920x1080 slide with one text area', () => {
+    test('creates a 1280x720 slide with one text area', () => {
         const slide = createSlide();
         expect(slide.slideId).toMatch(/^slide-.*_v2$/);
-        expect(slide).toMatchObject({ width: 1920, height: 1080 });
+        expect(slide).toMatchObject({ width: 1280, height: 720 });
         expect(types(slide)).toEqual(['text']);
     });
 });
