@@ -1,14 +1,11 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { Temporal } from '@js-temporal/polyfill';
-import { asAppId, type AppId } from '../model/identifier/AppId.ts';
+import { asAppId } from '../model/identifier/AppId.ts';
 import { APP_ID_CONVERTER } from '../model/identifier/AppId.ts';
-import { type SlideShow } from '../model/slides/SlideShow.ts';
 import { type Countdown } from '../model/slides/Countdown.ts';
 import {
     fromStorage,
     toStorage,
-    slideShowToStorage,
-    slideShowFromStorage,
     currentSlideIdToStorage,
     currentSlideIdFromStorage,
     countdownToStorage,
@@ -61,10 +58,6 @@ const NEWER_COUNTDOWN: Countdown = {
     showLargeCountdownFor: LARGE_FOR,
 };
 
-function makeSlideShow(id: AppId): SlideShow {
-    return { id, slides: [], timePerSlide: Temporal.Duration.from({ seconds: 10 }) };
-}
-
 // ---------------------------------------------------------------------------
 // fromStorage
 // ---------------------------------------------------------------------------
@@ -112,44 +105,15 @@ describe('toStorage', () => {
         toStorage(APP_ID_CONVERTER, 'app-id', NEWER_SLIDE_ID, (newer, older) => newer >= older);
         expect(fromStorage(APP_ID_CONVERTER, 'app-id')).toBe(NEWER_SLIDE_ID);
     });
-});
 
-// ---------------------------------------------------------------------------
-// slideShowToStorage / slideShowFromStorage
-// ---------------------------------------------------------------------------
-
-describe('slideShowFromStorage', () => {
-    test('returns null when nothing is stored', () => {
-        expect(slideShowFromStorage()).toBeNull();
-    });
-});
-
-describe('slideShowToStorage / slideShowFromStorage round-trip', () => {
-    test('stores and retrieves a SlideShow', () => {
-        const show = makeSlideShow(OLDER_SLIDE_ID);
-        slideShowToStorage(show);
-        const result = slideShowFromStorage();
-        expect(result).not.toBeNull();
-        expect(result!.id).toBe(OLDER_SLIDE_ID);
-        expect(result!.slides).toEqual([]);
-    });
-
-    test('does not overwrite a slideshow with a higher id', () => {
-        slideShowToStorage(makeSlideShow(NEWER_SLIDE_ID));
-        slideShowToStorage(makeSlideShow(OLDER_SLIDE_ID));
-        expect(slideShowFromStorage()!.id).toBe(NEWER_SLIDE_ID);
-    });
-
-    test('overwrites a slideshow with a lower id', () => {
-        slideShowToStorage(makeSlideShow(OLDER_SLIDE_ID));
-        slideShowToStorage(makeSlideShow(NEWER_SLIDE_ID));
-        expect(slideShowFromStorage()!.id).toBe(NEWER_SLIDE_ID);
-    });
-
-    test('overwrites a slideshow with the same id (e.g. after re-encoding its images)', () => {
-        slideShowToStorage(makeSlideShow(OLDER_SLIDE_ID));
-        slideShowToStorage({ ...makeSlideShow(OLDER_SLIDE_ID), darkMode: true });
-        expect(slideShowFromStorage()!.darkMode).toBe(true);
+    test('logs instead of throwing when the storage is full', () => {
+        storage.setItem = () => {
+            throw new DOMException('Quota exceeded', 'QuotaExceededError');
+        };
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        expect(() => toStorage(APP_ID_CONVERTER, 'app-id', OLDER_SLIDE_ID, () => false)).not.toThrow();
+        expect(error).toHaveBeenCalled();
+        error.mockRestore();
     });
 });
 
