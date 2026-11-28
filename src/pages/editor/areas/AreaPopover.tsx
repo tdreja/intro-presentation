@@ -115,7 +115,7 @@ export const AreaPopover = ({ area, target, show, boundary, textToolbarRef, onUp
                         <FollowSize popper={popper}>
                             {area.areaType === 'text' && <div ref={textToolbarRef} />}
                             {area.areaType === 'image' && <ImageAreaControls area={area} onUpdate={onUpdate} />}
-                            {area.areaType === 'qr-code' && <QrCodeAreaControls key={area.data} area={area} onUpdate={onUpdate} />}
+                            {area.areaType === 'qr-code' && <QrCodeAreaControls area={area} onUpdate={onUpdate} />}
                         </FollowSize>
                     </Popover.Body>
                 </Popover>
