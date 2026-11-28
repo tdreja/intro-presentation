@@ -117,8 +117,11 @@ type EditableAreaProps = {
      * Whether an area is being moved or resized; the popover is hidden meanwhile, as it can't follow the area
      */
     dragging: boolean
+    /**
+     * Editor canvas the popover of the area stays in
+     */
+    canvas: HTMLElement | null
     darkMode?: boolean | null
-    textToolbar: HTMLElement | null
     onSelect: () => void
     onUpdate: (area: Area) => void
     onBoundsChange: (bounds: Bounds) => void
@@ -131,8 +134,10 @@ type EditableAreaProps = {
  */
 const EditableArea = (props: EditableAreaProps): ReactElement => {
     const { area, scale, selected, onSelect } = props;
-    // Target of the popover with the controls of image and QR code areas
+    // Target of the popover with the controls of the area
     const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+    // Element in the popover that takes the formatting bar of a text area, while the popover is shown
+    const [textToolbar, setTextToolbar] = useState<HTMLDivElement | null>(null);
     const handleProps = {
         area,
         scale,
@@ -153,7 +158,14 @@ const EditableArea = (props: EditableAreaProps): ReactElement => {
             overlay={(
                 <>
                     <div ref={setFrame} className="position-absolute top-0 start-0 w-100 h-100 pe-none" />
-                    <AreaPopover area={area} target={frame} show={selected && !props.dragging} onUpdate={props.onUpdate} />
+                    <AreaPopover
+                        area={area}
+                        target={frame}
+                        show={selected && !props.dragging}
+                        boundary={props.canvas}
+                        textToolbarRef={setTextToolbar}
+                        onUpdate={props.onUpdate}
+                    />
                     <DragHandle kind="move" className="area-handle--move" title="Drag to move" label="Move area" {...handleProps}>
                         &#10021;
                     </DragHandle>
@@ -166,7 +178,7 @@ const EditableArea = (props: EditableAreaProps): ReactElement => {
                     <TextAreaEditor
                         area={area}
                         active={selected}
-                        toolbarHost={props.textToolbar}
+                        toolbarHost={textToolbar}
                         onUpdate={props.onUpdate}
                     />
                 )
@@ -188,7 +200,7 @@ export const SlideEditor = ({ slide, darkMode, onChange }: Props): ReactElement 
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     // Bounds while an area is being moved or resized; only committed (and broadcast) when the pointer is released
     const [draft, setDraft] = useState<Slide | null>(null);
-    const [textToolbar, setTextToolbar] = useState<HTMLDivElement | null>(null);
+    const [canvas, setCanvas] = useState<HTMLDivElement | null>(null);
     const shown = draft ?? slide;
     const selected = selectedIndex !== null ? shown.areas[selectedIndex] ?? null : null;
 
@@ -226,13 +238,13 @@ export const SlideEditor = ({ slide, darkMode, onChange }: Props): ReactElement 
                 area={selected}
                 canMoveBack={selectedIndex !== null && selectedIndex > 0}
                 canMoveForward={selectedIndex !== null && selectedIndex < shown.areas.length - 1}
-                textToolbarRef={setTextToolbar}
                 onUpdate={area => selectedIndex !== null && onChange(updateArea(slide, selectedIndex, area))}
                 onMove={onMove}
                 onRemove={onRemove}
                 onAdd={onAdd}
             />
             <div
+                ref={setCanvas}
                 className="flex-grow-1 p-3 bg-body-tertiary"
                 style={{ minHeight: 0 }}
                 onPointerDown={() => setSelectedIndex(null)}
@@ -251,8 +263,8 @@ export const SlideEditor = ({ slide, darkMode, onChange }: Props): ReactElement 
                                     scale={scale}
                                     selected={index === selectedIndex}
                                     dragging={draft !== null}
+                                    canvas={canvas}
                                     darkMode={darkMode}
-                                    textToolbar={textToolbar}
                                     onSelect={() => setSelectedIndex(index)}
                                     onUpdate={updated => onChange(updateArea(slide, index, { ...updated, ...boundsOf(slide.areas[index]) }))}
                                     onBoundsChange={bounds => setDraft(setAreaBounds(slide, index, bounds))}

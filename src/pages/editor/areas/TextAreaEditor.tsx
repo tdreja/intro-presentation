@@ -32,7 +32,7 @@ type Props = {
      */
     active: boolean
     /**
-     * Element above the slide that takes the formatting buttons
+     * Element in the popover of the area that takes the formatting buttons, null while the popover is hidden
      */
     toolbarHost: HTMLElement | null
     onUpdate: (area: TextArea) => void
